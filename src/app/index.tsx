@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
 import { LoadingState } from '@/shared/ui';
+import { theme } from '@/shared/theme';
 
 export default function IndexScreen() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function IndexScreen() {
   }, [session, isInitialized, isCoupleLoading, coupleData, router]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <LoadingState message="Loading Together..." />
     </SafeAreaView>
   );

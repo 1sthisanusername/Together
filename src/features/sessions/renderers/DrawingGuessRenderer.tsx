@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, Button, Input } from '@/shared/ui';
 import type { SessionData } from '../hooks/useSession';
 import { useSubmitEvent, useCompleteSession, useSaveSessionAsMemory } from '../hooks/useSession';
+import { theme } from '@/shared/theme';
 
 export interface DrawingGuessProps {
   data: SessionData;
@@ -298,12 +299,12 @@ const styles = StyleSheet.create({
   canvasContainer: {
     width: '100%',
     height: 280,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.surface,
     borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#CBD5E1',
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: theme.colors.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -320,11 +321,11 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#312E81',
+    backgroundColor: theme.colors.text, // #42362e
   },
   canvasPlaceholder: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: theme.colors.textMuted,
     fontStyle: 'italic',
   },
   guessSection: {
@@ -345,24 +346,24 @@ const styles = StyleSheet.create({
   },
   waitingGuessText: {
     fontSize: 14,
-    color: '#64748B',
+    color: theme.colors.textSecondary,
     fontWeight: '500',
   },
   correctCard: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
+    backgroundColor: theme.colors.surfaceSubtle,
+    borderColor: theme.colors.success,
     alignItems: 'center',
     width: '100%',
   },
   correctText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#15803D',
+    color: theme.colors.success,
   },
   answerText: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#166534',
+    color: theme.colors.text,
     marginTop: 4,
   },
   nextButton: {
@@ -377,14 +378,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   completedTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text,
     marginBottom: 8,
+    letterSpacing: -0.5,
   },
   completedSubtitle: {
     fontSize: 15,
-    color: '#64748B',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     marginBottom: 28,
   },

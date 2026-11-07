@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMemories, MemoryCard, AddMemoryModal } from '@/features/memories';
 import { LoadingState, ErrorState, Button, EmptyState } from '@/shared/ui';
+import { theme } from '@/shared/theme';
 
 export default function MemoriesScreen() {
   const { t } = useTranslation();
@@ -63,7 +64,7 @@ export default function MemoriesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.colors.background, // #f7f9f6
   },
   header: {
     flexDirection: 'row',
@@ -71,24 +72,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 12,
-    backgroundColor: '#FFFFFF',
+    paddingBottom: 14,
+    backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: theme.colors.borderLight,
   },
   headerText: {
     flex: 1,
     marginRight: 12,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text, // #42362e
     marginBottom: 4,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: theme.colors.textSecondary, // #a8917f
   },
   scrollContent: {
     paddingHorizontal: 20,

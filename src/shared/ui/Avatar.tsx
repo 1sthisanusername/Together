@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import { theme } from '@/shared/theme';
 
 export interface AvatarProps {
   name: string;
@@ -9,17 +10,26 @@ export interface AvatarProps {
 
 export const Avatar: React.FC<AvatarProps> = ({ name, url, size = 48 }) => {
   const initials = (name || '?')
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('');
+  .split(' ')
+  .filter(Boolean)
+  .slice(0, 2)
+  .map((part) => part[0]?.toUpperCase())
+  .join('');
 
   if (url) {
     return (
       <Image
         source={{ uri: url }}
-        style={[styles.image, { width: size, height: size, borderRadius: size / 2 }]}
+        style={[
+          styles.image,
+          {
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            borderWidth: 1.5,
+            borderColor: theme.colors.borderLight,
+          },
+        ]}
       />
     );
   }
@@ -42,16 +52,18 @@ export const Avatar: React.FC<AvatarProps> = ({ name, url, size = 48 }) => {
 
 const styles = StyleSheet.create({
   fallback: {
-    backgroundColor: '#E0E7FF',
+    backgroundColor: theme.colors.surfaceSubtle, // #f0ece6
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: theme.colors.border, // #d2ccc4
   },
   initials: {
-    color: '#4338CA',
+    color: theme.colors.text, // #42362e
     fontWeight: '700',
+    letterSpacing: 0.5,
   },
   image: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: theme.colors.surfaceSubtle,
   },
 });
-

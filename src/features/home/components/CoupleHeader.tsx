@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Avatar } from '@/shared/ui';
 import type { Profile } from '@/shared/types';
+import { theme } from '@/shared/theme';
 
 export interface CoupleHeaderProps {
   coupleName?: string | null;
@@ -23,7 +24,7 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
     <View style={styles.container}>
       <View style={styles.avatarsRow}>
         <View style={styles.avatarWrapper}>
-          <Avatar name={me?.display_name || 'Me'} url={me?.avatar_url} size={54} />
+          <Avatar name={me?.display_name || 'Me'} url={me?.avatar_url} size={58} />
           <Text style={styles.nameLabel} numberOfLines={1}>
             {me?.display_name || 'You'}
           </Text>
@@ -34,7 +35,7 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
         </View>
 
         <View style={styles.avatarWrapper}>
-          <Avatar name={partner?.display_name || 'Partner'} url={partner?.avatar_url} size={54} />
+          <Avatar name={partner?.display_name || 'Partner'} url={partner?.avatar_url} size={58} />
           <Text style={styles.nameLabel} numberOfLines={1}>
             {partner?.display_name || 'Partner'}
           </Text>
@@ -56,7 +57,7 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   avatarsRow: {
     flexDirection: 'row',
@@ -66,49 +67,49 @@ const styles = StyleSheet.create({
   },
   avatarWrapper: {
     alignItems: 'center',
-    width: 80,
+    width: 84,
   },
   nameLabel: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#475569',
+    color: theme.colors.textSecondary, // #a8917f
     marginTop: 6,
     textAlign: 'center',
   },
   heartWrapper: {
-    paddingHorizontal: 12,
-    marginBottom: 16,
+    paddingHorizontal: 14,
+    marginBottom: 20,
   },
   heartText: {
-    fontSize: 24,
-    color: '#EC4899',
+    fontSize: 26,
+    color: theme.colors.primary, // #b69788
   },
   coupleTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 6,
+    color: theme.colors.text, // #42362e
+    marginBottom: 8,
+    letterSpacing: -0.5,
   },
   counterBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FDF2F8',
+    backgroundColor: theme.colors.surfaceSubtle, // #f0ece6
     paddingVertical: 6,
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#FCE7F3',
+    borderColor: theme.colors.border, // #d2ccc4
   },
   counterNumber: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#DB2777',
+    color: theme.colors.primary, // #b69788
     marginRight: 6,
   },
   counterLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#9D174D',
+    color: theme.colors.textSecondary, // #a8917f
   },
 });
-

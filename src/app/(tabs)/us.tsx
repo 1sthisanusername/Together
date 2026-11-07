@@ -11,6 +11,7 @@ import {
 } from '@/features/us';
 import { useHomeData } from '@/features/home';
 import { LoadingState, ErrorState } from '@/shared/ui';
+import { theme } from '@/shared/theme';
 
 export default function UsScreen() {
   const { t } = useTranslation();
@@ -66,29 +67,30 @@ export default function UsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.colors.background, // #f7f9f6
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 12,
-    backgroundColor: '#FFFFFF',
+    paddingBottom: 14,
+    backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: theme.colors.borderLight,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text, // #42362e
     marginBottom: 4,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 14,
-    color: '#64748B',
+    color: theme.colors.textSecondary, // #a8917f
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
 });
 

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/shared/ui';
 import type { TimeZoneInfo } from '@/shared/lib/timezone';
+import { theme } from '@/shared/theme';
 
 export interface TimeZoneClockCardProps {
   partnerName: string;
@@ -68,8 +69,10 @@ export const TimeZoneClockCard: React.FC<TimeZoneClockCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    padding: 16,
+    padding: 18,
     width: '100%',
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.borderLight,
   },
   row: {
     flexDirection: 'row',
@@ -82,61 +85,63 @@ const styles = StyleSheet.create({
   },
   divider: {
     width: 1,
-    height: 70,
-    backgroundColor: '#E2E8F0',
-    marginHorizontal: 8,
+    height: 72,
+    backgroundColor: theme.colors.border,
+    marginHorizontal: 10,
   },
   locationTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#64748B',
+    color: theme.colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
     marginBottom: 4,
     textAlign: 'center',
   },
   timeBig: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text,
     marginBottom: 2,
+    letterSpacing: -0.5,
   },
   dateSub: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: theme.colors.textMuted,
     marginBottom: 8,
   },
   statusBadge: {
-    paddingVertical: 3,
+    paddingVertical: 4,
     paddingHorizontal: 10,
-    borderRadius: 12,
+    borderRadius: 14,
   },
   badgeDay: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: theme.colors.warningLight,
   },
   badgeNight: {
-    backgroundColor: '#EDE9FE',
+    backgroundColor: '#f3eef4',
   },
   statusText: {
     fontSize: 11,
     fontWeight: '600',
   },
   statusDayText: {
-    color: '#B45309',
+    color: theme.colors.warning,
   },
   statusNightText: {
-    color: '#6D28D9',
+    color: theme.colors.moon,
   },
   diffBadge: {
-    backgroundColor: '#F1F5F9',
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 12,
+    backgroundColor: theme.colors.surfaceSubtle,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 14,
   },
   diffText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#475569',
+    color: theme.colors.text,
   },
 });
-

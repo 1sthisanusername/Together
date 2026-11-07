@@ -8,6 +8,7 @@ import {
   StyleProp,
   ViewStyle,
 } from 'react-native';
+import { theme } from '@/shared/theme';
 
 export interface InputProps extends TextInputProps {
   label?: string;
@@ -26,7 +27,7 @@ export const Input: React.FC<InputProps> = ({
     <View style={[styles.container, containerStyle]}>
       {label && <Text style={styles.label}>{label}</Text>}
       <TextInput
-        placeholderTextColor="#94A3B8"
+        placeholderTextColor={theme.colors.textSecondary}
         style={[
           styles.input,
           error ? styles.inputError : null,
@@ -47,28 +48,28 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#334155',
+    color: theme.colors.text,
     marginBottom: 6,
+    letterSpacing: 0.1,
   },
   input: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 12,
+    borderColor: theme.colors.border,
+    borderRadius: 14,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 13,
     fontSize: 16,
-    color: '#0F172A',
+    color: theme.colors.text,
   },
   inputError: {
-    borderColor: '#EF4444',
-    backgroundColor: '#FEF2F2',
+    borderColor: theme.colors.danger,
+    backgroundColor: theme.colors.dangerLight,
   },
   errorText: {
     fontSize: 12,
-    color: '#EF4444',
+    color: theme.colors.danger,
     marginTop: 4,
     marginLeft: 2,
   },
 });
-

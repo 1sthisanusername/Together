@@ -14,6 +14,7 @@ import { useActiveCouple } from '@/features/couple';
 import { useAuthStore } from '@/features/auth';
 import { WriteLetterModal } from '@/features/letters';
 import { LoadingState, ErrorState } from '@/shared/ui';
+import { theme } from '@/shared/theme';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -103,26 +104,30 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.colors.background, // #f7f9f6
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   brandTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#4F46E5',
+    fontSize: 22,
+    fontWeight: '800',
+    color: theme.colors.text, // #42362e
     letterSpacing: -0.5,
   },
   settingsBtn: {
-    padding: 6,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
   },
   settingsIcon: {
-    fontSize: 20,
+    fontSize: 16,
   },
   scrollContent: {
     paddingHorizontal: 20,

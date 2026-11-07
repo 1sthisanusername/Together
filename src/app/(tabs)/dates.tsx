@@ -9,6 +9,7 @@ import { useActiveCouple } from '@/features/couple';
 import { useAuthStore } from '@/features/auth';
 import { LoadingState, ErrorState, Button } from '@/shared/ui';
 import type { Letter } from '@/shared/types';
+import { theme } from '@/shared/theme';
 
 export default function DatesScreen() {
   const router = useRouter();
@@ -116,36 +117,38 @@ export default function DatesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.colors.background, // #f7f9f6
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 12,
-    backgroundColor: '#FFFFFF',
+    paddingBottom: 14,
+    backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: theme.colors.borderLight,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text, // #42362e
     marginBottom: 4,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 14,
-    color: '#64748B',
+    color: theme.colors.textSecondary, // #a8917f
   },
   scrollContent: {
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
   sectionHeader: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text, // #42362e
     marginBottom: 10,
     marginTop: 8,
+    letterSpacing: -0.3,
   },
   lettersHeaderRow: {
     flexDirection: 'row',
@@ -156,9 +159,9 @@ const styles = StyleSheet.create({
   },
   emptyLetters: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: theme.colors.textMuted,
     fontStyle: 'italic',
-    paddingVertical: 12,
+    paddingVertical: 16,
     textAlign: 'center',
   },
 });

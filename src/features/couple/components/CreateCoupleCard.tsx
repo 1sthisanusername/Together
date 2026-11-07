@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, Button, Input, ErrorState } from '@/shared/ui';
 import { createCoupleSchema, type CreateCoupleInput } from '../schemas';
 import { useCreateCouple } from '../hooks/useCouple';
+import { theme } from '@/shared/theme';
 
 export interface CreateCoupleCardProps {
   onSuccess?: () => void;
@@ -79,21 +80,24 @@ export const CreateCoupleCard: React.FC<CreateCoupleCardProps> = ({ onSuccess })
 const styles = StyleSheet.create({
   card: {
     width: '100%',
+    padding: 24,
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.borderLight,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontSize: 20,
+    fontWeight: '800',
+    color: theme.colors.text, // #42362e
     marginBottom: 6,
+    letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 14,
-    color: '#64748B',
+    color: theme.colors.textSecondary, // #a8917f
     lineHeight: 20,
-    marginBottom: 16,
+    marginBottom: 18,
   },
   submitButton: {
     marginTop: 8,
   },
 });
-

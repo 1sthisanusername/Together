@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useActivities, useStartActivity, ActivityCard } from '@/features/activities';
 import { LoadingState, ErrorState } from '@/shared/ui';
+import { theme } from '@/shared/theme';
 
 export default function PlayScreen() {
   const router = useRouter();
@@ -92,25 +93,26 @@ export default function PlayScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.colors.background, // #f7f9f6
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 8,
-    backgroundColor: '#FFFFFF',
+    paddingBottom: 12,
+    backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: theme.colors.borderLight,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text, // #42362e
     marginBottom: 4,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 14,
-    color: '#64748B',
+    color: theme.colors.textSecondary, // #a8917f
     marginBottom: 16,
   },
   filterRow: {
@@ -118,25 +120,28 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   filterBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 14,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
     borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: theme.colors.surfaceSubtle, // #f0ece6
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
   },
   filterBtnActive: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: theme.colors.primary, // #b69788
+    borderColor: theme.colors.primary,
   },
   filterText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#64748B',
+    color: theme.colors.textSecondary,
   },
   filterTextActive: {
-    color: '#4F46E5',
+    color: theme.colors.textInverse, // #ffffff
     fontWeight: '700',
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
 });

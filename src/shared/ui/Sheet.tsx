@@ -7,6 +7,7 @@ import {
   StyleSheet,
   TouchableWithoutFeedback,
 } from 'react-native';
+import { theme } from '@/shared/theme';
 
 export interface SheetProps {
   visible: boolean;
@@ -50,24 +51,29 @@ export const Sheet: React.FC<SheetProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(66, 54, 46, 0.45)', // Warm espresso tinted backdrop
   },
   sheetContainer: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
+    backgroundColor: theme.colors.surface,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 22,
     paddingBottom: 40,
-    paddingTop: 12,
-    maxHeight: '80%',
+    paddingTop: 14,
+    maxHeight: '85%',
+    shadowColor: theme.colors.text,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
   },
   sheetHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#CBD5E1',
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: theme.colors.border,
     alignSelf: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   header: {
     flexDirection: 'row',
@@ -76,17 +82,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontSize: 20,
+    fontWeight: '800',
+    color: theme.colors.text, // #42362e
+    letterSpacing: -0.3,
   },
   closeButton: {
     fontSize: 18,
-    color: '#64748B',
+    color: theme.colors.textSecondary, // #a8917f
     fontWeight: '600',
   },
   content: {
     width: '100%',
   },
 });
-

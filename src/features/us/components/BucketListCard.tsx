@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, Input, Button } from '@/shared/ui';
 import type { BucketItem } from '@/shared/types';
 import { useAddBucketItem, useToggleBucketItem } from '../hooks/useUsData';
+import { theme } from '@/shared/theme';
 
 export interface BucketListCardProps {
   items: BucketItem[];
@@ -70,15 +71,19 @@ export const BucketListCard: React.FC<BucketListCardProps> = ({ items }) => {
 
 const styles = StyleSheet.create({
   card: {
-    padding: 20,
+    padding: 22,
     marginVertical: 8,
     width: '100%',
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.borderLight,
+    borderRadius: 20,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text, // #42362e
     marginBottom: 16,
+    letterSpacing: -0.3,
   },
   addInputRow: {
     flexDirection: 'row',
@@ -96,35 +101,37 @@ const styles = StyleSheet.create({
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: theme.colors.surfaceSubtle, // #f0ece6
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
   },
   itemDone: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: theme.colors.surface,
+    opacity: 0.6,
   },
   checkbox: {
     fontSize: 18,
-    color: '#6366F1',
+    color: theme.colors.primary, // #b69788
     marginRight: 10,
   },
   itemTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1E293B',
+    color: theme.colors.text, // #42362e
     flex: 1,
   },
   itemTitleDone: {
     textDecorationLine: 'line-through',
-    color: '#94A3B8',
+    color: theme.colors.textMuted,
   },
   emptyText: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: theme.colors.textMuted,
     fontStyle: 'italic',
     textAlign: 'center',
     paddingVertical: 12,
   },
 });
-

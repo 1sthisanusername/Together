@@ -8,6 +8,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
+import { theme } from '@/shared/theme';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -42,7 +43,7 @@ export const Button: React.FC<ButtonProps> = ({
       testID={testID}
       onPress={onPress}
       disabled={!isInteractive}
-      activeOpacity={0.8}
+      activeOpacity={0.85}
       style={[
         styles.base,
         styles[variant],
@@ -54,7 +55,7 @@ export const Button: React.FC<ButtonProps> = ({
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === 'primary' || variant === 'danger' ? '#FFFFFF' : '#4F46E5'}
+          color={variant === 'primary' || variant === 'danger' ? '#FFFFFF' : theme.colors.primary}
         />
       ) : (
         <Text
@@ -75,48 +76,56 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
   },
   sm: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
   },
   md: {
     paddingVertical: 14,
-    paddingHorizontal: 20,
+    paddingHorizontal: 22,
   },
   lg: {
-    paddingVertical: 18,
+    paddingVertical: 17,
     paddingHorizontal: 28,
   },
   primary: {
-    backgroundColor: '#6366F1',
+    backgroundColor: theme.colors.primary, // #b69788
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 2,
   },
   secondary: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: theme.colors.surfaceSubtle, // #f0ece6
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 1.5,
-    borderColor: '#6366F1',
+    borderColor: theme.colors.primary,
   },
   ghost: {
     backgroundColor: 'transparent',
   },
   danger: {
-    backgroundColor: '#EF4444',
+    backgroundColor: theme.colors.danger,
   },
   disabled: {
-    backgroundColor: '#E2E8F0',
-    borderColor: '#CBD5E1',
+    backgroundColor: theme.colors.borderLight,
+    borderColor: theme.colors.border,
     opacity: 0.6,
   },
   textBase: {
     fontWeight: '600',
     textAlign: 'center',
+    letterSpacing: 0.2,
   },
   smText: {
     fontSize: 13,
@@ -125,25 +134,25 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   lgText: {
-    fontSize: 17,
+    fontSize: 16,
   },
   primaryText: {
-    color: '#FFFFFF',
+    color: theme.colors.textInverse, // #ffffff
   },
   secondaryText: {
-    color: '#4F46E5',
+    color: theme.colors.text, // #42362e
   },
   outlineText: {
-    color: '#6366F1',
+    color: theme.colors.primary, // #b69788
   },
   ghostText: {
-    color: '#6366F1',
+    color: theme.colors.textSecondary, // #a8917f
   },
   dangerText: {
-    color: '#FFFFFF',
+    color: theme.colors.textInverse,
   },
   disabledText: {
-    color: '#94A3B8',
+    color: theme.colors.textMuted,
   },
 });
 

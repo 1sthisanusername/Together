@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, Button, Input } from '@/shared/ui';
 import type { ImportantDate } from '@/shared/types';
 import { useAddImportantDate } from '../hooks/useUsData';
+import { theme } from '@/shared/theme';
 
 export interface ImportantDatesListProps {
   dates: ImportantDate[];
@@ -92,9 +93,12 @@ export const ImportantDatesList: React.FC<ImportantDatesListProps> = ({ dates })
 
 const styles = StyleSheet.create({
   card: {
-    padding: 20,
+    padding: 22,
     marginVertical: 8,
     width: '100%',
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.borderLight,
+    borderRadius: 20,
   },
   header: {
     flexDirection: 'row',
@@ -105,13 +109,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text, // #42362e
+    letterSpacing: -0.3,
   },
   addForm: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
+    backgroundColor: theme.colors.surfaceSubtle,
+    borderRadius: 14,
     padding: 14,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
   },
   list: {
     gap: 10,
@@ -119,12 +126,12 @@ const styles = StyleSheet.create({
   dateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    backgroundColor: '#FDF2F8',
-    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: theme.colors.surfaceSubtle, // #f0ece6
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#FCE7F3',
+    borderColor: theme.colors.borderLight,
   },
   dateIconWrapper: {
     marginRight: 12,
@@ -138,19 +145,18 @@ const styles = StyleSheet.create({
   dateTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#831843',
+    color: theme.colors.text, // #42362e
     marginBottom: 2,
   },
   dateSub: {
     fontSize: 12,
-    color: '#BE185D',
+    color: theme.colors.textSecondary, // #a8917f
   },
   emptyText: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: theme.colors.textMuted,
     fontStyle: 'italic',
     textAlign: 'center',
     paddingVertical: 12,
   },
 });
-

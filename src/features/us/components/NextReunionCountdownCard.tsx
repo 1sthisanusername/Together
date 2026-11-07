@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, Button, Input } from '@/shared/ui';
 import type { ImportantDate } from '@/shared/types';
 import { useAddImportantDate } from '../hooks/useUsData';
+import { theme } from '@/shared/theme';
 
 export interface NextReunionCountdownCardProps {
   nextMeeting: ImportantDate | null;
@@ -77,19 +78,20 @@ export const NextReunionCountdownCard: React.FC<NextReunionCountdownCardProps> =
 
 const styles = StyleSheet.create({
   card: {
-    padding: 20,
+    padding: 22,
     marginVertical: 8,
     width: '100%',
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.borderLight,
     alignItems: 'center',
+    borderRadius: 22,
   },
   label: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
-    color: '#1D4ED8',
+    color: theme.colors.primary, // #b69788
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     marginBottom: 8,
   },
   countdownContainer: {
@@ -97,21 +99,22 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   daysNumber: {
-    fontSize: 54,
+    fontSize: 56,
     fontWeight: '900',
-    color: '#1E40AF',
-    lineHeight: 60,
+    color: theme.colors.text, // #42362e
+    lineHeight: 62,
+    letterSpacing: -1,
   },
   daysSub: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#3B82F6',
+    color: theme.colors.textSecondary, // #a8917f
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   dateDetail: {
     fontSize: 12,
-    color: '#60A5FA',
+    color: theme.colors.textMuted,
     marginTop: 8,
   },
   emptyContainer: {
@@ -120,7 +123,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#64748B',
+    color: theme.colors.textSecondary,
     marginBottom: 12,
     textAlign: 'center',
   },
@@ -132,4 +135,3 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 });
-

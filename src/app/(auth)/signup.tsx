@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SignUpForm } from '@/features/auth';
+import { theme } from '@/shared/theme';
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function SignUpScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
+          <Text style={styles.brandBadge}>🕊️ Together</Text>
           <Text style={styles.title}>{t('auth.signUp')}</Text>
           <Text style={styles.subtitle}>{t('auth.welcomeSubtitle')}</Text>
         </View>
@@ -32,7 +34,7 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.background, // #f7f9f6
   },
   scrollContent: {
     flexGrow: 1,
@@ -41,20 +43,28 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
   },
   header: {
-    marginBottom: 32,
+    marginBottom: 28,
     alignItems: 'center',
   },
-  title: {
-    fontSize: 30,
-    fontWeight: '800',
-    color: '#4F46E5',
+  brandBadge: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: theme.colors.primary, // #b69788
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
     marginBottom: 8,
-    letterSpacing: -0.5,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: theme.colors.text, // #42362e
+    marginBottom: 6,
+    letterSpacing: -0.6,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#64748B',
+    fontSize: 15,
+    color: theme.colors.textSecondary, // #a8917f
     textAlign: 'center',
+    lineHeight: 22,
   },
 });
-

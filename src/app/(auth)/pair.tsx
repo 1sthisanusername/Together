@@ -12,6 +12,7 @@ import {
 } from '@/features/couple';
 import { useAuthStore } from '@/features/auth';
 import { LoadingState, ErrorState, Avatar, Button, Card } from '@/shared/ui';
+import { theme } from '@/shared/theme';
 
 export default function PairScreen() {
   const router = useRouter();
@@ -174,7 +175,7 @@ export default function PairScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.colors.background, // #f7f9f6
   },
   scrollContent: {
     flexGrow: 1,
@@ -188,26 +189,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text, // #42362e
     marginBottom: 8,
     textAlign: 'center',
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 15,
-    color: '#64748B',
+    color: theme.colors.textSecondary, // #a8917f
     textAlign: 'center',
     lineHeight: 22,
     paddingHorizontal: 12,
   },
   segmentedControl: {
     flexDirection: 'row',
-    backgroundColor: '#E2E8F0',
-    borderRadius: 12,
+    backgroundColor: theme.colors.surfaceSubtle, // #f0ece6
+    borderRadius: 14,
     padding: 4,
     marginBottom: 24,
     width: '100%',
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
   },
   segment: {
     flex: 1,
@@ -216,46 +220,49 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   segmentActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
+    backgroundColor: theme.colors.surface, // #ffffff
+    shadowColor: theme.colors.text,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
     elevation: 2,
   },
   segmentText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#64748B',
+    color: theme.colors.textSecondary, // #a8917f
   },
   segmentTextActive: {
-    color: '#4F46E5',
+    color: theme.colors.text, // #42362e
+    fontWeight: '700',
   },
   connectedCard: {
     width: '100%',
     alignItems: 'center',
     paddingVertical: 32,
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.borderLight,
   },
   connectedBadge: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#16A34A',
-    backgroundColor: '#DCFCE7',
+    color: theme.colors.success,
+    backgroundColor: theme.colors.successLight,
     paddingVertical: 6,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     borderRadius: 20,
     marginBottom: 20,
   },
   partnerName: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.colors.text, // #42362e
     marginTop: 14,
     marginBottom: 6,
   },
   connectedSubtitle: {
     fontSize: 15,
-    color: '#64748B',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -264,7 +271,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   unlinkButton: {
-    borderColor: '#EF4444',
+    borderColor: theme.colors.danger,
   },
   cancelCoupleButton: {
     marginTop: 16,

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/shared/ui';
 import type { Letter } from '@/shared/types';
+import { theme } from '@/shared/theme';
 
 export interface LetterCardProps {
   letter: Letter;
@@ -48,7 +49,7 @@ export const LetterCard: React.FC<LetterCardProps> = ({
   };
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
       <Card style={[styles.card, isOpened ? styles.cardOpened : styles.cardSealed]}>
         <View style={styles.headerRow}>
           <Text style={styles.envelopeIcon}>{isOpened ? '📖' : '✉️'}</Text>
@@ -71,16 +72,18 @@ const styles = StyleSheet.create({
   card: {
     padding: 18,
     marginVertical: 6,
+    borderRadius: 18,
+    borderColor: theme.colors.borderLight,
   },
   cardSealed: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.surface,
     borderLeftWidth: 4,
-    borderLeftColor: '#6366F1',
+    borderLeftColor: theme.colors.primary, // #b69788
   },
   cardOpened: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.colors.surfaceSubtle, // #f0ece6
     borderLeftWidth: 4,
-    borderLeftColor: '#10B981',
+    borderLeftColor: theme.colors.border, // #d2ccc4
   },
   headerRow: {
     flexDirection: 'row',
@@ -93,42 +96,42 @@ const styles = StyleSheet.create({
   },
   badge: {
     paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    borderRadius: 14,
   },
   badgeOpened: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: theme.colors.successLight,
   },
   badgeOpenedText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#15803D',
+    color: theme.colors.success,
   },
   badgeLocked: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: theme.colors.warningLight,
   },
   badgeLockedText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#B45309',
+    color: theme.colors.warning,
   },
   badgeReady: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: theme.colors.primaryLight,
   },
   badgeReadyText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#4F46E5',
+    color: theme.colors.primary, // #b69788
   },
   title: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 6,
+    color: theme.colors.text, // #42362e
+    marginBottom: 4,
+    letterSpacing: -0.2,
   },
   subtext: {
     fontSize: 13,
-    color: '#64748B',
+    color: theme.colors.textSecondary, // #a8917f
   },
 });
-

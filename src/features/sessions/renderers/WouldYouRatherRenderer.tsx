@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, Button } from '@/shared/ui';
 import type { SessionData } from '../hooks/useSession';
 import { useSubmitEvent, useCompleteSession, useSaveSessionAsMemory } from '../hooks/useSession';
+import { theme } from '@/shared/theme';
 
 export interface WouldYouRatherProps {
   data: SessionData;
@@ -228,35 +229,35 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   optionSelected: {
-    borderColor: '#6366F1',
-    backgroundColor: '#EEF2FF',
+    borderColor: theme.colors.primary, // #b69788
+    backgroundColor: theme.colors.primaryLight, // #f4ede8
   },
   optionPartnerPicked: {
-    borderColor: '#EC4899',
+    borderColor: theme.colors.secondary, // #a8917f
   },
   optionLetter: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#94A3B8',
+    color: theme.colors.textSecondary,
     marginBottom: 6,
   },
   optionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1E293B',
+    color: theme.colors.text, // #42362e
     textAlign: 'center',
   },
   pickBadge: {
     marginTop: 8,
     fontSize: 12,
     fontWeight: '700',
-    color: '#4F46E5',
+    color: theme.colors.primary, // #b69788
   },
   partnerBadge: {
     marginTop: 4,
     fontSize: 12,
     fontWeight: '700',
-    color: '#DB2777',
+    color: theme.colors.secondary, // #a8917f
   },
   orDivider: {
     alignItems: 'center',
@@ -265,27 +266,27 @@ const styles = StyleSheet.create({
   orText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#94A3B8',
+    color: theme.colors.textMuted,
   },
   statusCard: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.colors.surfaceSubtle,
     marginTop: 20,
     alignItems: 'center',
   },
   statusText: {
     fontSize: 14,
-    color: '#64748B',
+    color: theme.colors.textSecondary,
     fontWeight: '600',
   },
   partnerWaitingCard: {
-    backgroundColor: '#FEF3C7',
-    borderColor: '#FDE68A',
+    backgroundColor: theme.colors.warningLight,
+    borderColor: theme.colors.border,
     marginTop: 20,
     alignItems: 'center',
   },
   partnerWaitingText: {
     fontSize: 14,
-    color: '#B45309',
+    color: theme.colors.warning,
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -294,21 +295,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   matchCard: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
+    backgroundColor: theme.colors.surfaceSubtle,
+    borderColor: theme.colors.primary,
+    borderWidth: 1.5,
     width: '100%',
     alignItems: 'center',
   },
   differCard: {
-    backgroundColor: '#FDF2F8',
-    borderColor: '#FCE7F3',
+    backgroundColor: theme.colors.surfaceSubtle,
+    borderColor: theme.colors.border,
     width: '100%',
     alignItems: 'center',
   },
   revealTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#1E293B',
+    color: theme.colors.text,
   },
   nextButton: {
     width: '100%',
@@ -323,14 +325,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   completedTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text,
     marginBottom: 8,
+    letterSpacing: -0.5,
   },
   completedSubtitle: {
     fontSize: 15,
-    color: '#64748B',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     marginBottom: 28,
   },

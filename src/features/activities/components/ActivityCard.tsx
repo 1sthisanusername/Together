@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/shared/ui';
 import type { Activity } from '@/shared/types';
+import { theme } from '@/shared/theme';
 
 export interface ActivityCardProps {
   activity: Activity;
@@ -68,8 +69,11 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    padding: 16,
+    padding: 18,
     marginVertical: 6,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.borderLight,
   },
   headerRow: {
     flexDirection: 'row',
@@ -81,45 +85,48 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   badge: {
-    backgroundColor: '#F1F5F9',
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 8,
+    backgroundColor: theme.colors.surfaceSubtle, // #f0ece6
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
   },
   badgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#475569',
+    color: theme.colors.textSecondary, // #a8917f
   },
   title: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text, // #42362e
     marginBottom: 4,
+    letterSpacing: -0.3,
   },
   description: {
     fontSize: 13,
-    color: '#64748B',
-    lineHeight: 18,
-    marginBottom: 12,
+    color: theme.colors.textSecondary, // #a8917f
+    lineHeight: 19,
+    marginBottom: 14,
   },
   footerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 8,
+    paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#F8FAFC',
+    borderTopColor: theme.colors.surfaceSubtle,
   },
   duration: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748B',
+    color: theme.colors.textMuted,
   },
   startText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#4F46E5',
+    color: theme.colors.primary, // #b69788
   },
 });
 

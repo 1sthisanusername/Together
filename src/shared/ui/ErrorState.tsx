@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Button } from './Button';
+import { theme } from '@/shared/theme';
 
 export interface ErrorStateProps {
   title?: string;
@@ -41,13 +42,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#EF4444',
+    color: theme.colors.danger, // #ab5c56
     marginBottom: 8,
     textAlign: 'center',
   },
   message: {
     fontSize: 14,
-    color: '#475569',
+    color: theme.colors.textSecondary, // #a8917f
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 16,
@@ -56,4 +57,3 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 });
-

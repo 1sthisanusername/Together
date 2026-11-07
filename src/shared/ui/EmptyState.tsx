@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Button } from './Button';
+import { theme } from '@/shared/theme';
 
 export interface EmptyStateProps {
   title: string;
@@ -45,21 +46,21 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontSize: 20,
+    fontWeight: '800',
+    color: theme.colors.text, // #42362e
     textAlign: 'center',
     marginBottom: 8,
+    letterSpacing: -0.3,
   },
   description: {
     fontSize: 14,
-    color: '#64748B',
+    color: theme.colors.textSecondary, // #a8917f
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 21,
     marginBottom: 20,
   },
   button: {
-    marginTop: 8,
+    minWidth: 160,
   },
 });
-
