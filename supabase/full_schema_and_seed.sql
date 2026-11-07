@@ -67,8 +67,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS tr_check_couple_member_limit ON public.couple_members;
-CREATE TRIGGER tr_check_couple_member_limit
-  BEFORE INSERT OR UPDATE ON public.couple_members
+CREATE TRIGGER tr_check_couple_member_limit BEFORE INSERT OR UPDATE ON public.couple_members
   FOR EACH ROW
   EXECUTE FUNCTION public.check_couple_member_limit();
 
@@ -116,11 +115,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS tr_profiles_updated_at ON public.profiles;
 CREATE TRIGGER tr_profiles_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+DROP TRIGGER IF EXISTS tr_couples_updated_at ON public.couples;
 CREATE TRIGGER tr_couples_updated_at BEFORE UPDATE ON public.couples FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+DROP TRIGGER IF EXISTS tr_couple_members_updated_at ON public.couple_members;
 CREATE TRIGGER tr_couple_members_updated_at BEFORE UPDATE ON public.couple_members FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+DROP TRIGGER IF EXISTS tr_invitations_updated_at ON public.invitations;
 CREATE TRIGGER tr_invitations_updated_at BEFORE UPDATE ON public.invitations FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+DROP TRIGGER IF EXISTS tr_feature_flags_updated_at ON public.feature_flags;
 CREATE TRIGGER tr_feature_flags_updated_at BEFORE UPDATE ON public.feature_flags FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+DROP TRIGGER IF EXISTS tr_entitlements_updated_at ON public.entitlements;
 CREATE TRIGGER tr_entitlements_updated_at BEFORE UPDATE ON public.entitlements FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- 6. SECURITY DEFINER HELPER: get active couple_id for a user
@@ -163,8 +168,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
+CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- 8. ROW LEVEL SECURITY (RLS) POLICIES
@@ -177,6 +181,7 @@ ALTER TABLE public.entitlements ENABLE ROW LEVEL SECURITY;
 
 -- PROFILES Policies
 -- Users can see their own profile or their partner's profile
+DROP POLICY IF EXISTS "profiles_select_own_or_partner" ON public.profiles;
 CREATE POLICY "profiles_select_own_or_partner" ON public.profiles
   FOR SELECT TO authenticated
   USING (
@@ -189,10 +194,12 @@ CREATE POLICY "profiles_select_own_or_partner" ON public.profiles
     )
   );
 
+DROP POLICY IF EXISTS "profiles_insert_own" ON public.profiles;
 CREATE POLICY "profiles_insert_own" ON public.profiles
   FOR INSERT TO authenticated
   WITH CHECK (id = auth.uid());
 
+DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
 CREATE POLICY "profiles_update_own" ON public.profiles
   FOR UPDATE TO authenticated
   USING (id = auth.uid())
@@ -200,16 +207,19 @@ CREATE POLICY "profiles_update_own" ON public.profiles
 
 -- COUPLES Policies
 -- Accessible only if auth.uid() is an active member
+DROP POLICY IF EXISTS "couples_select_active_member" ON public.couples;
 CREATE POLICY "couples_select_active_member" ON public.couples
   FOR SELECT TO authenticated
   USING (
     id = public.get_active_couple_id(auth.uid())
   );
 
+DROP POLICY IF EXISTS "couples_insert_authenticated" ON public.couples;
 CREATE POLICY "couples_insert_authenticated" ON public.couples
   FOR INSERT TO authenticated
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "couples_update_active_member" ON public.couples;
 CREATE POLICY "couples_update_active_member" ON public.couples
   FOR UPDATE TO authenticated
   USING (
@@ -217,6 +227,7 @@ CREATE POLICY "couples_update_active_member" ON public.couples
   );
 
 -- COUPLE MEMBERS Policies
+DROP POLICY IF EXISTS "couple_members_select_active_member_or_self" ON public.couple_members;
 CREATE POLICY "couple_members_select_active_member_or_self" ON public.couple_members
   FOR SELECT TO authenticated
   USING (
@@ -224,22 +235,26 @@ CREATE POLICY "couple_members_select_active_member_or_self" ON public.couple_mem
     couple_id = public.get_active_couple_id(auth.uid())
   );
 
+DROP POLICY IF EXISTS "couple_members_insert_self" ON public.couple_members;
 CREATE POLICY "couple_members_insert_self" ON public.couple_members
   FOR INSERT TO authenticated
   WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "couple_members_update_self" ON public.couple_members;
 CREATE POLICY "couple_members_update_self" ON public.couple_members
   FOR UPDATE TO authenticated
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
 
 -- INVITATIONS Policies
+DROP POLICY IF EXISTS "invitations_select_active_couple_member" ON public.invitations;
 CREATE POLICY "invitations_select_active_couple_member" ON public.invitations
   FOR SELECT TO authenticated
   USING (
     couple_id = public.get_active_couple_id(auth.uid())
   );
 
+DROP POLICY IF EXISTS "invitations_insert_active_couple_member" ON public.invitations;
 CREATE POLICY "invitations_insert_active_couple_member" ON public.invitations
   FOR INSERT TO authenticated
   WITH CHECK (
@@ -247,23 +262,23 @@ CREATE POLICY "invitations_insert_active_couple_member" ON public.invitations
     couple_id = public.get_active_couple_id(auth.uid())
   );
 
+DROP POLICY IF EXISTS "invitations_update_inviter" ON public.invitations;
 CREATE POLICY "invitations_update_inviter" ON public.invitations
   FOR UPDATE TO authenticated
   USING (inviter_id = auth.uid())
   WITH CHECK (inviter_id = auth.uid());
 
 -- FEATURE FLAGS & ENTITLEMENTS Policies
+DROP POLICY IF EXISTS "feature_flags_select_all" ON public.feature_flags;
 CREATE POLICY "feature_flags_select_all" ON public.feature_flags
   FOR SELECT TO authenticated
   USING (true);
 
+DROP POLICY IF EXISTS "entitlements_select_couple" ON public.entitlements;
 CREATE POLICY "entitlements_select_couple" ON public.entitlements
   FOR SELECT TO authenticated
   USING (
-    couple_id IN (
-      SELECT couple_id FROM public.couple_members
-      WHERE user_id = auth.uid() AND status = 'active'
-    )
+    couple_id = public.get_active_couple_id(auth.uid())
   );
 
 -- 9. TRANSACTIONAL RPCS (Create couple + invite, Accept invite)
@@ -635,13 +650,21 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
 );
 
 -- Triggers for updated_at
+DROP TRIGGER IF EXISTS tr_media_files_updated_at ON public.media_files;
 CREATE TRIGGER tr_media_files_updated_at BEFORE UPDATE ON public.media_files FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+DROP TRIGGER IF EXISTS tr_activities_updated_at ON public.activities;
 CREATE TRIGGER tr_activities_updated_at BEFORE UPDATE ON public.activities FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+DROP TRIGGER IF EXISTS tr_activity_sessions_updated_at ON public.activity_sessions;
 CREATE TRIGGER tr_activity_sessions_updated_at BEFORE UPDATE ON public.activity_sessions FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+DROP TRIGGER IF EXISTS tr_letters_updated_at ON public.letters;
 CREATE TRIGGER tr_letters_updated_at BEFORE UPDATE ON public.letters FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+DROP TRIGGER IF EXISTS tr_memories_updated_at ON public.memories;
 CREATE TRIGGER tr_memories_updated_at BEFORE UPDATE ON public.memories FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+DROP TRIGGER IF EXISTS tr_bucket_items_updated_at ON public.bucket_items;
 CREATE TRIGGER tr_bucket_items_updated_at BEFORE UPDATE ON public.bucket_items FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+DROP TRIGGER IF EXISTS tr_important_dates_updated_at ON public.important_dates;
 CREATE TRIGGER tr_important_dates_updated_at BEFORE UPDATE ON public.important_dates FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+DROP TRIGGER IF EXISTS tr_user_settings_updated_at ON public.user_settings;
 CREATE TRIGGER tr_user_settings_updated_at BEFORE UPDATE ON public.user_settings FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- 12. ROW LEVEL SECURITY (RLS) POLICIES
@@ -658,170 +681,201 @@ ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_settings ENABLE ROW LEVEL SECURITY;
 
 -- ACTIVITIES: readable by all authenticated users
+DROP POLICY IF EXISTS "activities_select_all" ON public.activities;
 CREATE POLICY "activities_select_all" ON public.activities
   FOR SELECT TO authenticated USING (true);
 
 -- Couple-based RLS Helper Expression:
--- couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active')
+-- couple_id = public.get_active_couple_id(auth.uid())
 
 -- MEDIA FILES
+DROP POLICY IF EXISTS "media_files_couple_select" ON public.media_files;
 CREATE POLICY "media_files_couple_select" ON public.media_files
   FOR SELECT TO authenticated
-  USING (couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active'));
+  USING (couple_id = public.get_active_couple_id(auth.uid()));
 
+DROP POLICY IF EXISTS "media_files_couple_insert" ON public.media_files;
 CREATE POLICY "media_files_couple_insert" ON public.media_files
   FOR INSERT TO authenticated
   WITH CHECK (
     owner_id = auth.uid() AND
-    couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active')
+    couple_id = public.get_active_couple_id(auth.uid())
   );
 
+DROP POLICY IF EXISTS "media_files_owner_delete" ON public.media_files;
 CREATE POLICY "media_files_owner_delete" ON public.media_files
   FOR DELETE TO authenticated
   USING (owner_id = auth.uid());
 
 -- ACTIVITY SESSIONS
+DROP POLICY IF EXISTS "sessions_couple_select" ON public.activity_sessions;
 CREATE POLICY "sessions_couple_select" ON public.activity_sessions
   FOR SELECT TO authenticated
-  USING (couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active'));
+  USING (couple_id = public.get_active_couple_id(auth.uid()));
 
+DROP POLICY IF EXISTS "sessions_couple_insert" ON public.activity_sessions;
 CREATE POLICY "sessions_couple_insert" ON public.activity_sessions
   FOR INSERT TO authenticated
   WITH CHECK (
     created_by = auth.uid() AND
-    couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active')
+    couple_id = public.get_active_couple_id(auth.uid())
   );
 
+DROP POLICY IF EXISTS "sessions_couple_update" ON public.activity_sessions;
 CREATE POLICY "sessions_couple_update" ON public.activity_sessions
   FOR UPDATE TO authenticated
-  USING (couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active'));
+  USING (couple_id = public.get_active_couple_id(auth.uid()));
 
 -- SESSION EVENTS
+DROP POLICY IF EXISTS "events_couple_select" ON public.session_events;
 CREATE POLICY "events_couple_select" ON public.session_events
   FOR SELECT TO authenticated
-  USING (couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active'));
+  USING (couple_id = public.get_active_couple_id(auth.uid()));
 
+DROP POLICY IF EXISTS "events_couple_insert" ON public.session_events;
 CREATE POLICY "events_couple_insert" ON public.session_events
   FOR INSERT TO authenticated
   WITH CHECK (
     user_id = auth.uid() AND
-    couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active')
+    couple_id = public.get_active_couple_id(auth.uid())
   );
 
 -- LETTERS
+DROP POLICY IF EXISTS "letters_couple_select" ON public.letters;
 CREATE POLICY "letters_couple_select" ON public.letters
   FOR SELECT TO authenticated
   USING (
     deleted_at IS NULL AND
-    couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active')
+    couple_id = public.get_active_couple_id(auth.uid())
   );
 
+DROP POLICY IF EXISTS "letters_couple_insert" ON public.letters;
 CREATE POLICY "letters_couple_insert" ON public.letters
   FOR INSERT TO authenticated
   WITH CHECK (
     sender_id = auth.uid() AND
-    couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active')
+    couple_id = public.get_active_couple_id(auth.uid())
   );
 
+DROP POLICY IF EXISTS "letters_couple_update" ON public.letters;
 CREATE POLICY "letters_couple_update" ON public.letters
   FOR UPDATE TO authenticated
-  USING (couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active'));
+  USING (couple_id = public.get_active_couple_id(auth.uid()));
 
 -- MESSAGES
+DROP POLICY IF EXISTS "messages_couple_select" ON public.messages;
 CREATE POLICY "messages_couple_select" ON public.messages
   FOR SELECT TO authenticated
-  USING (couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active'));
+  USING (couple_id = public.get_active_couple_id(auth.uid()));
 
+DROP POLICY IF EXISTS "messages_couple_insert" ON public.messages;
 CREATE POLICY "messages_couple_insert" ON public.messages
   FOR INSERT TO authenticated
   WITH CHECK (
     sender_id = auth.uid() AND
-    couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active')
+    couple_id = public.get_active_couple_id(auth.uid())
   );
 
 -- MEMORIES
+DROP POLICY IF EXISTS "memories_couple_select" ON public.memories;
 CREATE POLICY "memories_couple_select" ON public.memories
   FOR SELECT TO authenticated
   USING (
     deleted_at IS NULL AND
-    couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active')
+    couple_id = public.get_active_couple_id(auth.uid())
   );
 
+DROP POLICY IF EXISTS "memories_couple_insert" ON public.memories;
 CREATE POLICY "memories_couple_insert" ON public.memories
   FOR INSERT TO authenticated
   WITH CHECK (
     created_by = auth.uid() AND
-    couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active')
+    couple_id = public.get_active_couple_id(auth.uid())
   );
 
+DROP POLICY IF EXISTS "memories_couple_update" ON public.memories;
 CREATE POLICY "memories_couple_update" ON public.memories
   FOR UPDATE TO authenticated
-  USING (couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active'));
+  USING (couple_id = public.get_active_couple_id(auth.uid()));
 
 -- BUCKET ITEMS
+DROP POLICY IF EXISTS "bucket_items_couple_select" ON public.bucket_items;
 CREATE POLICY "bucket_items_couple_select" ON public.bucket_items
   FOR SELECT TO authenticated
-  USING (couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active'));
+  USING (couple_id = public.get_active_couple_id(auth.uid()));
 
+DROP POLICY IF EXISTS "bucket_items_couple_insert" ON public.bucket_items;
 CREATE POLICY "bucket_items_couple_insert" ON public.bucket_items
   FOR INSERT TO authenticated
   WITH CHECK (
     created_by = auth.uid() AND
-    couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active')
+    couple_id = public.get_active_couple_id(auth.uid())
   );
 
+DROP POLICY IF EXISTS "bucket_items_couple_update" ON public.bucket_items;
 CREATE POLICY "bucket_items_couple_update" ON public.bucket_items
   FOR UPDATE TO authenticated
-  USING (couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active'));
+  USING (couple_id = public.get_active_couple_id(auth.uid()));
 
+DROP POLICY IF EXISTS "bucket_items_couple_delete" ON public.bucket_items;
 CREATE POLICY "bucket_items_couple_delete" ON public.bucket_items
   FOR DELETE TO authenticated
-  USING (couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active'));
+  USING (couple_id = public.get_active_couple_id(auth.uid()));
 
 -- IMPORTANT DATES
+DROP POLICY IF EXISTS "important_dates_couple_select" ON public.important_dates;
 CREATE POLICY "important_dates_couple_select" ON public.important_dates
   FOR SELECT TO authenticated
-  USING (couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active'));
+  USING (couple_id = public.get_active_couple_id(auth.uid()));
 
+DROP POLICY IF EXISTS "important_dates_couple_insert" ON public.important_dates;
 CREATE POLICY "important_dates_couple_insert" ON public.important_dates
   FOR INSERT TO authenticated
   WITH CHECK (
     created_by = auth.uid() AND
-    couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active')
+    couple_id = public.get_active_couple_id(auth.uid())
   );
 
+DROP POLICY IF EXISTS "important_dates_couple_update" ON public.important_dates;
 CREATE POLICY "important_dates_couple_update" ON public.important_dates
   FOR UPDATE TO authenticated
-  USING (couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active'));
+  USING (couple_id = public.get_active_couple_id(auth.uid()));
 
+DROP POLICY IF EXISTS "important_dates_couple_delete" ON public.important_dates;
 CREATE POLICY "important_dates_couple_delete" ON public.important_dates
   FOR DELETE TO authenticated
-  USING (couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active'));
+  USING (couple_id = public.get_active_couple_id(auth.uid()));
 
 -- NOTIFICATIONS
+DROP POLICY IF EXISTS "notifications_recipient_select" ON public.notifications;
 CREATE POLICY "notifications_recipient_select" ON public.notifications
   FOR SELECT TO authenticated
   USING (recipient_id = auth.uid());
 
+DROP POLICY IF EXISTS "notifications_couple_insert" ON public.notifications;
 CREATE POLICY "notifications_couple_insert" ON public.notifications
   FOR INSERT TO authenticated
   WITH CHECK (
-    couple_id IN (SELECT couple_id FROM public.couple_members WHERE user_id = auth.uid() AND status = 'active')
+    couple_id = public.get_active_couple_id(auth.uid())
   );
 
+DROP POLICY IF EXISTS "notifications_recipient_update" ON public.notifications;
 CREATE POLICY "notifications_recipient_update" ON public.notifications
   FOR UPDATE TO authenticated
   USING (recipient_id = auth.uid());
 
 -- USER SETTINGS
+DROP POLICY IF EXISTS "user_settings_select_own" ON public.user_settings;
 CREATE POLICY "user_settings_select_own" ON public.user_settings
   FOR SELECT TO authenticated
   USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "user_settings_insert_own" ON public.user_settings;
 CREATE POLICY "user_settings_insert_own" ON public.user_settings
   FOR INSERT TO authenticated
   WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "user_settings_update_own" ON public.user_settings;
 CREATE POLICY "user_settings_update_own" ON public.user_settings
   FOR UPDATE TO authenticated
   USING (user_id = auth.uid());
@@ -1011,6 +1065,87 @@ BEGIN
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 2. STORAGE CONFIGURATION (couples-media bucket)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'couples-media',
+  'couples-media',
+  false,
+  10485760, -- 10MB limit
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'audio/m4a', 'audio/mp4', 'audio/mpeg', 'audio/aac', 'audio/wav']
+)
+ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "couples_media_select" ON storage.objects;
+CREATE POLICY "couples_media_select" ON storage.objects
+  FOR SELECT TO authenticated
+  USING (
+    bucket_id = 'couples-media' AND
+    (storage.foldername(name))[1] = (public.get_active_couple_id(auth.uid()))::text
+  );
+
+DROP POLICY IF EXISTS "couples_media_insert" ON storage.objects;
+CREATE POLICY "couples_media_insert" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'couples-media' AND
+    (storage.foldername(name))[1] = (public.get_active_couple_id(auth.uid()))::text
+  );
+
+DROP POLICY IF EXISTS "couples_media_delete" ON storage.objects;
+CREATE POLICY "couples_media_delete" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (
+    bucket_id = 'couples-media' AND
+    (storage.foldername(name))[1] = (public.get_active_couple_id(auth.uid()))::text
+  );
+
+-- 3. REALTIME PUBLICATIONS (for live sync of sessions, partner linking, letters)
+DO $
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.couple_members;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $;
+
+DO $
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.session_events;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $;
+
+DO $
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.activity_sessions;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $;
+
+DO $
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.letters;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $;
+
+DO $
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.memories;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $;
+
+DO $
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $;
+
+-- 4. FUNCTION PERMISSIONS & GRANTS
+GRANT EXECUTE ON FUNCTION public.get_active_couple_id(UUID) TO authenticated, service_role, anon;
+GRANT EXECUTE ON FUNCTION public.create_couple_with_invite(TEXT) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.accept_invitation(TEXT) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.unlink_couple() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.get_session_events_masked(UUID) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.open_letter(UUID) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.delete_user_account() TO authenticated, service_role;
 
 -- Seed: 25 Activities across all MVP categories and kinds (Section 6)
 
