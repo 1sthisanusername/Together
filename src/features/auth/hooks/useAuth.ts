@@ -19,7 +19,7 @@ interface AuthState {
   setProfile: (profile: Profile | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  signUp: (data: SignUpInput) => Promise<{ error: Error | null }>;
+  signUp: (data: SignUpInput) => Promise<{ error: Error | null; session?: Session | null; needsEmailConfirmation?: boolean }>;
   signIn: (data: LoginInput) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -66,6 +66,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signUp: async ({ email, password, displayName }: SignUpInput) => {
     set({ isLoading: true, error: null });
     try {
+      const redirectUrl = Linking.createURL('auth/callback');
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -73,26 +74,49 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           data: {
             display_name: displayName,
           },
+          emailRedirectTo: redirectUrl,
         },
       });
 
       if (error) {
         set({ isLoading: false, error: error.message });
-        return { error };
+        return { error, session: null, needsEmailConfirmation: false };
+      }
+
+      let activeSession = data.session;
+
+      // Try automatic immediate login if session was null (works when confirm email is disabled)
+      if (!activeSession) {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (!signInError && signInData.session) {
+          activeSession = signInData.session;
+        }
       }
 
       if (data.user) {
         analytics.track('account_created');
         analytics.identify(data.user.id, { email });
-        await get().fetchProfile(data.user.id);
+        if (activeSession) {
+          await get().fetchProfile(data.user.id);
+        }
       }
 
-      set({ session: data.session, user: data.user, isLoading: false });
-      return { error: null };
+      const needsEmailConfirmation = !activeSession;
+
+      set({
+        session: activeSession,
+        user: activeSession?.user ?? data.user ?? null,
+        isLoading: false,
+      });
+
+      return { error: null, session: activeSession, needsEmailConfirmation };
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Signup failed');
       set({ isLoading: false, error: error.message });
-      return { error };
+      return { error, session: null, needsEmailConfirmation: false };
     }
   },
 

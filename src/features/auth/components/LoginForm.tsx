@@ -36,7 +36,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const onSubmit = async (data: LoginInput) => {
     setError(null);
     const result = await signIn(data);
-    if (!result.error) {
+    if (!result.error && useAuthStore.getState().session) {
       onSuccess?.();
     }
   };
@@ -44,7 +44,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const handleGoogleSignIn = async () => {
     setError(null);
     const result = await signInWithGoogle();
-    if (!result.error) {
+    if (!result.error && useAuthStore.getState().session) {
       onSuccess?.();
     }
   };

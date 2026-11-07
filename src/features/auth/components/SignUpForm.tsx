@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { Button, Input, ErrorState } from '@/shared/ui';
+import { Button, Input, ErrorState, Card } from '@/shared/ui';
+import { theme } from '@/shared/theme';
 import { signUpSchema, type SignUpInput } from '../schemas';
 import { useAuthStore } from '../hooks/useAuth';
 
@@ -18,6 +19,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
 }) => {
   const { t } = useTranslation();
   const { signUp, signInWithGoogle, isLoading, error, setError } = useAuthStore();
+  const [emailSent, setEmailSent] = useState(false);
 
   const {
     control,
@@ -36,17 +38,47 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     setError(null);
     const result = await signUp(data);
     if (!result.error) {
-      onSuccess?.();
+      if (result.needsEmailConfirmation) {
+        setEmailSent(true);
+      } else if (result.session || useAuthStore.getState().session) {
+        onSuccess?.();
+      }
     }
   };
 
   const handleGoogleSignIn = async () => {
     setError(null);
     const result = await signInWithGoogle();
-    if (!result.error) {
+    if (!result.error && useAuthStore.getState().session) {
       onSuccess?.();
     }
   };
+
+  if (emailSent) {
+    return (
+      <Card style={styles.confirmCard}>
+        <View style={styles.iconCircle}>
+          <Text style={styles.envelopeIcon}>✉️</Text>
+        </View>
+        <Text style={styles.confirmTitle}>{t('auth.checkEmailTitle')}</Text>
+        <Text style={styles.confirmMessage}>{t('auth.checkEmailMessage')}</Text>
+        <Button
+          title={t('auth.login')}
+          variant="primary"
+          size="lg"
+          onPress={() => onNavigateToLogin?.()}
+          style={styles.confirmLoginButton}
+        />
+        <Button
+          title={t('common.back')}
+          variant="ghost"
+          size="sm"
+          onPress={() => setEmailSent(false)}
+          style={{ marginTop: 8 }}
+        />
+      </Card>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -179,6 +211,43 @@ const styles = StyleSheet.create({
   },
   switchButton: {
     marginTop: 8,
+  },
+  confirmCard: {
+    padding: 24,
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.borderLight,
+    marginTop: 12,
+  },
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: theme.colors.surfaceSubtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  envelopeIcon: {
+    fontSize: 32,
+  },
+  confirmTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: theme.colors.text,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  confirmMessage: {
+    fontSize: 15,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 20,
+    paddingHorizontal: 8,
+  },
+  confirmLoginButton: {
+    width: '100%',
   },
 });
 

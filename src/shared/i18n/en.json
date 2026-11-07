@@ -43,6 +43,8 @@
     "resetLinkSent": "Password reset email sent! Check your inbox.",
     "alreadyHaveAccount": "Already have an account? Log In",
     "needAccount": "Don't have an account? Sign Up",
+    "checkEmailTitle": "Check Your Email",
+    "checkEmailMessage": "We sent a confirmation link to your inbox. Tap the link on this phone to confirm your account, then log in.",
     "signOut": "Sign Out",
     "errors": {
       "invalidEmail": "Please enter a valid email address",

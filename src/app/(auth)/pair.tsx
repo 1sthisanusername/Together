@@ -17,12 +17,18 @@ import { theme } from '@/shared/theme';
 export default function PairScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { signOut } = useAuthStore();
+  const { session, user, isInitialized, signOut } = useAuthStore();
   const { data: coupleData, isLoading, error, refetch } = useActiveCouple();
   const [tab, setTab] = useState<'create' | 'join'>('create');
   const [showUnlinkModal, setShowUnlinkModal] = useState(false);
 
-  if (isLoading) {
+  React.useEffect(() => {
+    if (isInitialized && (!session || !user)) {
+      router.replace('/(auth)/login');
+    }
+  }, [isInitialized, session, user, router]);
+
+  if (!isInitialized || !session || !user || isLoading) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <LoadingState message={t('common.loading')} />

@@ -131,6 +131,9 @@ export const useCreateCouple = () => {
 
   return useMutation({
     mutationFn: async (coupleName?: string) => {
+      if (!user) {
+        throw new Error('You must be logged in to create a couple space.');
+      }
       const { data, error } = await supabase.rpc('create_couple_with_invite', {
         p_couple_name: coupleName || null,
       });
@@ -159,6 +162,9 @@ export const useAcceptInvite = () => {
 
   return useMutation({
     mutationFn: async (inviteCode: string) => {
+      if (!user) {
+        throw new Error('You must be logged in to join a couple space.');
+      }
       const { data, error } = await supabase.rpc('accept_invitation', {
         p_invite_code: inviteCode.trim().toUpperCase(),
       });
