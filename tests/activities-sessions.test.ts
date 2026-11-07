@@ -138,6 +138,16 @@ describe('MVP Database Schema & Migration Integrity', () => {
     expect(sql).toContain('CREATE OR REPLACE FUNCTION public.open_letter');
     expect(sql).toContain('Letter is locked until');
   });
+
+  it('contains account deletion flow meeting GDPR privacy requirements', () => {
+    const deletionPath = path.resolve(
+      __dirname,
+      '../supabase/migrations/20261107000002_account_deletion_and_storage.sql'
+    );
+    const deletionSql = fs.readFileSync(deletionPath, 'utf-8');
+    expect(deletionSql).toContain('CREATE OR REPLACE FUNCTION public.delete_user_account');
+    expect(deletionSql).toContain('DELETE FROM public.profiles WHERE id = v_user_id');
+  });
 });
 
 describe('Seed Activities Integrity', () => {
