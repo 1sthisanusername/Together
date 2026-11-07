@@ -4,3 +4,4 @@ export default {
   createURL,
   parse,
 };
+
