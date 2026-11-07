@@ -7,7 +7,10 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://aeeiqxvcubihluurnhyq.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_r0gufJHVGja-xxS2IaoP7g_tfPWtN9S",
+        "EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_r0gufJHVGja-xxS2IaoP7g_tfPWtN9S"
       }
     },
     "preview": {
@@ -16,7 +19,10 @@
         "buildType": "apk"
       },
       "env": {
-        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://aeeiqxvcubihluurnhyq.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_r0gufJHVGja-xxS2IaoP7g_tfPWtN9S",
+        "EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_r0gufJHVGja-xxS2IaoP7g_tfPWtN9S"
       }
     },
     "production": {
@@ -24,7 +30,10 @@
         "buildType": "apk"
       },
       "env": {
-        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://aeeiqxvcubihluurnhyq.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_r0gufJHVGja-xxS2IaoP7g_tfPWtN9S",
+        "EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_r0gufJHVGja-xxS2IaoP7g_tfPWtN9S"
       }
     }
   },
