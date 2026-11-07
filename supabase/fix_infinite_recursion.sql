@@ -259,3 +259,4 @@ CREATE POLICY "notifications_couple_insert" ON public.notifications
   WITH CHECK (
     couple_id = public.get_active_couple_id(auth.uid())
   );
+
