@@ -1,6 +1,8 @@
 node_modules/
 .expo/
 dist/
+android/
+ios/
 npm-debug.*
 *.jks
 *.p8
@@ -20,4 +22,3 @@ web-build/
 
 # Temporary files
 ARCHITECTURE_DOC_EXTRACTED.txt
-
