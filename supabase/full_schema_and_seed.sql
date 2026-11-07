@@ -124,11 +124,15 @@ CREATE TRIGGER tr_feature_flags_updated_at BEFORE UPDATE ON public.feature_flags
 CREATE TRIGGER tr_entitlements_updated_at BEFORE UPDATE ON public.entitlements FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- 6. SECURITY DEFINER HELPER: get active couple_id for a user
-CREATE OR REPLACE FUNCTION public.get_active_couple_id(p_user_id UUID)
+CREATE OR REPLACE FUNCTION public.get_active_couple_id(p_user_id UUID DEFAULT auth.uid())
 RETURNS UUID AS $$
 DECLARE
   v_couple_id UUID;
 BEGIN
+  IF p_user_id IS NULL THEN
+    RETURN NULL;
+  END IF;
+
   SELECT couple_id INTO v_couple_id
   FROM public.couple_members
   WHERE user_id = p_user_id AND status = 'active'
@@ -136,7 +140,7 @@ BEGIN
 
   RETURN v_couple_id;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
 
 -- 7. TRIGGER: automatically create profile on auth.users signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -178,12 +182,10 @@ CREATE POLICY "profiles_select_own_or_partner" ON public.profiles
   USING (
     id = auth.uid() OR
     id IN (
-      SELECT cm2.user_id
-      FROM public.couple_members cm1
-      JOIN public.couple_members cm2 ON cm1.couple_id = cm2.couple_id
-      WHERE cm1.user_id = auth.uid()
-        AND cm1.status = 'active'
-        AND cm2.status = 'active'
+      SELECT cm.user_id
+      FROM public.couple_members cm
+      WHERE cm.couple_id = public.get_active_couple_id(auth.uid())
+        AND cm.status = 'active'
     )
   );
 
@@ -201,10 +203,7 @@ CREATE POLICY "profiles_update_own" ON public.profiles
 CREATE POLICY "couples_select_active_member" ON public.couples
   FOR SELECT TO authenticated
   USING (
-    id IN (
-      SELECT couple_id FROM public.couple_members 
-      WHERE user_id = auth.uid() AND status = 'active'
-    )
+    id = public.get_active_couple_id(auth.uid())
   );
 
 CREATE POLICY "couples_insert_authenticated" ON public.couples
@@ -214,10 +213,7 @@ CREATE POLICY "couples_insert_authenticated" ON public.couples
 CREATE POLICY "couples_update_active_member" ON public.couples
   FOR UPDATE TO authenticated
   USING (
-    id IN (
-      SELECT couple_id FROM public.couple_members 
-      WHERE user_id = auth.uid() AND status = 'active'
-    )
+    id = public.get_active_couple_id(auth.uid())
   );
 
 -- COUPLE MEMBERS Policies
@@ -225,10 +221,7 @@ CREATE POLICY "couple_members_select_active_member_or_self" ON public.couple_mem
   FOR SELECT TO authenticated
   USING (
     user_id = auth.uid() OR
-    couple_id IN (
-      SELECT couple_id FROM public.couple_members
-      WHERE user_id = auth.uid() AND status = 'active'
-    )
+    couple_id = public.get_active_couple_id(auth.uid())
   );
 
 CREATE POLICY "couple_members_insert_self" ON public.couple_members
@@ -244,20 +237,14 @@ CREATE POLICY "couple_members_update_self" ON public.couple_members
 CREATE POLICY "invitations_select_active_couple_member" ON public.invitations
   FOR SELECT TO authenticated
   USING (
-    couple_id IN (
-      SELECT couple_id FROM public.couple_members
-      WHERE user_id = auth.uid() AND status = 'active'
-    )
+    couple_id = public.get_active_couple_id(auth.uid())
   );
 
 CREATE POLICY "invitations_insert_active_couple_member" ON public.invitations
   FOR INSERT TO authenticated
   WITH CHECK (
     inviter_id = auth.uid() AND
-    couple_id IN (
-      SELECT couple_id FROM public.couple_members
-      WHERE user_id = auth.uid() AND status = 'active'
-    )
+    couple_id = public.get_active_couple_id(auth.uid())
   );
 
 CREATE POLICY "invitations_update_inviter" ON public.invitations
