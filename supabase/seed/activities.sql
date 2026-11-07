@@ -91,7 +91,7 @@ INSERT INTO public.activities (slug, title, description, kind, category, mode, d
 -- Quizzes (Play & Deep Talk)
 ('quiz-love-languages', 'The 5 Love Languages Quiz', 'Understand each other''s primary and secondary ways of giving and receiving love.', 'quiz', 'deep_talk', 'both', 15, 'heart', '{
   "rounds": [
-    {"id": 1, "question": "Which of these makes you feel most cherished?", "options": ["Hearing sincere verbal compliments and 'I love you'", "Receiving a thoughtful surprise gift", "Spending uninterrupted focused time together", "Having your partner help lighten your daily load", "Physical touch like a warm long hug"]},
+    {"id": 1, "question": "Which of these makes you feel most cherished?", "options": ["Hearing sincere verbal compliments and ''I love you''", "Receiving a thoughtful surprise gift", "Spending uninterrupted focused time together", "Having your partner help lighten your daily load", "Physical touch like a warm long hug"]},
     {"id": 2, "question": "When we are apart long-distance, what matters most to your heart?", "options": ["Surprise handwritten letters or voice notes", "Consistent scheduled quality call dates", "Cheering each other up through tough tasks", "Small care packages in the mail", "Reminding each other of our future together"]},
     {"id": 3, "question": "How do you most naturally show love when you care deeply?", "options": ["Words of encouragement", "Giving gifts & surprises", "Planning special experiences", "Doing thoughtful acts of service", "Affection and closeness"]}
   ]
