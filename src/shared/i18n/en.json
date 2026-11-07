@@ -28,6 +28,8 @@
     "welcomeSubtitle": "A private space for the two of you",
     "login": "Log In",
     "signUp": "Create Account",
+    "continueWithGoogle": "Continue with Google",
+    "orDivider": "OR",
     "emailLabel": "Email",
     "emailPlaceholder": "you@example.com",
     "passwordLabel": "Password",

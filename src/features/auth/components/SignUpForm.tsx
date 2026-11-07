@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +17,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   onNavigateToLogin,
 }) => {
   const { t } = useTranslation();
-  const { signUp, isLoading, error, setError } = useAuthStore();
+  const { signUp, signInWithGoogle, isLoading, error, setError } = useAuthStore();
 
   const {
     control,
@@ -40,6 +40,14 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    const result = await signInWithGoogle();
+    if (!result.error) {
+      onSuccess?.();
+    }
+  };
+
   return (
     <View style={styles.container}>
       {error ? (
@@ -50,6 +58,21 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
           retryTitle={t('common.retry')}
         />
       ) : null}
+
+      <Button
+        title={t('auth.continueWithGoogle')}
+        variant="outline"
+        size="lg"
+        loading={isLoading}
+        onPress={handleGoogleSignIn}
+        style={styles.googleButton}
+      />
+
+      <View style={styles.dividerRow}>
+        <View style={styles.dividerLine} />
+        <Text style={styles.dividerText}>{t('auth.orDivider')}</Text>
+        <View style={styles.dividerLine} />
+      </View>
 
       <Controller
         control={control}
@@ -130,6 +153,25 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     paddingVertical: 12,
+  },
+  googleButton: {
+    marginBottom: 16,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E2E8F0',
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#94A3B8',
   },
   submitButton: {
     marginTop: 12,

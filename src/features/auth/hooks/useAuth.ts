@@ -1,8 +1,12 @@
 import { create } from 'zustand';
 import type { Session, User } from '@supabase/supabase-js';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 import { supabase, analytics } from '@/services';
 import type { Profile } from '@/shared/types';
 import type { SignUpInput, LoginInput, ResetPasswordInput } from '../schemas';
+
+WebBrowser.maybeCompleteAuthSession();
 
 interface AuthState {
   session: Session | null;
@@ -17,6 +21,7 @@ interface AuthState {
   setError: (error: string | null) => void;
   signUp: (data: SignUpInput) => Promise<{ error: Error | null }>;
   signIn: (data: LoginInput) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (data: ResetPasswordInput) => Promise<{ error: Error | null }>;
   fetchProfile: (userId: string) => Promise<Profile | null>;
@@ -113,6 +118,85 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return { error: null };
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Login failed');
+      set({ isLoading: false, error: error.message });
+      return { error };
+    }
+  },
+
+  signInWithGoogle: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const redirectUrl = Linking.createURL('auth/callback');
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) {
+        set({ isLoading: false, error: error.message });
+        return { error };
+      }
+
+      if (!data?.url) {
+        const err = new Error('No OAuth URL returned');
+        set({ isLoading: false, error: err.message });
+        return { error: err };
+      }
+
+      const res = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+
+      if (res.type === 'success' && res.url) {
+        const parsed = Linking.parse(res.url);
+        const queryParams = parsed.queryParams;
+
+        if (queryParams?.code) {
+          const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(
+            String(queryParams.code)
+          );
+          if (sessionError) {
+            set({ isLoading: false, error: sessionError.message });
+            return { error: sessionError };
+          }
+          if (sessionData.user) {
+            analytics.identify(sessionData.user.id, { email: sessionData.user.email ?? null });
+            await get().fetchProfile(sessionData.user.id);
+          }
+          set({ session: sessionData.session, user: sessionData.user, isLoading: false });
+          return { error: null };
+        }
+
+        if (res.url.includes('#')) {
+          const hash = res.url.split('#')[1];
+          const params = new URLSearchParams(hash);
+          const accessToken = params.get('access_token');
+          const refreshToken = params.get('refresh_token');
+
+          if (accessToken && refreshToken) {
+            const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            if (sessionError) {
+              set({ isLoading: false, error: sessionError.message });
+              return { error: sessionError };
+            }
+            if (sessionData.user) {
+              analytics.identify(sessionData.user.id, { email: sessionData.user.email ?? null });
+              await get().fetchProfile(sessionData.user.id);
+            }
+            set({ session: sessionData.session, user: sessionData.user, isLoading: false });
+            return { error: null };
+          }
+        }
+      }
+
+      set({ isLoading: false });
+      return { error: null };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Google sign-in failed');
       set({ isLoading: false, error: error.message });
       return { error };
     }

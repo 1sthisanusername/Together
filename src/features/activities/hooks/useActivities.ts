@@ -4,6 +4,8 @@ import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
 import type { Activity, ActivitySession } from '@/shared/types';
 
+import { FALLBACK_ACTIVITIES } from '../fallbackActivities';
+
 export function useActivities(category?: string) {
   return useQuery<Activity[]>({
     queryKey: ['activities', category],
@@ -15,10 +17,23 @@ export function useActivities(category?: string) {
       }
 
       const { data, error } = await query;
-      if (error) throw new Error(error.message);
-      return data ?? [];
+      if (error) {
+        // Fallback on offline or unseeded database
+        return filterFallback(category);
+      }
+      if (!data || data.length === 0) {
+        return filterFallback(category);
+      }
+      return data;
     },
   });
+}
+
+function filterFallback(category?: string): Activity[] {
+  if (!category || category === 'all') {
+    return FALLBACK_ACTIVITIES;
+  }
+  return FALLBACK_ACTIVITIES.filter((a) => a.category === category);
 }
 
 export function useStartActivity() {
