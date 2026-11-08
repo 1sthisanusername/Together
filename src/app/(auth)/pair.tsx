@@ -56,8 +56,14 @@ export default function PairScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Card style={styles.connectedCard}>
             <Text style={styles.connectedBadge}>✓ {t('couple.linkedSuccessTitle')}</Text>
-            <Avatar name={coupleData.partner.display_name} url={coupleData.partner.avatar_url} size={72} />
-            <Text style={styles.partnerName}>{coupleData.partner.display_name}</Text>
+            <Avatar
+              name={coupleData.partner.display_name || 'Partner'}
+              url={coupleData.partner.avatar_url}
+              size={72}
+            />
+            <Text style={styles.partnerName}>
+              {coupleData.partner.display_name || 'Partner'}
+            </Text>
             <Text style={styles.connectedSubtitle}>{t('couple.linkedSuccessSubtitle')}</Text>
 
             <Button

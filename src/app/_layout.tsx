@@ -1,11 +1,13 @@
 import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import '@/shared/i18n';
 import { useAuthStore } from '@/features/auth';
 import { supabase } from '@/services';
+import { theme } from '@/shared/theme';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,6 +17,20 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
+  return (
+    <SafeAreaView style={styles.errorContainer}>
+      <Text style={styles.errorTitle}>Something went wrong</Text>
+      <Text style={styles.errorMessage}>
+        {error?.message || 'An unexpected error occurred. Please try again.'}
+      </Text>
+      <TouchableOpacity style={styles.errorRetryBtn} onPress={retry}>
+        <Text style={styles.errorRetryText}>Try Again</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  );
+}
 
 export default function RootLayout() {
   const router = useRouter();
@@ -83,3 +99,38 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  errorContainer: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+  },
+  errorTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: theme.colors.text,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  errorRetryBtn: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 14,
+  },
+  errorRetryText: {
+    color: theme.colors.textInverse,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+});

@@ -232,3 +232,4 @@ fullSchema = fullSchema.replace(oldCreateCouple.replace(/\r\n/g, '\n'), newCreat
 fullSchema = fullSchema.replace(oldAcceptInvite.replace(/\r\n/g, '\n'), newAcceptInvite);
 fs.writeFileSync(fullSchemaPath, fullSchema, 'utf8');
 console.log('✓ Updated full_schema_and_seed.sql with profile backfill and self-healing couple RPCs');
+

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Keyboard, Platform } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +28,7 @@ export const JoinCoupleCard: React.FC<JoinCoupleCardProps> = ({ onSuccess }) => 
   });
 
   const onSubmit = async (data: AcceptInviteInput) => {
+    Keyboard.dismiss();
     try {
       await acceptInvite(data.inviteCode);
       onSuccess?.();
@@ -60,6 +61,8 @@ export const JoinCoupleCard: React.FC<JoinCoupleCardProps> = ({ onSuccess }) => 
             autoCapitalize="characters"
             autoCorrect={false}
             maxLength={6}
+            returnKeyType="done"
+            onSubmitEditing={() => handleSubmit(onSubmit)()}
             onBlur={onBlur}
             onChangeText={(text) => onChange(text.toUpperCase())}
             value={value}
@@ -104,7 +107,7 @@ const styles = StyleSheet.create({
   codeInput: {
     fontSize: 22,
     fontWeight: '800',
-    letterSpacing: 4,
+    letterSpacing: Platform.OS === 'ios' ? 4 : 0,
     textAlign: 'center',
     color: theme.colors.text, // #42362e
   },

@@ -636,3 +636,4 @@ GRANT EXECUTE ON FUNCTION public.unlink_couple() TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.get_session_events_masked(UUID) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.open_letter(UUID) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.delete_user_account() TO authenticated, service_role;
+

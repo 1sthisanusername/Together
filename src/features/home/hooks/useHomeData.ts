@@ -85,8 +85,10 @@ export function useHomeData() {
       let daysToNextMeeting: number | null = null;
       if (nextMeeting?.event_date) {
         const target = new Date(nextMeeting.event_date);
-        const diffMs = target.getTime() - currentDate.getTime();
-        daysToNextMeeting = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        if (!isNaN(target.getTime())) {
+          const diffMs = target.getTime() - currentDate.getTime();
+          daysToNextMeeting = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        }
       }
 
       return {
