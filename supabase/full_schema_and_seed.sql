@@ -323,6 +323,23 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
+  -- Ensure caller profile exists in public.profiles (self-healing for foreign key constraint)
+  INSERT INTO public.profiles (id, email, display_name, timezone, locale)
+  SELECT 
+    v_user_id,
+    u.email,
+    COALESCE(
+      u.raw_user_meta_data->>'display_name',
+      u.raw_user_meta_data->>'full_name',
+      u.raw_user_meta_data->>'name',
+      split_part(COALESCE(u.email, 'User'), '@', 1)
+    ),
+    COALESCE(u.raw_user_meta_data->>'timezone', 'UTC'),
+    COALESCE(u.raw_user_meta_data->>'locale', 'en')
+  FROM auth.users u
+  WHERE u.id = v_user_id
+  ON CONFLICT (id) DO NOTHING;
+
   -- 1. Create couple
   INSERT INTO public.couples (name)
   VALUES (p_couple_name)
@@ -417,6 +434,23 @@ BEGIN
     RAISE EXCEPTION 'This couple already has the maximum of 2 partners'
       USING ERRCODE = 'check_violation';
   END IF;
+
+  -- Ensure partner profile exists in public.profiles (self-healing for foreign key constraint)
+  INSERT INTO public.profiles (id, email, display_name, timezone, locale)
+  SELECT 
+    v_user_id,
+    u.email,
+    COALESCE(
+      u.raw_user_meta_data->>'display_name',
+      u.raw_user_meta_data->>'full_name',
+      u.raw_user_meta_data->>'name',
+      split_part(COALESCE(u.email, 'User'), '@', 1)
+    ),
+    COALESCE(u.raw_user_meta_data->>'timezone', 'UTC'),
+    COALESCE(u.raw_user_meta_data->>'locale', 'en')
+  FROM auth.users u
+  WHERE u.id = v_user_id
+  ON CONFLICT (id) DO NOTHING;
 
   -- Add partner
   INSERT INTO public.couple_members (couple_id, user_id, role, status)

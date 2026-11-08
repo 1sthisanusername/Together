@@ -49,14 +49,43 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        console.warn('Error fetching profile:', error.message);
-        return null;
+      if (data) {
+        set({ profile: data });
+        return data;
       }
-      set({ profile: data });
-      return data;
+
+      // Self-heal: If profile row is missing, auto-create it from the authenticated session user
+      const currentUser = get().user;
+      const displayName =
+        currentUser?.user_metadata?.display_name ||
+        currentUser?.user_metadata?.full_name ||
+        currentUser?.user_metadata?.name ||
+        currentUser?.email?.split('@')[0] ||
+        'User';
+
+      const { data: createdProfile, error: upsertError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          email: currentUser?.email,
+          display_name: displayName,
+          timezone: 'UTC',
+          locale: 'en',
+        })
+        .select()
+        .maybeSingle();
+
+      if (createdProfile) {
+        set({ profile: createdProfile });
+        return createdProfile;
+      }
+
+      if (upsertError) {
+        console.warn('Error self-healing profile:', upsertError.message);
+      }
+      return null;
     } catch (err) {
       console.warn('Unexpected error fetching profile:', err);
       return null;
