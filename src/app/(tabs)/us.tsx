@@ -8,6 +8,7 @@ import {
   NextReunionCountdownCard,
   BucketListCard,
   ImportantDatesList,
+  CoupleProfileCard,
 } from '@/features/us';
 import { useHomeData } from '@/features/home';
 import { LoadingState, ErrorState } from '@/shared/ui';
@@ -47,6 +48,9 @@ export default function UsScreen() {
           contentContainerStyle={styles.scrollContent}
           refreshControl={<RefreshControl refreshing={false} onRefresh={handleRefresh} />}
         >
+          {/* Couple Profile Card */}
+          <CoupleProfileCard />
+
           {/* Next Reunion Countdown */}
           <NextReunionCountdownCard
             nextMeeting={homeData?.nextMeeting ?? null}

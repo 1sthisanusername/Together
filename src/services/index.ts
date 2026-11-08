@@ -4,4 +4,4 @@ export type { AnalyticsEvent } from './analytics';
 export { push } from './push';
 export { storage } from './storage';
 export type { UploadOptions, StorageService } from './storage';
-export { queryClient, clearAppCache } from './queryClient';
+export { queryClient, clearAppCache, restorePersistedCache, persistQueryCache } from './queryClient';

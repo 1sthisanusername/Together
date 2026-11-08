@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { supabase, analytics } from '@/services';
+import { supabase, analytics, persistQueryCache } from '@/services';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
 import {
@@ -61,26 +61,26 @@ export function useHomeData() {
       const partnerTimeInfo = getTimeInZone(partnerZone, currentDate);
       const timeDiff = getTimeDifference(myZone, partnerZone, currentDate);
 
-      // Check for in-progress session
-      const { data: activeSession } = await supabase
-        .from('activity_sessions')
-        .select('*')
-        .eq('couple_id', coupleId)
-        .in('status', ['waiting', 'active'])
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      // Check for next reunion date
+      // Parallel fetch for active session and next reunion date (Promise.all)
       const todayStr = currentDate.toISOString().split('T')[0];
-      const { data: nextMeeting } = await supabase
-        .from('important_dates')
-        .select('*')
-        .eq('couple_id', coupleId)
-        .gte('event_date', todayStr)
-        .order('event_date', { ascending: true })
-        .limit(1)
-        .maybeSingle();
+      const [{ data: activeSession }, { data: nextMeeting }] = await Promise.all([
+        supabase
+          .from('activity_sessions')
+          .select('*')
+          .eq('couple_id', coupleId)
+          .in('status', ['waiting', 'active'])
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('important_dates')
+          .select('*')
+          .eq('couple_id', coupleId)
+          .gte('event_date', todayStr)
+          .order('event_date', { ascending: true })
+          .limit(1)
+          .maybeSingle(),
+      ]);
 
       let daysToNextMeeting: number | null = null;
       if (nextMeeting?.event_date) {
@@ -90,6 +90,9 @@ export function useHomeData() {
           daysToNextMeeting = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
         }
       }
+
+      // Persist cache snapshot for instant reopen
+      persistQueryCache().catch(() => {});
 
       return {
         daysTogether: getDaysTogether(coupleData.couple.start_date),

@@ -65,3 +65,47 @@ export function useCreateMemory() {
   });
 }
 
+export function useDeleteMemory() {
+  const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
+  const { data: coupleData } = useActiveCouple();
+
+  return useMutation({
+    mutationFn: async ({ memoryId, mediaId }: { memoryId: string; mediaId?: string | null }) => {
+      if (!user?.id || !coupleData?.couple?.id) throw new Error('Not authenticated');
+
+      // 1. Soft-delete the memory
+      const { error: memError } = await supabase
+        .from('memories')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', memoryId)
+        .eq('couple_id', coupleData.couple.id);
+
+      if (memError) throw new Error(memError.message);
+
+      // 2. If memory had a media attachment, clean it up from storage
+      if (mediaId) {
+        const { data: mediaFile } = await supabase
+          .from('media_files')
+          .select('bucket_path')
+          .eq('id', mediaId)
+          .maybeSingle();
+
+        if (mediaFile?.bucket_path) {
+          await supabase.storage.from('couples-media').remove([mediaFile.bucket_path]);
+          await supabase
+            .from('media_files')
+            .delete()
+            .eq('id', mediaId);
+        }
+      }
+
+      analytics.track('memory_deleted');
+      return { memoryId };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['memories'] });
+    },
+  });
+}
+

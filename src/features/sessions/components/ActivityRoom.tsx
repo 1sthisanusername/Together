@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSession } from '../hooks/useSession';
 import { getActivityRenderer } from '@/features/activities/registry';
 import { LoadingState, ErrorState } from '@/shared/ui';
+import { theme } from '@/shared/theme';
 
 export interface ActivityRoomProps {
   sessionId: string;
@@ -19,6 +20,26 @@ export const ActivityRoom: React.FC<ActivityRoomProps> = ({
 }) => {
   const { t } = useTranslation();
   const { data: sessionData, isLoading, error, refetch } = useSession(sessionId);
+
+  // Find latest round_advanced event to display synchronised banner
+  const latestAdvanceEvent = useMemo(() => {
+    if (!sessionData?.events) return null;
+    return [...sessionData.events]
+      .reverse()
+      .find((e) => e.type === 'round_advanced');
+  }, [sessionData?.events]);
+
+  const advanceBannerText = useMemo(() => {
+    if (!latestAdvanceEvent || !sessionData?.session) return null;
+    const payload = latestAdvanceEvent.payload as any;
+    if (payload?.to_round === sessionData.session.current_round) {
+      const moverName =
+        payload?.by_name ||
+        (latestAdvanceEvent.user_id === sessionData.myUserId ? 'You' : partnerName);
+      return `${moverName} moved to round ${payload?.to_round}`;
+    }
+    return null;
+  }, [latestAdvanceEvent, sessionData?.session?.current_round, sessionData?.myUserId, partnerName]);
 
   if (isLoading) {
     return (
@@ -57,6 +78,14 @@ export const ActivityRoom: React.FC<ActivityRoomProps> = ({
         </View>
       </View>
 
+      {/* Synchronized Server Round Banner */}
+      {advanceBannerText ? (
+        <View style={styles.advanceBanner}>
+          <Text style={styles.advanceBannerIcon}>🔔</Text>
+          <Text style={styles.advanceBannerText}>{advanceBannerText}</Text>
+        </View>
+      ) : null}
+
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <Component
           data={sessionData}
@@ -71,17 +100,17 @@ export const ActivityRoom: React.FC<ActivityRoomProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    paddingVertical: 14,
+    backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.colors.borderLight,
   },
   exitBtn: {
     paddingVertical: 6,
@@ -90,12 +119,12 @@ const styles = StyleSheet.create({
   exitText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#64748B',
+    color: theme.colors.textSecondary,
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text,
     flex: 1,
     textAlign: 'center',
     marginHorizontal: 8,
@@ -104,8 +133,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   liveDot: {
-    color: '#10B981',
+    color: theme.colors.success || '#10B981',
     fontSize: 18,
+  },
+  advanceBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FAF5F2',
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.borderLight,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  advanceBannerIcon: {
+    fontSize: 14,
+  },
+  advanceBannerText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: theme.colors.primary,
   },
   scrollContent: {
     flexGrow: 1,

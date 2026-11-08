@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Card, Button } from '@/shared/ui';
 import type { SessionData } from '../hooks/useSession';
-import { useSubmitEvent, useCompleteSession, useSaveSessionAsMemory } from '../hooks/useSession';
+import {
+  useSubmitEvent,
+  useCompleteSession,
+  useSaveSessionAsMemory,
+  useAdvanceRound,
+} from '../hooks/useSession';
 import { theme } from '@/shared/theme';
 
 export interface WouldYouRatherProps {
@@ -24,10 +29,13 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
   };
 
   const rounds = config?.rounds || [];
-  const [currentRoundIdx, setCurrentRoundIdx] = useState(0);
+  // Server-authoritative round index (never kept on client)
+  const serverRound = session.current_round || 1;
+  const currentRoundIdx = Math.min(Math.max(0, rounds.length - 1), Math.max(0, serverRound - 1));
   const currentRound = rounds[currentRoundIdx] || rounds[0];
 
   const { mutate: submitEvent, isPending: isSubmitting } = useSubmitEvent(session.id);
+  const { mutate: advanceRound, isPending: isAdvancing } = useAdvanceRound(session.id);
   const { mutate: completeSession, isPending: isCompleting } = useCompleteSession(session.id);
   const { mutate: saveMemory, isSuccess: isMemorySaved } = useSaveSessionAsMemory();
 
@@ -63,7 +71,7 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
     if (isLastRound) {
       completeSession(activity.id);
     } else {
-      setCurrentRoundIdx((prev) => prev + 1);
+      advanceRound({ expectedRound: serverRound });
     }
   };
 

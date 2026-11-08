@@ -47,6 +47,7 @@ export type Database = {
           id: string;
           name: string | null;
           start_date: string | null;
+          status: 'active' | 'unlinked';
           created_at: string;
           updated_at: string;
         };
@@ -54,6 +55,7 @@ export type Database = {
           id?: string;
           name?: string | null;
           start_date?: string | null;
+          status?: 'active' | 'unlinked';
           created_at?: string;
           updated_at?: string;
         };
@@ -61,6 +63,7 @@ export type Database = {
           id?: string;
           name?: string | null;
           start_date?: string | null;
+          status?: 'active' | 'unlinked';
           created_at?: string;
           updated_at?: string;
         };
@@ -190,6 +193,7 @@ export type Database = {
           activity_id: string;
           created_by: string;
           status: 'created' | 'waiting' | 'active' | 'paused' | 'completed' | 'cancelled';
+          current_round: number;
           started_at: string | null;
           completed_at: string | null;
           created_at: string;
@@ -201,6 +205,7 @@ export type Database = {
           activity_id: string;
           created_by: string;
           status?: 'created' | 'waiting' | 'active' | 'paused' | 'completed' | 'cancelled';
+          current_round?: number;
           started_at?: string | null;
           completed_at?: string | null;
           created_at?: string;
@@ -212,6 +217,7 @@ export type Database = {
           activity_id?: string;
           created_by?: string;
           status?: 'created' | 'waiting' | 'active' | 'paused' | 'completed' | 'cancelled';
+          current_round?: number;
           started_at?: string | null;
           completed_at?: string | null;
           created_at?: string;
@@ -306,6 +312,8 @@ export type Database = {
           content: string | null;
           media_id: string | null;
           played_at: string | null;
+          deleted_at: string | null;
+          idempotency_key: string | null;
           created_at: string;
         };
         Insert: {
@@ -316,6 +324,8 @@ export type Database = {
           content?: string | null;
           media_id?: string | null;
           played_at?: string | null;
+          deleted_at?: string | null;
+          idempotency_key?: string | null;
           created_at?: string;
         };
         Update: {
@@ -326,6 +336,8 @@ export type Database = {
           content?: string | null;
           media_id?: string | null;
           played_at?: string | null;
+          deleted_at?: string | null;
+          idempotency_key?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -618,6 +630,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      push_tokens: {
+        Row: {
+          user_id: string;
+          token: string;
+          platform: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          token: string;
+          platform: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          token?: string;
+          platform?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -681,6 +717,29 @@ export type Database = {
           letter_id: string;
           status: string;
           opened_at: string;
+        };
+      };
+      advance_round: {
+        Args: {
+          p_session_id: string;
+          p_expected_round: number;
+        };
+        Returns: {
+          session_id: string;
+          current_round: number;
+          advanced: boolean;
+          by_name?: string;
+          message?: string;
+        };
+      };
+      delete_message: {
+        Args: {
+          p_message_id: string;
+        };
+        Returns: {
+          message_id: string;
+          deleted: boolean;
+          media_bucket_path?: string | null;
         };
       };
     };

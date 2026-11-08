@@ -211,5 +211,15 @@
     "displayName": "Display Name",
     "timeZone": "Time Zone",
     "signOut": "Sign Out"
+  },
+  "chat": {
+    "title": "Messages",
+    "subtitle": "Private Couple Thread",
+    "placeholder": "Type a sweet message...",
+    "holdToRecord": "Hold to record voice note",
+    "recording": "Recording...",
+    "slideCancel": "← Slide left to cancel",
+    "emptyTitle": "Your Private Messages",
+    "emptySubtitle": "Send sweet notes and voice messages to {{name}}. No read receipts, no guilt."
   }
 }

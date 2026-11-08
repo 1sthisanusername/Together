@@ -8,6 +8,10 @@ export type AnalyticsEvent =
   | 'letter_opened'
   | 'date_completed'
   | 'memory_created'
+  | 'memory_deleted'
+  | 'message_sent'
+  | 'voice_note_sent'
+  | 'message_deleted'
   | 'couple_returned';
 
 export interface AnalyticsService {

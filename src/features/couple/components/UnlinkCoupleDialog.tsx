@@ -3,17 +3,20 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Sheet, Button, ErrorState } from '@/shared/ui';
 import { useUnlinkCouple } from '../hooks/useCouple';
+import { theme } from '@/shared/theme';
 
 export interface UnlinkCoupleDialogProps {
   visible: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  isCancel?: boolean;
 }
 
 export const UnlinkCoupleDialog: React.FC<UnlinkCoupleDialogProps> = ({
   visible,
   onClose,
   onSuccess,
+  isCancel = false,
 }) => {
   const { t } = useTranslation();
   const { mutateAsync: unlink, isPending, error, reset } = useUnlinkCouple();
@@ -28,10 +31,28 @@ export const UnlinkCoupleDialog: React.FC<UnlinkCoupleDialogProps> = ({
     }
   };
 
+  const title = isCancel ? 'Cancel Space' : t('couple.unlinkTitle');
+
   return (
-    <Sheet visible={visible} onClose={onClose} title={t('couple.unlinkTitle')}>
+    <Sheet visible={visible} onClose={onClose} title={title}>
       <View style={styles.container}>
-        <Text style={styles.message}>{t('couple.unlinkConfirm')}</Text>
+        <Text style={styles.warningHeading}>
+          {isCancel
+            ? 'Cancel this pending couple space?'
+            : 'What happens when you unlink:'}
+        </Text>
+
+        <View style={styles.bulletList}>
+          <Text style={styles.bulletItem}>
+            • Access to shared letters, chats, memories, and game sessions will end immediately for both partners.
+          </Text>
+          <Text style={styles.bulletItem}>
+            • Active invitation codes will be revoked at once.
+          </Text>
+          <Text style={styles.bulletItem}>
+            • You and your partner will both land on the setup screen where a new space can be created.
+          </Text>
+        </View>
 
         {error ? (
           <ErrorState
@@ -52,7 +73,7 @@ export const UnlinkCoupleDialog: React.FC<UnlinkCoupleDialogProps> = ({
             style={styles.button}
           />
           <Button
-            title={t('couple.unlinkTitle')}
+            title={isCancel ? 'Cancel Space' : t('couple.unlinkTitle')}
             variant="danger"
             size="md"
             loading={isPending}
@@ -69,11 +90,23 @@ const styles = StyleSheet.create({
   container: {
     paddingVertical: 8,
   },
-  message: {
-    fontSize: 15,
-    color: '#475569',
-    lineHeight: 22,
-    marginBottom: 24,
+  warningHeading: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: 12,
+  },
+  bulletList: {
+    backgroundColor: theme.colors.surfaceSubtle,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 20,
+    gap: 8,
+  },
+  bulletItem: {
+    fontSize: 14,
+    color: theme.colors.text,
+    lineHeight: 20,
   },
   actions: {
     flexDirection: 'row',
@@ -83,4 +116,3 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-

@@ -1,34 +1,29 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   useActiveCouple,
+  usePartnerUnlinkStore,
   CreateCoupleCard,
   InvitePartnerCard,
   JoinCoupleCard,
   UnlinkCoupleDialog,
 } from '@/features/couple';
-import { useAuthStore } from '@/features/auth';
+import { useAuthStore, OnboardingWalkthrough } from '@/features/auth';
 import { LoadingState, ErrorState, Avatar, Button, Card } from '@/shared/ui';
 import { theme } from '@/shared/theme';
 
 export default function PairScreen() {
-  const router = useRouter();
   const { t } = useTranslation();
-  const { session, user, isInitialized, signOut } = useAuthStore();
+  const { signOut } = useAuthStore();
   const { data: coupleData, isLoading, error, refetch } = useActiveCouple();
+  const { unlinkedMessage, clearUnlinkedMessage } = usePartnerUnlinkStore();
+
   const [tab, setTab] = useState<'create' | 'join'>('create');
   const [showUnlinkModal, setShowUnlinkModal] = useState(false);
 
-  React.useEffect(() => {
-    if (isInitialized && (!session || !user)) {
-      router.replace('/(auth)/login');
-    }
-  }, [isInitialized, session, user, router]);
-
-  if (!isInitialized || !session || !user || isLoading) {
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <LoadingState message={t('common.loading')} />
@@ -49,8 +44,10 @@ export default function PairScreen() {
     );
   }
 
-  // State 1: Both partners linked
-  if (coupleData?.isComplete && coupleData.partner) {
+  const coupleState = coupleData?.state || 'NO_COUPLE';
+
+  // 1. ACTIVE: 2 members linked
+  if (coupleState === 'ACTIVE' && coupleData?.partner) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -65,14 +62,6 @@ export default function PairScreen() {
               {coupleData.partner.display_name || 'Partner'}
             </Text>
             <Text style={styles.connectedSubtitle}>{t('couple.linkedSuccessSubtitle')}</Text>
-
-            <Button
-              title={t('couple.goToHome')}
-              variant="primary"
-              size="lg"
-              onPress={() => router.replace('/(tabs)/home')}
-              style={styles.enterHomeButton}
-            />
 
             <Button
               title={t('couple.unlinkTitle')}
@@ -101,22 +90,25 @@ export default function PairScreen() {
     );
   }
 
-  // State 2: Couple created, waiting for partner
-  if (coupleData?.pendingInvite) {
+  // 2. PENDING: Couple exists, only 1 active member -> "Waiting for partner" screen
+  if (coupleState === 'PENDING' && coupleData?.pendingInvite) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
+          {unlinkedMessage ? (
+            <View style={styles.unlinkedBanner}>
+              <Text style={styles.unlinkedBannerText}>ℹ️ {unlinkedMessage}</Text>
+              <TouchableOpacity onPress={clearUnlinkedMessage} style={styles.dismissBtn}>
+                <Text style={styles.dismissBtnText}>Dismiss</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
           <InvitePartnerCard
             code={coupleData.pendingInvite.code}
             expiresAt={coupleData.pendingInvite.expires_at}
-          />
-
-          <Button
-            title={t('couple.unlinkTitle')}
-            variant="ghost"
-            size="sm"
-            onPress={() => setShowUnlinkModal(true)}
-            style={styles.cancelCoupleButton}
+            onCancel={() => setShowUnlinkModal(true)}
+            onResend={() => refetch()}
           />
 
           <Button
@@ -131,20 +123,32 @@ export default function PairScreen() {
             visible={showUnlinkModal}
             onClose={() => setShowUnlinkModal(false)}
             onSuccess={() => refetch()}
+            isCancel={true}
           />
         </ScrollView>
       </SafeAreaView>
     );
   }
 
-  // State 3: No couple yet -> Choose between Create or Join
+  // 3. NO_COUPLE: "Create couple space / Enter invite code"
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        {unlinkedMessage ? (
+          <View style={styles.unlinkedBanner}>
+            <Text style={styles.unlinkedBannerText}>ℹ️ {unlinkedMessage}</Text>
+            <TouchableOpacity onPress={clearUnlinkedMessage} style={styles.dismissBtn}>
+              <Text style={styles.dismissBtnText}>Dismiss</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
         <View style={styles.header}>
           <Text style={styles.title}>{t('couple.pairTitle')}</Text>
           <Text style={styles.subtitle}>{t('couple.pairSubtitle')}</Text>
         </View>
+
+        <OnboardingWalkthrough />
 
         <View style={styles.segmentedControl}>
           <TouchableOpacity
@@ -187,7 +191,7 @@ export default function PairScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: theme.colors.background, // #f7f9f6
+    backgroundColor: theme.colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -196,34 +200,62 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  unlinkedBanner: {
+    width: '100%',
+    backgroundColor: '#fffbeb',
+    borderColor: '#fde68a',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  unlinkedBannerText: {
+    fontSize: 14,
+    color: '#92400e',
+    fontWeight: '600',
+    flex: 1,
+  },
+  dismissBtn: {
+    marginLeft: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: '#fef3c7',
+  },
+  dismissBtnText: {
+    fontSize: 12,
+    color: '#92400e',
+    fontWeight: '700',
+  },
   header: {
     marginBottom: 24,
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '800',
-    color: theme.colors.text, // #42362e
+    color: theme.colors.text,
     marginBottom: 8,
     textAlign: 'center',
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 15,
-    color: theme.colors.textSecondary, // #a8917f
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
   },
   segmentedControl: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.surfaceSubtle, // #f0ece6
+    backgroundColor: theme.colors.surfaceSubtle,
     borderRadius: 14,
     padding: 4,
     marginBottom: 24,
     width: '100%',
-    borderWidth: 1,
-    borderColor: theme.colors.borderLight,
   },
   segment: {
     flex: 1,
@@ -232,64 +264,55 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   segmentActive: {
-    backgroundColor: theme.colors.surface, // #ffffff
-    shadowColor: theme.colors.text,
+    backgroundColor: theme.colors.surface,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
     elevation: 2,
   },
   segmentText: {
     fontSize: 14,
     fontWeight: '600',
-    color: theme.colors.textSecondary, // #a8917f
+    color: theme.colors.textSecondary,
   },
   segmentTextActive: {
-    color: theme.colors.text, // #42362e
+    color: theme.colors.primary,
     fontWeight: '700',
   },
   connectedCard: {
     width: '100%',
     alignItems: 'center',
-    paddingVertical: 32,
-    backgroundColor: theme.colors.surface,
-    borderColor: theme.colors.borderLight,
+    padding: 24,
   },
   connectedBadge: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
-    color: theme.colors.success,
-    backgroundColor: theme.colors.successLight,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    marginBottom: 20,
+    color: theme.colors.primary,
+    backgroundColor: theme.colors.surfaceSubtle,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+    overflow: 'hidden',
   },
   partnerName: {
     fontSize: 22,
-    fontWeight: '700',
-    color: theme.colors.text, // #42362e
-    marginTop: 14,
+    fontWeight: '800',
+    color: theme.colors.text,
+    marginTop: 12,
     marginBottom: 6,
   },
   connectedSubtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 24,
-  },
-  enterHomeButton: {
-    width: '100%',
-    marginBottom: 12,
+    marginBottom: 20,
   },
   unlinkButton: {
-    borderColor: theme.colors.danger,
-  },
-  cancelCoupleButton: {
-    marginTop: 16,
+    marginTop: 8,
   },
   signOutButton: {
-    marginTop: 24,
+    marginTop: 20,
   },
 });
-

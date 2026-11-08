@@ -1,20 +1,38 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { supabase, analytics } from '@/services';
+import { create } from 'zustand';
+import { supabase, analytics, clearAppCache } from '@/services';
 import type { Couple, Profile, Invitation } from '@/shared/types';
 import { useAuthStore } from '@/features/auth';
 
+export type CoupleState = 'NO_COUPLE' | 'PENDING' | 'ACTIVE';
+
 export interface CoupleData {
+  state: CoupleState;
   couple: Couple;
   partner: Profile | null;
   myMemberRole: 'creator' | 'partner';
+  activeMemberCount: number;
   isComplete: boolean;
   pendingInvite?: Invitation | null;
 }
 
+interface PartnerUnlinkStore {
+  unlinkedMessage: string | null;
+  setUnlinkedMessage: (message: string | null) => void;
+  clearUnlinkedMessage: () => void;
+}
+
+export const usePartnerUnlinkStore = create<PartnerUnlinkStore>((set) => ({
+  unlinkedMessage: null,
+  setUnlinkedMessage: (unlinkedMessage) => set({ unlinkedMessage }),
+  clearUnlinkedMessage: () => set({ unlinkedMessage: null }),
+}));
+
 export const useActiveCouple = () => {
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
+  const setUnlinkedMessage = usePartnerUnlinkStore((state) => state.setUnlinkedMessage);
 
   const query = useQuery<CoupleData | null>({
     queryKey: ['activeCouple', user?.id],
@@ -22,7 +40,7 @@ export const useActiveCouple = () => {
     queryFn: async () => {
       if (!user) return null;
 
-      // 1. Find my active membership
+      // 1. Find caller's active membership
       const { data: myMember, error: myMemberError } = await supabase
         .from('couple_members')
         .select('couple_id, role')
@@ -34,33 +52,58 @@ export const useActiveCouple = () => {
         throw new Error(myMemberError.message);
       }
 
+      // NO_COUPLE: No active membership row found
       if (!myMember) {
         return null;
       }
 
-      // 2. Fetch couple
-      const { data: couple, error: coupleError } = await supabase
-        .from('couples')
-        .select('*')
-        .eq('id', myMember.couple_id)
-        .single();
+      // 2. Fetch couple and all active members in parallel (Promise.all)
+      const [
+        { data: couple, error: coupleError },
+        { data: members, error: membersError },
+      ] = await Promise.all([
+        supabase
+          .from('couples')
+          .select('*')
+          .eq('id', myMember.couple_id)
+          .single(),
+        supabase
+          .from('couple_members')
+          .select('user_id, role, status')
+          .eq('couple_id', myMember.couple_id)
+          .eq('status', 'active'),
+      ]);
 
-      if (coupleError) {
-        throw new Error(coupleError.message);
+      if (coupleError) throw new Error(coupleError.message);
+      if (membersError) throw new Error(membersError.message);
+
+      const activeMembers = members || [];
+      const activeCount = activeMembers.length;
+
+      // PENDING: Couple exists, but only 1 active member (waiting for partner)
+      if (activeCount <= 1) {
+        const { data: inviteData } = await supabase
+          .from('invitations')
+          .select('*')
+          .eq('couple_id', myMember.couple_id)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        return {
+          state: 'PENDING',
+          couple,
+          partner: null,
+          myMemberRole: myMember.role,
+          activeMemberCount: activeCount,
+          isComplete: false,
+          pendingInvite: inviteData,
+        };
       }
 
-      // 3. Fetch all active members in this couple
-      const { data: members, error: membersError } = await supabase
-        .from('couple_members')
-        .select('user_id, role, status')
-        .eq('couple_id', myMember.couple_id)
-        .eq('status', 'active');
-
-      if (membersError) {
-        throw new Error(membersError.message);
-      }
-
-      const partnerMember = members?.find((m) => m.user_id !== user.id);
+      // ACTIVE: Exactly 2 active members (full couple space)
+      const partnerMember = activeMembers.find((m) => m.user_id !== user.id);
       let partnerProfile: Profile | null = null;
 
       if (partnerMember) {
@@ -73,37 +116,25 @@ export const useActiveCouple = () => {
         partnerProfile = partnerData;
       }
 
-      // 4. If partner not yet joined, find active pending invitation
-      let pendingInvite: Invitation | null = null;
-      if (!partnerProfile) {
-        const { data: inviteData } = await supabase
-          .from('invitations')
-          .select('*')
-          .eq('couple_id', myMember.couple_id)
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        pendingInvite = inviteData;
-      }
-
       return {
+        state: 'ACTIVE',
         couple,
         partner: partnerProfile,
         myMemberRole: myMember.role,
-        isComplete: !!partnerProfile,
-        pendingInvite,
+        activeMemberCount: activeCount,
+        isComplete: true,
       };
     },
   });
 
-  // Supabase Realtime subscription for couple_members to auto-update when partner links
+  // Supabase Realtime subscription: Partner's app redirects immediately when unlinked
   useEffect(() => {
     if (!user) return;
 
+    // Use unique channel topic to prevent collisions when multiple components invoke useActiveCouple()
+    const channelName = `couple_members_${user.id}_${Math.random().toString(36).slice(2, 9)}`;
     const channel = supabase
-      .channel(`couple_members_${user.id}_${Math.random().toString(36).slice(2)}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -111,8 +142,17 @@ export const useActiveCouple = () => {
           schema: 'public',
           table: 'couple_members',
         },
-        () => {
+        (payload) => {
+          // If membership row updated to unlinked, partner unlinked!
+          if (
+            payload.eventType === 'UPDATE' &&
+            (payload.new as any)?.status === 'unlinked'
+          ) {
+            clearAppCache();
+            setUnlinkedMessage('Your partner unlinked');
+          }
           queryClient.invalidateQueries({ queryKey: ['activeCouple', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['homeData'] });
         }
       )
       .subscribe();
@@ -120,7 +160,7 @@ export const useActiveCouple = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, queryClient]);
+  }, [user, queryClient, setUnlinkedMessage]);
 
   return query;
 };
@@ -195,8 +235,9 @@ export const useUnlinkCouple = () => {
       return data;
     },
     onSuccess: () => {
+      // Clear all cached queries, persisted storage, and local data on unlink
+      clearAppCache();
       queryClient.invalidateQueries({ queryKey: ['activeCouple', user?.id] });
     },
   });
 };
-

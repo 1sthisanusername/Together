@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { Session, User } from '@supabase/supabase-js';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
-import { supabase, analytics, clearAppCache } from '@/services';
+import { supabase, analytics, clearAppCache, push } from '@/services';
 import type { Profile } from '@/shared/types';
 import type { SignUpInput, LoginInput, ResetPasswordInput } from '../schemas';
 
@@ -165,6 +165,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (data.user) {
         analytics.identify(data.user.id, { email: data.user.email ?? null });
         await get().fetchProfile(data.user.id);
+        push.registerForPushNotifications(data.user.id).catch(() => {});
       }
 
       set({ session: data.session, user: data.user, isLoading: false });
@@ -288,17 +289,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ session, user: session?.user ?? null, isInitialized: true, isLoading: false });
         if (session?.user) {
           await get().fetchProfile(session.user.id);
+          push.registerForPushNotifications(session.user.id).catch(() => {});
         } else {
           set({ profile: null });
         }
       }
     );
 
-    // Initial check
+    // Initial check on launch
     supabase.auth.getSession().then(({ data: { session } }) => {
       set({ session, user: session?.user ?? null, isInitialized: true, isLoading: false });
       if (session?.user) {
         get().fetchProfile(session.user.id);
+        push.registerForPushNotifications(session.user.id).catch(() => {});
       }
     });
 

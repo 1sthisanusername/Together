@@ -7,7 +7,8 @@ export {
   useCreateCouple,
   useAcceptInvite,
   useUnlinkCouple,
+  usePartnerUnlinkStore,
 } from './hooks/useCouple';
-export type { CoupleData } from './hooks/useCouple';
+export type { CoupleData, CoupleState } from './hooks/useCouple';
 export * from './schemas';
 

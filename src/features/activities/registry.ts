@@ -3,11 +3,25 @@ import { z } from 'zod';
 import { WouldYouRatherRenderer } from '@/features/sessions/renderers/WouldYouRatherRenderer';
 import { WhoKnowsWhomRenderer } from '@/features/sessions/renderers/WhoKnowsWhomRenderer';
 import { GuessMyAnswerRenderer } from '@/features/sessions/renderers/GuessMyAnswerRenderer';
-import { DrawingGuessRenderer } from '@/features/sessions/renderers/DrawingGuessRenderer';
 import { QuizRenderer } from '@/features/sessions/renderers/QuizRenderer';
 import { GuidedDateRenderer } from '@/features/sessions/renderers/GuidedDateRenderer';
 import { PhotoMissionRenderer } from '@/features/sessions/renderers/PhotoMissionRenderer';
 import type { SessionData } from '@/features/sessions/hooks/useSession';
+import { LoadingState } from '@/shared/ui';
+
+// Lazy-load heavy drawing game component to reduce initial bundle parse time
+const LazyDrawingGuessRenderer = React.lazy(() =>
+  import('@/features/sessions/renderers/DrawingGuessRenderer').then((m) => ({
+    default: m.DrawingGuessRenderer,
+  }))
+);
+
+const LazyDrawingWrapper: React.FC<ActivityRendererProps> = (props) =>
+  React.createElement(
+    React.Suspense,
+    { fallback: React.createElement(LoadingState, { message: 'Loading canvas...' }) },
+    React.createElement(LazyDrawingGuessRenderer, props)
+  );
 
 export interface ActivityRendererProps {
   data: SessionData;
@@ -61,7 +75,7 @@ export const activityRegistry: Record<string, ActivityRegistryEntry> = {
     }),
   },
   drawing_guess: {
-    Component: DrawingGuessRenderer,
+    Component: LazyDrawingWrapper,
     configSchema: z.object({
       rounds: z.array(
         z.object({

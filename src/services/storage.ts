@@ -13,6 +13,7 @@ export interface UploadOptions {
 export interface StorageService {
   uploadMedia: (options: UploadOptions) => Promise<MediaFile>;
   getSignedUrl: (bucketPath: string, expiresInSeconds?: number) => Promise<string | null>;
+  deleteMedia: (bucketPath: string) => Promise<void>;
 }
 
 class AppStorageService implements StorageService {
@@ -79,6 +80,16 @@ class AppStorageService implements StorageService {
     }
 
     return data?.signedUrl ?? null;
+  }
+
+  async deleteMedia(bucketPath: string): Promise<void> {
+    const { error } = await supabase.storage
+      .from(this.bucketName)
+      .remove([bucketPath]);
+
+    if (error) {
+      console.warn('Error deleting storage file:', error.message);
+    }
   }
 }
 

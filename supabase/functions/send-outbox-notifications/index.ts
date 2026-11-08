@@ -1,5 +1,6 @@
 // Supabase Edge Function: send-outbox-notifications
-// Follows Section 3.7 & 11: Delivers queued notifications respecting quiet hours & user timezone
+// Follows Section 3.7 & 11: Delivers queued notifications via Expo Push API
+// Respects quiet hours, recipient timezone, and user category preferences.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
@@ -11,11 +12,21 @@ interface NotificationRow {
   payload: Record<string, unknown>;
   deep_link: string | null;
   send_after: string;
+  sent_at: string | null;
+}
+
+interface ExpoPushMessage {
+  to: string;
+  sound: 'default' | null;
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+  channelId?: string;
 }
 
 Deno.serve(async (req) => {
   try {
-    // FIX 5: Enforce authorization check on Edge Function
+    // 1. Authorization check: Service role key or internal cron bearer
     const authHeader = req.headers.get('Authorization') ?? '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const cronSecret = Deno.env.get('CRON_SECRET') ?? '';
@@ -31,7 +42,6 @@ Deno.serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-
     if (!supabaseUrl || !supabaseServiceKey) {
       return new Response(JSON.stringify({ error: 'Service configuration unavailable' }), {
         status: 500,
@@ -42,32 +52,60 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const nowUtc = new Date().toISOString();
 
-    // 1. Fetch pending outbox notifications
-    const { data: pendingNotifications, error: fetchError } = await supabase
-      .from('notifications')
-      .select('*')
-      .lte('send_after', nowUtc)
-      .is('sent_at', null)
-      .limit(50);
-
-    if (fetchError) {
-      console.error('[send-outbox-notifications] Fetch error:', fetchError.message);
-      return new Response(JSON.stringify({ error: 'Unable to process notifications' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    // Check if triggered for a specific record (Database Webhook / trigger payload)
+    let bodyJson: any = null;
+    try {
+      bodyJson = await req.json();
+    } catch {
+      // Empty body or cron trigger
     }
 
-    if (!pendingNotifications || pendingNotifications.length === 0) {
+    let notificationsToProcess: NotificationRow[] = [];
+
+    if (bodyJson?.record?.id) {
+      // Single row trigger from notifications table insert
+      const { data: singleRow } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('id', bodyJson.record.id)
+        .is('sent_at', null)
+        .maybeSingle();
+
+      if (singleRow) {
+        notificationsToProcess = [singleRow as NotificationRow];
+      }
+    } else {
+      // Batch fetch pending outbox notifications
+      const { data: pendingNotifications, error: fetchError } = await supabase
+        .from('notifications')
+        .select('*')
+        .lte('send_after', nowUtc)
+        .is('sent_at', null)
+        .limit(50);
+
+      if (fetchError) {
+        console.error('[send-outbox-notifications] Fetch error:', fetchError.message);
+        return new Response(JSON.stringify({ error: 'Unable to process notifications' }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      notificationsToProcess = (pendingNotifications || []) as NotificationRow[];
+    }
+
+    if (notificationsToProcess.length === 0) {
       return new Response(JSON.stringify({ delivered: 0, message: 'No pending notifications' }), {
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
     let deliveredCount = 0;
+    const expoMessages: ExpoPushMessage[] = [];
+    const notificationIdsToMarkSent: string[] = [];
 
-    for (const notif of pendingNotifications as NotificationRow[]) {
-      // 2. Fetch recipient settings and timezone
+    for (const notif of notificationsToProcess) {
+      // 2. Fetch recipient profile (timezone) and settings (quiet hours, categories)
       const { data: recipientProfile } = await supabase
         .from('profiles')
         .select('timezone')
@@ -84,7 +122,7 @@ Deno.serve(async (req) => {
       const nowInTz = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
       const currentHour = nowInTz.getHours();
 
-      // Check quiet hours (e.g. between 22:00 and 08:00)
+      // Check quiet hours (default: 22:00 to 08:00)
       if (recipientSettings?.quiet_hours_enabled) {
         const startHour = parseInt((recipientSettings.quiet_hours_start || '22:00:00').split(':')[0], 10);
         const endHour = parseInt((recipientSettings.quiet_hours_end || '08:00:00').split(':')[0], 10);
@@ -95,28 +133,80 @@ Deno.serve(async (req) => {
             : currentHour >= startHour && currentHour < endHour;
 
         if (isInQuietHours) {
-          // Delay until after quiet hours
+          // Delay delivery until quiet hours end
+          console.log(`[send-outbox-notifications] Delaying notification ${notif.id}: recipient in quiet hours`);
           continue;
         }
       }
 
-      // Check per-category toggles
+      // Check per-category notification toggles
       if (recipientSettings) {
+        if (!recipientSettings.notifications_enabled) continue;
         if (notif.type.includes('activity') && !recipientSettings.notify_activities) continue;
         if (notif.type.includes('letter') && !recipientSettings.notify_letters) continue;
         if (notif.type.includes('date') && !recipientSettings.notify_dates) continue;
       }
 
-      // 3. Mark as sent in DB
+      // 3. Fetch active push tokens for recipient
+      const { data: pushTokens } = await supabase
+        .from('push_tokens')
+        .select('token, platform')
+        .eq('user_id', notif.recipient_id);
+
+      const title = (notif.payload as any)?.title || 'Together';
+      const body = (notif.payload as any)?.body || 'You have a new update from your partner';
+
+      if (pushTokens && pushTokens.length > 0) {
+        for (const tokenRow of pushTokens) {
+          expoMessages.push({
+            to: tokenRow.token,
+            sound: 'default',
+            title,
+            body,
+            data: {
+              deepLink: notif.deep_link,
+              notificationId: notif.id,
+              type: notif.type,
+              ...(notif.payload || {}),
+            },
+          });
+        }
+      }
+
+      notificationIdsToMarkSent.push(notif.id);
+    }
+
+    // 4. Dispatch batches to Expo Push API
+    if (expoMessages.length > 0) {
+      try {
+        const expoRes = await fetch('https://exp.host/--/api/v2/push/send', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Accept-Encoding': 'gzip, deflate',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(expoMessages),
+        });
+
+        const expoData = await expoRes.json();
+        console.log('[send-outbox-notifications] Expo Push response:', expoData);
+      } catch (expoErr) {
+        console.error('[send-outbox-notifications] Expo dispatch error:', expoErr);
+      }
+    }
+
+    // 5. Mark processed notifications as sent
+    if (notificationIdsToMarkSent.length > 0) {
       await supabase
         .from('notifications')
         .update({ sent_at: new Date().toISOString() })
-        .eq('id', notif.id);
+        .in('id', notificationIdsToMarkSent);
 
-      deliveredCount++;
+      deliveredCount = notificationIdsToMarkSent.length;
     }
 
-    return new Response(JSON.stringify({ delivered: deliveredCount }), {
+    return new Response(JSON.stringify({ delivered: deliveredCount, pushed: expoMessages.length }), {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err: unknown) {
@@ -127,4 +217,3 @@ Deno.serve(async (req) => {
     });
   }
 });
-

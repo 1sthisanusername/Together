@@ -1,12 +1,13 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import '@/shared/i18n';
 import { useAuthStore } from '@/features/auth';
-import { supabase, queryClient } from '@/services';
+import { useActiveCouple } from '@/features/couple';
+import { supabase, queryClient, push, restorePersistedCache } from '@/services';
 import { theme } from '@/shared/theme';
 
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
@@ -23,11 +24,80 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
   );
 }
 
+/**
+ * RootRouteGuard: The single authoritative route guard at the app root.
+ * Derives state from database:
+ *   NO_COUPLE -> go to "Create couple space / Enter invite code" (pair)
+ *   PENDING   -> "Waiting for partner" screen (pair)
+ *   ACTIVE    -> main tabs
+ * No individual screen decides routing by itself.
+ */
+function RootRouteGuard({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const segments = useSegments();
+  const { session, isInitialized } = useAuthStore();
+  const { data: coupleData, isLoading: isCoupleLoading } = useActiveCouple();
+
+  useEffect(() => {
+    // Wait until local session restore has evaluated
+    if (!isInitialized) return;
+
+    const segs = segments as unknown as string[];
+    const firstSegment = segs[0];
+    const secondSegment = segs[1];
+
+    const inAuthGroup = firstSegment === '(auth)';
+    const isCallback = firstSegment === 'auth' && secondSegment === 'callback';
+
+    // 1. Not authenticated -> must be on auth screens
+    if (!session) {
+      if (!inAuthGroup && !isCallback) {
+        router.replace('/(auth)/login');
+      }
+      return;
+    }
+
+    // 2. Authenticated -> wait for couple state
+    if (isCoupleLoading) return;
+
+    const coupleState = coupleData?.state || 'NO_COUPLE';
+    const isPairScreen = inAuthGroup && secondSegment === 'pair';
+    const isRootIndex = segs.length === 0 || firstSegment === 'index';
+
+    switch (coupleState) {
+      case 'NO_COUPLE':
+        // Go to Create couple space / Enter invite code
+        if (!isPairScreen) {
+          router.replace('/(auth)/pair');
+        }
+        break;
+
+      case 'PENDING':
+        // Go to Waiting for partner screen with invite code/link, resend, and cancel
+        if (!isPairScreen) {
+          router.replace('/(auth)/pair');
+        }
+        break;
+
+      case 'ACTIVE':
+        // 2 members active -> Main tabs (or allowed sub-routes like settings, session)
+        if (inAuthGroup || isRootIndex) {
+          router.replace('/(tabs)/home');
+        }
+        break;
+    }
+  }, [session, isInitialized, isCoupleLoading, coupleData?.state, segments, router]);
+
+  return <>{children}</>;
+}
+
 export default function RootLayout() {
   const router = useRouter();
   const initAuth = useAuthStore((state) => state.initAuth);
 
   useEffect(() => {
+    // Restore persisted query cache for instant app reopen
+    restorePersistedCache().catch(() => {});
     const unsubscribe = initAuth();
 
     // Listen to deep linking events while app is open
@@ -69,23 +139,39 @@ export default function RootLayout() {
       }
     });
 
+    // Handle deep-linking when user taps a push notification
+    const removePushListener = push.setupNotificationResponseListener((deepLink) => {
+      try {
+        if (deepLink) {
+          const target = deepLink.replace(/^together:\/\//, '/');
+          router.push(target as any);
+        }
+      } catch (err) {
+        console.warn('Error navigating to push deep link:', err);
+      }
+    });
+
     return () => {
       unsubscribe();
       subscription.remove();
+      removePushListener();
     };
   }, [initAuth, router]);
 
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="auth/callback" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="session/[id]" />
-          <Stack.Screen name="settings" />
-        </Stack>
+        <RootRouteGuard>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="auth/callback" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="session/[id]" />
+            <Stack.Screen name="chat" />
+            <Stack.Screen name="settings" />
+          </Stack>
+        </RootRouteGuard>
       </QueryClientProvider>
     </SafeAreaProvider>
   );

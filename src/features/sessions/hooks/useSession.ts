@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { supabase, analytics } from '@/services';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
@@ -66,6 +67,16 @@ export function useSession(sessionId: string) {
     refetchInterval: 2500, // Safe poll + Realtime subscription
   });
 
+  // Refetch session on reconnect / app active state
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+      }
+    });
+    return () => subscription.remove();
+  }, [sessionId, queryClient]);
+
   // Supabase Realtime channel subscription
   useEffect(() => {
     if (!sessionId) return;
@@ -96,7 +107,12 @@ export function useSession(sessionId: string) {
           queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        // On reconnect / subscription active: refetch session
+        if (status === 'SUBSCRIBED') {
+          queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -104,6 +120,34 @@ export function useSession(sessionId: string) {
   }, [sessionId, queryClient]);
 
   return query;
+}
+
+export function useAdvanceRound(sessionId: string) {
+  const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
+
+  return useMutation({
+    mutationFn: async ({ expectedRound }: { expectedRound: number }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase.rpc('advance_round', {
+        p_session_id: sessionId,
+        p_expected_round: expectedRound,
+      });
+
+      if (error) throw new Error(error.message);
+      return data as unknown as {
+        session_id: string;
+        current_round: number;
+        advanced: boolean;
+        by_name?: string;
+        message?: string;
+      };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+    },
+  });
 }
 
 export function useSubmitEvent(sessionId: string) {
