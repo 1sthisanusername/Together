@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SettingsView } from '@/features/settings';
+import { theme } from '@/shared/theme';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -26,17 +27,17 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    paddingVertical: 14,
+    backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: theme.colors.borderLight,
   },
   backBtn: {
     paddingVertical: 4,
@@ -45,12 +46,12 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#6366F1',
+    color: theme.colors.primary,
   },
   title: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text,
   },
   spacer: {
     width: 60,

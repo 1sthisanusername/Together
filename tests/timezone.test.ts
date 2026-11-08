@@ -5,6 +5,7 @@ import {
   getTimeDifference,
   getDaysTogether,
 } from '../src/shared/lib/timezone';
+import { getUtcOffsetString } from '../src/features/settings/components/TimeZonePickerModal';
 
 describe('Timezone & Date Utilities', () => {
   it('returns valid device timezone string', () => {
@@ -48,6 +49,34 @@ describe('Timezone & Date Utilities', () => {
 
     expect(getDaysTogether(null)).toBeNull();
     expect(getDaysTogether('invalid-date')).toBeNull();
+  });
+
+  it('calculates correct UTC offset strings for IANA time zones', () => {
+    const testDate = new Date('2026-11-07T12:00:00Z');
+    
+    expect(getUtcOffsetString('Asia/Kolkata', testDate)).toBe('UTC+05:30');
+    expect(getUtcOffsetString('Europe/London', testDate)).toBe('UTC+00:00');
+    expect(getUtcOffsetString('UTC', testDate)).toBe('UTC+00:00');
+    expect(getUtcOffsetString('America/New_York', testDate)).toBe('UTC-05:00');
+  });
+
+  it('updates partner local time on Home when partner timezone changes in profile', () => {
+    const testDate = new Date('2026-11-07T12:00:00Z'); // 12:00 PM UTC
+    const userZone = 'Asia/Kolkata'; // 17:30 (5:30 PM)
+    
+    // Partner originally in London (12:00 PM)
+    let partnerZone = 'Europe/London';
+    let partnerTime = getTimeInZone(partnerZone, testDate);
+    let diff = getTimeDifference(userZone, partnerZone, testDate);
+    expect(partnerTime.timeString).toMatch(/12:00/);
+    expect(diff).toBe(-5); // London is 5.5 hours behind Kolkata (Math.round(-5.5) = -5)
+
+    // Partner changes profile timezone to Tokyo (21:00 / 9:00 PM)
+    partnerZone = 'Asia/Tokyo';
+    partnerTime = getTimeInZone(partnerZone, testDate);
+    diff = getTimeDifference(userZone, partnerZone, testDate);
+    expect(partnerTime.timeString).toMatch(/9:00/);
+    expect(diff).toBe(4); // Tokyo is 3.5 hours ahead of Kolkata (Math.round(3.5) = 4)
   });
 });
 

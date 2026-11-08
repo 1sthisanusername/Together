@@ -12,3 +12,4 @@ export const queryClient = new QueryClient({
 export function clearAppCache(): void {
   queryClient.clear();
 }
+
