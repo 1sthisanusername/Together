@@ -1,10 +1,62 @@
+import * as FileSystem from 'expo-file-system/legacy';
+import { decode } from 'base64-arraybuffer';
 import { supabase } from './supabase';
 import type { MediaFile } from '@/shared/types';
+
+/**
+ * Shared media upload helper
+ * Reads the file as base64 via expo-file-system, decodes to ArrayBuffer,
+ * uploads to private 'couples-media' storage bucket with explicit contentType,
+ * and verifies that stored size > 0.
+ */
+export async function uploadMedia(
+  uri: string,
+  mime: string,
+  path: string
+): Promise<{ path: string; size: number }> {
+  // 1. Read file as base64
+  const base64Data = await FileSystem.readAsStringAsync(uri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+
+  if (!base64Data || base64Data.length === 0) {
+    throw new Error('Recorded file or media is empty (0 bytes).');
+  }
+
+  // 2. Decode to ArrayBuffer
+  const arrayBuffer = decode(base64Data);
+  const size = arrayBuffer.byteLength;
+  if (size <= 0) {
+    throw new Error('Decoded media payload is empty (0 bytes).');
+  }
+
+  if (size > 10 * 1024 * 1024) {
+    throw new Error('File exceeds the 10 MB maximum limit');
+  }
+
+  // 3. Upload with explicit contentType to couples-media bucket
+  const { data, error } = await supabase.storage
+    .from('couples-media')
+    .upload(path, arrayBuffer, {
+      contentType: mime,
+      upsert: false,
+    });
+
+  if (error) {
+    throw new Error(`Upload failed: ${error.message}`);
+  }
+
+  return {
+    path: data?.path || path,
+    size,
+  };
+}
 
 export interface UploadOptions {
   coupleId: string;
   userId: string;
-  fileBytes: Uint8Array | Blob;
+  uri?: string;
+  fileBytes?: Uint8Array | Blob;
   mimeType: string;
   fileName: string;
   durationSeconds?: number;
@@ -23,29 +75,48 @@ class AppStorageService implements StorageService {
   async uploadMedia({
     coupleId,
     userId,
+    uri,
     fileBytes,
     mimeType,
     fileName,
     durationSeconds,
   }: UploadOptions): Promise<MediaFile> {
-    const size = fileBytes instanceof Blob ? fileBytes.size : fileBytes.byteLength;
-    if (size > this.maxSizeBytes) {
-      throw new Error('File exceeds the 10 MB maximum limit');
-    }
-
-    const ext = fileName.split('.').pop() || 'dat';
+    const ext = fileName.split('.').pop() || (mimeType.includes('audio') ? 'm4a' : 'jpg');
     const filePath = `${coupleId}/${userId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
 
-    // 1. Upload to private storage bucket
-    const { error: uploadError } = await supabase.storage
-      .from(this.bucketName)
-      .upload(filePath, fileBytes, {
-        contentType: mimeType,
-        upsert: false,
-      });
+    let storedSize = 0;
 
-    if (uploadError) {
-      throw new Error(`Failed to upload media: ${uploadError.message}`);
+    if (uri) {
+      // Use standard uploadMedia base64 -> ArrayBuffer pipeline
+      const uploadResult = await uploadMedia(uri, mimeType, filePath);
+      storedSize = uploadResult.size;
+    } else if (fileBytes) {
+      const size = fileBytes instanceof Blob ? fileBytes.size : fileBytes.byteLength;
+      if (size === 0) {
+        throw new Error('Recorded file or media is empty (0 bytes).');
+      }
+      if (size > this.maxSizeBytes) {
+        throw new Error('File exceeds the 10 MB maximum limit');
+      }
+
+      // 1. Upload to private storage bucket with explicit mimeType
+      const { error: uploadError } = await supabase.storage
+        .from(this.bucketName)
+        .upload(filePath, fileBytes, {
+          contentType: mimeType,
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw new Error(`Failed to upload media: ${uploadError.message}`);
+      }
+      storedSize = size;
+    } else {
+      throw new Error('Either uri or fileBytes must be provided to uploadMedia');
+    }
+
+    if (storedSize <= 0) {
+      throw new Error('Stored size must be greater than 0.');
     }
 
     // 2. Insert into media_files table (Section 3.8)
@@ -56,7 +127,7 @@ class AppStorageService implements StorageService {
         owner_id: userId,
         bucket_path: filePath,
         mime_type: mimeType,
-        file_size: size,
+        file_size: storedSize,
         duration_seconds: durationSeconds ?? null,
       })
       .select('*')
@@ -94,4 +165,3 @@ class AppStorageService implements StorageService {
 }
 
 export const storage = new AppStorageService();
-

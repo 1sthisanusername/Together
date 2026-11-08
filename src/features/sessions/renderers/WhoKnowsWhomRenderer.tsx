@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Input } from '@/shared/ui';
@@ -34,6 +34,18 @@ export const WhoKnowsWhomRenderer: React.FC<WhoKnowsWhomProps> = ({
   const { mutate: completeSession, isPending: isCompleting } = useCompleteSession(session.id);
   const { mutate: saveMemory, isSuccess: isMemorySaved } = useSaveSessionAsMemory();
 
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedOption(null);
+    setInputText('');
+  }, [currentRound?.id]);
+
+  // Determine if this user is the target subject or the guesser
+  const isTarget =
+    (currentRound.target === 'partner_a' && session.created_by === myUserId) ||
+    (currentRound.target === 'partner_b' && session.created_by !== myUserId);
+
   const roundEvents = events.filter(
     (e) => e.type === 'answer_submitted' && (e.payload as any)?.round === currentRound?.id
   );
@@ -42,20 +54,28 @@ export const WhoKnowsWhomRenderer: React.FC<WhoKnowsWhomProps> = ({
   const partnerAnswerEvent = roundEvents.find((e) => e.user_id === partnerId);
 
   const myAnswer = (myAnswerEvent?.payload as any)?.answer;
+  const effectiveMyAnswer = myAnswer || selectedOption;
   const partnerAnswer = (partnerAnswerEvent?.payload as any)?.answer;
   const isPartnerMasked = (partnerAnswerEvent?.payload as any)?.masked === true;
   const isBothRevealed = myAnswer && partnerAnswer && !isPartnerMasked;
+
+  const isMatch = isBothRevealed &&
+    typeof myAnswer === 'string' &&
+    typeof partnerAnswer === 'string' &&
+    myAnswer.trim().toLowerCase() === partnerAnswer.trim().toLowerCase();
 
   const isLastRound = currentRoundIdx === rounds.length - 1;
   const isCompleted = session.status === 'completed';
 
   const handleSubmit = (answerValue: string) => {
-    if (!answerValue.trim() || myAnswer || isSubmitting) return;
+    if (!answerValue.trim() || effectiveMyAnswer || isSubmitting) return;
+    setSelectedOption(answerValue.trim());
     submitEvent({
       type: 'answer_submitted',
       payload: {
         round: currentRound.id,
         answer: answerValue.trim(),
+        isTarget,
       },
     });
     setInputText('');
@@ -110,6 +130,12 @@ export const WhoKnowsWhomRenderer: React.FC<WhoKnowsWhomProps> = ({
         </Text>
       </View>
 
+      <View style={styles.roleBanner}>
+        <Text style={styles.roleText}>
+          {isTarget ? '🎯 Round Topic: About You' : `💭 Guessing for: ${partnerName}`}
+        </Text>
+      </View>
+
       <Text style={styles.promptText}>{currentRound.prompt}</Text>
 
       {currentRound.options ? (
@@ -119,22 +145,26 @@ export const WhoKnowsWhomRenderer: React.FC<WhoKnowsWhomProps> = ({
               key={idx}
               style={[
                 styles.optionBtn,
-                myAnswer === option && styles.optionSelected,
+                effectiveMyAnswer === option && styles.optionSelected,
                 isBothRevealed && partnerAnswer === option && styles.optionPartner,
               ]}
               onPress={() => handleSubmit(option)}
-              disabled={!!myAnswer || isSubmitting}
+              disabled={!!effectiveMyAnswer || isSubmitting}
             >
               <Text style={styles.optionBtnText}>{option}</Text>
+              {effectiveMyAnswer === option && <Text style={styles.myBadge}>✓ {t('sessions.yourChoice')}</Text>}
+              {isBothRevealed && partnerAnswer === option && (
+                <Text style={styles.partnerBadge}>♥ {t('sessions.partnerChoice', { name: partnerName })}</Text>
+              )}
             </TouchableOpacity>
           ))}
         </View>
       ) : (
         <View style={styles.inputSection}>
-          {!myAnswer ? (
+          {!effectiveMyAnswer ? (
             <>
               <Input
-                placeholder="Type your answer..."
+                placeholder={isTarget ? "Type your answer about yourself..." : `Guess ${partnerName}'s answer...`}
                 value={inputText}
                 onChangeText={setInputText}
               />
@@ -150,13 +180,13 @@ export const WhoKnowsWhomRenderer: React.FC<WhoKnowsWhomProps> = ({
           ) : (
             <Card style={styles.lockedCard}>
               <Text style={styles.lockedLabel}>{t('sessions.yourChoice')}:</Text>
-              <Text style={styles.lockedValue}>{myAnswer}</Text>
+              <Text style={styles.lockedValue}>{effectiveMyAnswer}</Text>
             </Card>
           )}
         </View>
       )}
 
-      {myAnswer && !partnerAnswerEvent ? (
+      {effectiveMyAnswer && !partnerAnswerEvent ? (
         <Card style={styles.statusCard}>
           <Text style={styles.statusText}>
             🔒 {t('sessions.waitingForPartner', { name: partnerName })}
@@ -164,7 +194,7 @@ export const WhoKnowsWhomRenderer: React.FC<WhoKnowsWhomProps> = ({
         </Card>
       ) : null}
 
-      {!myAnswer && partnerAnswerEvent ? (
+      {!effectiveMyAnswer && partnerAnswerEvent ? (
         <Card style={styles.partnerWaitingCard}>
           <Text style={styles.partnerWaitingText}>
             ⚡ {t('sessions.partnerWaitingAnswer', { name: partnerName })}
@@ -174,6 +204,14 @@ export const WhoKnowsWhomRenderer: React.FC<WhoKnowsWhomProps> = ({
 
       {isBothRevealed ? (
         <View style={styles.revealSection}>
+          <Card style={isMatch ? styles.matchCard : styles.differCard}>
+            <Text style={styles.matchTitle}>
+              {isMatch
+                ? `🎯 Spot on! +1 Point for ${isTarget ? partnerName : 'You'}!`
+                : '💭 Different answers! Now you know each other even better.'}
+            </Text>
+          </Card>
+
           <Card style={styles.partnerRevealCard}>
             <Text style={styles.revealPartnerLabel}>
               ♥ {t('sessions.partnerChoice', { name: partnerName })}:
@@ -202,7 +240,20 @@ const styles = StyleSheet.create({
   },
   progressHeader: {
     alignItems: 'center',
+    marginBottom: 8,
+  },
+  roleBanner: {
+    alignSelf: 'center',
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 12,
     marginBottom: 12,
+  },
+  roleText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#4F46E5',
   },
   roundText: {
     fontSize: 13,
@@ -236,6 +287,38 @@ const styles = StyleSheet.create({
   },
   optionPartner: {
     borderColor: '#EC4899',
+  },
+  myBadge: {
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#4F46E5',
+  },
+  partnerBadge: {
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#EC4899',
+  },
+  matchCard: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+    alignItems: 'center',
+    padding: 16,
+    marginBottom: 12,
+  },
+  differCard: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    padding: 16,
+    marginBottom: 12,
+  },
+  matchTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#065F46',
+    textAlign: 'center',
   },
   optionBtnText: {
     fontSize: 15,

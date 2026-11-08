@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
-import { supabase, analytics } from '@/services';
+import { supabase, analytics, push } from '@/services';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
 import type { Activity, ActivitySession, SessionEvent } from '@/shared/types';
@@ -165,8 +165,12 @@ export function useSubmitEvent(sessionId: string) {
     }) => {
       if (!user?.id || !coupleData?.couple?.id) throw new Error('Not authenticated');
 
-      // Client-generated idempotency key
-      const idempotencyKey = `${user.id}_${sessionId}_${type}_${payload.round || Date.now()}_${Math.random().toString(36).substring(7)}`;
+      // Client-generated deterministic idempotency key
+      const idempotencyKey =
+        (payload.idempotency_key as string) ||
+        (type === 'stroke'
+          ? `${user.id}_${sessionId}_stroke_${payload.round ?? 1}_${Date.now()}_${Math.random().toString(36).substring(7)}`
+          : `${user.id}_${sessionId}_${type}_${payload.round !== undefined ? payload.round : (payload.stepId || 'single')}`);
 
       const { data, error } = await supabase
         .from('session_events')
@@ -187,6 +191,20 @@ export function useSubmitEvent(sessionId: string) {
           return null;
         }
         throw new Error(error.message);
+      }
+
+      if (type === 'photo_submitted' && coupleData?.partner?.id) {
+        push.queueNotification({
+          recipientId: coupleData.partner.id,
+          coupleId: coupleData.couple.id,
+          type: 'photo_mission',
+          payload: {
+            title: 'Photo mission update',
+            body: 'Partner submitted a photo! Tap to reveal.',
+            sessionId,
+          },
+          deepLink: `/session/${sessionId}`,
+        }).catch(() => {});
       }
 
       return data;

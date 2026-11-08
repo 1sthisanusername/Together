@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import type { ChatMessage } from '../types';
 import { VoiceNotePlayer } from './VoiceNotePlayer';
 import { useDeleteChatMessage, useMarkVoicePlayed } from '../hooks/useMessages';
+import { MessageErrorBoundary } from '@/shared/ui';
 import { theme } from '@/shared/theme';
 
 export interface MessageItemProps {
@@ -56,19 +57,23 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           message.status === 'failed' && styles.bubbleFailed,
         ]}
       >
-        {isVoiceNote ? (
-          <VoiceNotePlayer
-            mediaSignedUrl={message.mediaSignedUrl}
-            durationSeconds={message.media?.duration_seconds}
-            playedAt={message.played_at}
-            isMyMessage={isMyMessage}
-            onPlayed={() => markVoicePlayed({ messageId: message.id })}
-          />
-        ) : (
-          <Text style={[styles.messageText, isMyMessage ? styles.textMy : styles.textPartner]}>
-            {message.content}
-          </Text>
-        )}
+        <MessageErrorBoundary isMyMessage={isMyMessage}>
+          {isVoiceNote ? (
+            <VoiceNotePlayer
+              mediaSignedUrl={message.mediaSignedUrl}
+              bucketPath={message.media?.bucket_path}
+              mediaId={message.media_id}
+              durationSeconds={message.media?.duration_seconds}
+              playedAt={message.played_at}
+              isMyMessage={isMyMessage}
+              onPlayed={() => markVoicePlayed({ messageId: message.id })}
+            />
+          ) : (
+            <Text style={[styles.messageText, isMyMessage ? styles.textMy : styles.textPartner]}>
+              {message.content}
+            </Text>
+          )}
+        </MessageErrorBoundary>
 
         <View style={styles.footerRow}>
           <Text style={[styles.timeText, isMyMessage ? styles.timeMy : styles.timePartner]}>

@@ -3,7 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, storage, analytics, push } from '@/services';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
-import type { ChatMessage, SendTextMessageParams, SendVoiceNoteParams } from '../types';
+import type {
+  ChatMessage,
+  SendTextMessageParams,
+  SendVoiceNoteParams,
+  SendPhotoMessageParams,
+} from '../types';
 import type { MediaFile } from '@/shared/types';
 
 export function useMessages() {
@@ -234,6 +239,7 @@ export function useSendVoiceNote() {
 
   return useMutation({
     mutationFn: async ({
+      uri,
       fileBytes,
       durationSeconds,
       fileName = 'voice_note.m4a',
@@ -267,10 +273,11 @@ export function useSendVoiceNote() {
       ]);
 
       try {
-        // 2. Upload voice note to private storage bucket
+        // 2. Upload voice note to private storage bucket via shared helper
         const mediaFile = await storage.uploadMedia({
           coupleId,
           userId: user.id,
+          uri,
           fileBytes,
           mimeType: 'audio/m4a',
           fileName,
@@ -314,6 +321,68 @@ export function useSendVoiceNote() {
         );
         throw new Error(err.message || 'Failed to send voice note');
       }
+    },
+  });
+}
+
+export function useSendPhotoMessage() {
+  const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
+  const { data: coupleData } = useActiveCouple();
+  const coupleId = coupleData?.couple?.id;
+  const partnerId = coupleData?.partner?.id;
+
+  return useMutation({
+    mutationFn: async ({ uri, caption }: SendPhotoMessageParams) => {
+      if (!coupleId || !user?.id || !partnerId) throw new Error('Not authenticated');
+
+      const localId = `local_photo_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const idempotencyKey = `${user.id}_photo_${Date.now()}`;
+
+      // 1. Upload photo to couples-media bucket
+      const mediaFile = await storage.uploadMedia({
+        coupleId,
+        userId: user.id,
+        uri,
+        mimeType: 'image/jpeg',
+        fileName: 'chat_photo.jpg',
+      });
+
+      const signedUrl = await storage.getSignedUrl(mediaFile.bucket_path, 3600);
+
+      // 2. Insert message referencing media_files
+      const { data, error } = await supabase
+        .from('messages')
+        .insert({
+          couple_id: coupleId,
+          sender_id: user.id,
+          recipient_id: partnerId,
+          content: caption || null,
+          media_id: mediaFile.id,
+          idempotency_key: idempotencyKey,
+        })
+        .select('*')
+        .single();
+
+      if (error) throw new Error(error.message);
+
+      const fullMsg: ChatMessage = {
+        ...data,
+        media: mediaFile,
+        mediaSignedUrl: signedUrl,
+        status: 'sent',
+      };
+
+      queryClient.setQueryData<ChatMessage[]>(['messages', coupleId], (prev = []) => [
+        ...(prev || []),
+        fullMsg,
+      ]);
+
+      analytics.track('message_sent');
+      return fullMsg;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages', coupleId] });
     },
   });
 }

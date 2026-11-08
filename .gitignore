@@ -20,5 +20,9 @@ web-build/
 .env.local
 .env*.local
 
+# Firebase credentials
+google-services.json
+*-firebase-adminsdk-*.json
+
 # Temporary files
 ARCHITECTURE_DOC_EXTRACTED.txt

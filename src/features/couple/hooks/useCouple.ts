@@ -241,3 +241,51 @@ export const useUnlinkCouple = () => {
     },
   });
 };
+
+export const useUpdateStartDate = () => {
+  const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
+
+  return useMutation({
+    mutationFn: async (startDate: string | null) => {
+      if (!user) throw new Error('Not authenticated');
+
+      if (startDate) {
+        const today = new Date().toISOString().split('T')[0];
+        if (startDate > today) {
+          throw new Error('Anniversary date cannot be in the future');
+        }
+      }
+
+      // 1. Locate user active couple
+      const { data: member } = await supabase
+        .from('couple_members')
+        .select('couple_id')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (!member?.couple_id) {
+        throw new Error('No active couple found');
+      }
+
+      // 2. Update couple start_date
+      const { data, error } = await supabase
+        .from('couples')
+        .update({
+          start_date: startDate,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', member.couple_id)
+        .select('*')
+        .single();
+
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['activeCouple', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['homeData'] });
+    },
+  });
+};

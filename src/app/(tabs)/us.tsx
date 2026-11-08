@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import {
   useBucketItems,
   useImportantDates,
@@ -12,10 +13,20 @@ import {
 } from '@/features/us';
 import { useHomeData } from '@/features/home';
 import { LoadingState, ErrorState } from '@/shared/ui';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export default function UsScreen() {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  let tabBarHeight = 56;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    tabBarHeight = useBottomTabBarHeight();
+  } catch {
+    tabBarHeight = 56;
+  }
+  const bottomPadding = tabBarHeight + insets.bottom + 16;
+
   const { data: homeData, isLoading: isHomeLoading } = useHomeData();
   const { data: bucketItems, isLoading: isBucketLoading, refetch: refetchBucket } = useBucketItems();
   const { data: importantDates, isLoading: isDatesLoading, refetch: refetchDates, error } = useImportantDates();
@@ -30,8 +41,12 @@ export default function UsScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Text style={styles.title}>{t('us.title')}</Text>
-        <Text style={styles.subtitle}>{t('us.subtitle')}</Text>
+        <Text style={styles.title} maxFontSizeMultiplier={1.35}>
+          {t('us.title')}
+        </Text>
+        <Text style={styles.subtitle} maxFontSizeMultiplier={1.35}>
+          {t('us.subtitle')}
+        </Text>
       </View>
 
       {isLoading ? (
@@ -45,23 +60,24 @@ export default function UsScreen() {
         />
       ) : (
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={false} onRefresh={handleRefresh} />}
         >
-          {/* Couple Profile Card */}
           <CoupleProfileCard />
 
-          {/* Next Reunion Countdown */}
-          <NextReunionCountdownCard
-            nextMeeting={homeData?.nextMeeting ?? null}
-            daysRemaining={homeData?.daysToNextMeeting ?? null}
-          />
+          {homeData?.nextMeeting ? (
+            <NextReunionCountdownCard
+              nextMeeting={homeData.nextMeeting}
+              daysRemaining={homeData.daysToNextMeeting}
+            />
+          ) : null}
 
-          {/* Shared Bucket List */}
-          <BucketListCard items={bucketItems ?? []} />
+          <ImportantDatesList dates={importantDates || []} />
 
-          {/* Important Dates */}
-          <ImportantDatesList dates={importantDates ?? []} />
+          <BucketListCard items={bucketItems || []} />
         </ScrollView>
       )}
     </SafeAreaView>
@@ -71,30 +87,29 @@ export default function UsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: theme.colors.background, // #f7f9f6
+    backgroundColor: theme.colors.background,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 14,
+    paddingHorizontal: scale(20),
+    paddingTop: scale(16),
+    paddingBottom: scale(14),
     backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.borderLight,
+    borderBottomColor: theme.colors.border,
   },
   title: {
-    fontSize: 26,
+    fontSize: scale(26),
     fontWeight: '800',
-    color: theme.colors.text, // #42362e
-    marginBottom: 4,
+    color: theme.colors.text,
+    marginBottom: scale(4),
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 14,
-    color: theme.colors.textSecondary, // #a8917f
+    fontSize: scale(14),
+    color: theme.colors.textSecondary,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: scale(20),
+    paddingVertical: scale(16),
   },
 });
-

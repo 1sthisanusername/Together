@@ -1,16 +1,22 @@
 import React from 'react';
 import {
-  TouchableOpacity,
   Text,
   ActivityIndicator,
   StyleSheet,
   StyleProp,
   ViewStyle,
   TextStyle,
+  Pressable,
+  View,
 } from 'react-native';
-import { theme } from '@/shared/theme';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
+import { theme, scale, triggerHaptic, motion } from '@/shared/theme';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'pool' | 'bubblegum' | 'outline' | 'ghost' | 'danger' | 'kintsugi';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps {
@@ -23,6 +29,7 @@ export interface ButtonProps {
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
   testID?: string;
+  accessibilityLabel?: string;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -35,124 +42,214 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   textStyle,
   testID,
+  accessibilityLabel,
 }) => {
   const isInteractive = !loading && !disabled;
+  const pressedOffset = useSharedValue(0);
+
+  const animatedSurfaceStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: pressedOffset.value },
+        { translateY: pressedOffset.value },
+      ],
+    };
+  });
+
+  const handlePressIn = () => {
+    if (!isInteractive) return;
+    triggerHaptic('light');
+    pressedOffset.value = withSpring(motion.pressOffset, motion.spring);
+  };
+
+  const handlePressOut = () => {
+    pressedOffset.value = withSpring(0, motion.spring);
+  };
+
+  const handlePress = () => {
+    if (!isInteractive) return;
+    onPress();
+  };
+
+  // Map legacy variant names
+  const resolvedVariant = variant === 'kintsugi' ? 'secondary' : variant;
 
   return (
-    <TouchableOpacity
+    <Pressable
       testID={testID}
-      onPress={onPress}
+      onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={!isInteractive}
-      activeOpacity={0.85}
-      style={[
-        styles.base,
-        styles[variant],
-        styles[size],
-        disabled && styles.disabled,
-        style,
-      ]}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel || title}
+      accessibilityState={{ disabled: !isInteractive, busy: loading }}
+      style={[styles.outerContainer, disabled && styles.disabledContainer, style]}
     >
-      {loading ? (
-        <ActivityIndicator
-          size="small"
-          color={variant === 'primary' || variant === 'danger' ? '#FFFFFF' : theme.colors.primary}
-        />
-      ) : (
-        <Text
-          style={[
-            styles.textBase,
-            styles[`${variant}Text` as keyof typeof styles],
-            styles[`${size}Text` as keyof typeof styles],
-            disabled && styles.disabledText,
-            textStyle,
-          ]}
-        >
-          {title}
-        </Text>
+      {/* 1. Solid Ink Hard Shadow Underlay */}
+      {resolvedVariant !== 'ghost' && !disabled && (
+        <View style={[styles.shadowBlock, styles[`shadow_${size}`]]} />
       )}
-    </TouchableOpacity>
+
+      {/* 2. Interactive Surface with Chunky Ink Outline */}
+      <Animated.View
+        style={[
+          styles.surfaceBase,
+          styles[resolvedVariant],
+          styles[size],
+          animatedSurfaceStyle,
+          disabled && styles.disabledSurface,
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator
+            size="small"
+            color={resolvedVariant === 'primary' || resolvedVariant === 'danger' ? '#FFFFFF' : theme.colors.text}
+          />
+        ) : (
+          <Text
+            style={[
+              styles.textBase,
+              styles[`text_${resolvedVariant}`],
+              styles[`text_${size}`],
+              disabled && styles.textDisabled,
+              textStyle,
+            ]}
+            maxFontSizeMultiplier={1.35}
+          >
+            {title}
+          </Text>
+        )}
+      </Animated.View>
+    </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
-  base: {
-    borderRadius: 16,
+  outerContainer: {
+    position: 'relative',
+    marginRight: motion.pressOffset,
+    marginBottom: motion.pressOffset,
+  },
+  disabledContainer: {
+    opacity: 0.6,
+  },
+  // Hard offset ink shadow block (No blur!)
+  shadowBlock: {
+    position: 'absolute',
+    top: motion.pressOffset,
+    left: motion.pressOffset,
+    right: -motion.pressOffset,
+    bottom: -motion.pressOffset,
+    backgroundColor: theme.colors.shadowInk,
+    borderRadius: theme.roundness.md,
+  },
+  shadow_sm: {
+    borderRadius: theme.roundness.sm,
+  },
+  shadow_md: {
+    borderRadius: theme.roundness.md,
+  },
+  shadow_lg: {
+    borderRadius: theme.roundness.lg,
+  },
+
+  // Surface
+  surfaceBase: {
+    borderRadius: theme.roundness.md,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-  },
-  sm: {
-    paddingVertical: 9,
-    paddingHorizontal: 16,
-  },
-  md: {
-    paddingVertical: 14,
-    paddingHorizontal: 22,
-  },
-  lg: {
-    paddingVertical: 17,
-    paddingHorizontal: 28,
-  },
-  primary: {
-    backgroundColor: theme.colors.primary, // #b69788
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  secondary: {
-    backgroundColor: theme.colors.surfaceSubtle, // #f0ece6
-    borderWidth: 1,
+    borderWidth: theme.borders.chunky,
     borderColor: theme.colors.border,
   },
+
+  // Sizes (Minimum 48dp touch target enforced)
+  sm: {
+    borderRadius: theme.roundness.sm,
+    paddingVertical: scale(8),
+    paddingHorizontal: scale(14),
+    minHeight: Math.max(48, scale(44)),
+  },
+  md: {
+    borderRadius: theme.roundness.md,
+    paddingVertical: scale(12),
+    paddingHorizontal: scale(20),
+    minHeight: scale(50),
+  },
+  lg: {
+    borderRadius: theme.roundness.lg,
+    paddingVertical: scale(15),
+    paddingHorizontal: scale(26),
+    minHeight: scale(56),
+  },
+
+  // Variants (String & Stickers Toybox Palette)
+  primary: {
+    backgroundColor: theme.colors.primary, // Tomato #FF5A3C
+  },
+  secondary: {
+    backgroundColor: theme.colors.secondary, // Sunshine #FFC93C
+  },
+  pool: {
+    backgroundColor: theme.colors.pool, // Pool #2EC4B6
+  },
+  bubblegum: {
+    backgroundColor: theme.colors.bubblegum, // Bubblegum #FF8FB1
+  },
   outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.surface, // Paper White #FFFFFF
   },
   ghost: {
     backgroundColor: 'transparent',
+    borderWidth: 0,
   },
   danger: {
-    backgroundColor: theme.colors.danger,
+    backgroundColor: theme.colors.danger, // Alert Red #E03616
   },
-  disabled: {
-    backgroundColor: theme.colors.borderLight,
-    borderColor: theme.colors.border,
-    opacity: 0.6,
+  disabledSurface: {
+    backgroundColor: theme.colors.surfaceSubtle,
+    borderColor: theme.colors.borderLight,
   },
+
+  // Typography
   textBase: {
-    fontWeight: '600',
+    fontFamily: theme.typography.fontFamilies.display,
+    fontWeight: '800',
     textAlign: 'center',
-    letterSpacing: 0.2,
+    letterSpacing: -0.2,
   },
-  smText: {
-    fontSize: 13,
+  text_sm: {
+    fontSize: scale(14),
   },
-  mdText: {
-    fontSize: 15,
+  text_md: {
+    fontSize: scale(15),
   },
-  lgText: {
-    fontSize: 16,
+  text_lg: {
+    fontSize: scale(16),
   },
-  primaryText: {
-    color: theme.colors.textInverse, // #ffffff
+  text_primary: {
+    color: '#FFFFFF',
   },
-  secondaryText: {
-    color: theme.colors.text, // #42362e
+  text_secondary: {
+    color: theme.colors.text,
   },
-  outlineText: {
-    color: theme.colors.primary, // #b69788
+  text_pool: {
+    color: theme.colors.text,
   },
-  ghostText: {
-    color: theme.colors.textSecondary, // #a8917f
+  text_bubblegum: {
+    color: theme.colors.text,
   },
-  dangerText: {
-    color: theme.colors.textInverse,
+  text_outline: {
+    color: theme.colors.text,
   },
-  disabledText: {
+  text_ghost: {
+    color: theme.colors.primary,
+  },
+  text_danger: {
+    color: '#FFFFFF',
+  },
+  textDisabled: {
     color: theme.colors.textMuted,
   },
 });
-

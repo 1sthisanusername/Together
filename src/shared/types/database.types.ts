@@ -352,6 +352,7 @@ export type Database = {
           note: string | null;
           memory_date: string;
           media_id: string | null;
+          media_ids: string[] | null;
           favorite: boolean;
           deleted_at: string | null;
           created_at: string;
@@ -366,6 +367,7 @@ export type Database = {
           note?: string | null;
           memory_date?: string;
           media_id?: string | null;
+          media_ids?: string[] | null;
           favorite?: boolean;
           deleted_at?: string | null;
           created_at?: string;
@@ -380,6 +382,7 @@ export type Database = {
           note?: string | null;
           memory_date?: string;
           media_id?: string | null;
+          media_ids?: string[] | null;
           favorite?: boolean;
           deleted_at?: string | null;
           created_at?: string;
@@ -392,6 +395,7 @@ export type Database = {
           id: string;
           couple_id: string;
           owner_id: string;
+          memory_id: string | null;
           bucket_path: string;
           mime_type: string;
           file_size: number | null;
@@ -403,6 +407,7 @@ export type Database = {
           id?: string;
           couple_id: string;
           owner_id: string;
+          memory_id?: string | null;
           bucket_path: string;
           mime_type: string;
           file_size?: number | null;
@@ -414,6 +419,7 @@ export type Database = {
           id?: string;
           couple_id?: string;
           owner_id?: string;
+          memory_id?: string | null;
           bucket_path?: string;
           mime_type?: string;
           file_size?: number | null;

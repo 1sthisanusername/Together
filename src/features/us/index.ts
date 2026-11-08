@@ -8,4 +8,6 @@ export {
   useToggleBucketItem,
   useImportantDates,
   useAddImportantDate,
+  useUpdateImportantDate,
+  useDeleteImportantDate,
 } from './hooks/useUsData';

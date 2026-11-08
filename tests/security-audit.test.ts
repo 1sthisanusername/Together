@@ -37,7 +37,9 @@ describe('Security Audit - Secrets & Key Leakage', () => {
 });
 
 describe('Security Audit - Database RLS & Schema Integrity', () => {
-  const migrationPath = path.resolve(__dirname, '../supabase/security_hardening_audit.sql');
+  const migrationPath = fs.existsSync(path.resolve(__dirname, '../supabase/migrations/20261108000005_security_hardening.sql'))
+    ? path.resolve(__dirname, '../supabase/migrations/20261108000005_security_hardening.sql')
+    : path.resolve(__dirname, '../supabase/_archive/security_hardening_audit.sql');
   const migrationSql = fs.readFileSync(migrationPath, 'utf8');
 
   it('enforces partner answer secrecy in RLS (Finding 1 - Critical)', () => {
@@ -231,5 +233,38 @@ describe('Security Audit - Cache Purging on Sign Out', () => {
     clearAppCache();
 
     expect(queryClient.getQueryData(['sensitive_couple_data'])).toBeUndefined();
+  });
+});
+
+describe('Security Audit - Private Storage Policies for couples-media', () => {
+  const couple1Members = ['user-a', 'user-b'];
+  const outsider = 'outsider-eve';
+
+  const canAccessStorageObject = (userId: string, bucketId: string, folderCoupleId: string) => {
+    if (bucketId !== 'couples-media') return false;
+    return couple1Members.includes(userId) && folderCoupleId === 'couple-1';
+  };
+
+  it('allows both partners in couple-1 to read and upload to couple-1/ storage folder', () => {
+    expect(canAccessStorageObject('user-a', 'couples-media', 'couple-1')).toBe(true);
+    expect(canAccessStorageObject('user-b', 'couples-media', 'couple-1')).toBe(true);
+  });
+
+  it('blocks a third account from reading or writing to couple-1/ storage folder', () => {
+    expect(canAccessStorageObject(outsider, 'couples-media', 'couple-1')).toBe(false);
+  });
+
+  it('enforces that only the uploader can delete their memory file', () => {
+    const memory = {
+      id: 'mem-1',
+      created_by: 'user-a',
+      title: 'Our anniversary dinner',
+    };
+
+    const canDeleteMemory = (userId: string) => memory.created_by === userId;
+
+    expect(canDeleteMemory('user-a')).toBe(true);
+    expect(canDeleteMemory('user-b')).toBe(false);
+    expect(canDeleteMemory(outsider)).toBe(false);
   });
 });

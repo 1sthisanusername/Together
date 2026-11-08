@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Card, Button } from '@/shared/ui';
@@ -33,6 +33,12 @@ export const GuessMyAnswerRenderer: React.FC<GuessMyAnswerProps> = ({
   const { mutate: completeSession, isPending: isCompleting } = useCompleteSession(session.id);
   const { mutate: saveMemory, isSuccess: isMemorySaved } = useSaveSessionAsMemory();
 
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedOption(null);
+  }, [currentRound?.id]);
+
   const roundEvents = events.filter(
     (e) => e.type === 'answer_submitted' && (e.payload as any)?.round === currentRound?.id
   );
@@ -41,6 +47,7 @@ export const GuessMyAnswerRenderer: React.FC<GuessMyAnswerProps> = ({
   const partnerAnswerEvent = roundEvents.find((e) => e.user_id === partnerId);
 
   const myAnswer = (myAnswerEvent?.payload as any)?.answer;
+  const effectiveMyAnswer = myAnswer || selectedOption;
   const partnerAnswer = (partnerAnswerEvent?.payload as any)?.answer;
   const isPartnerMasked = (partnerAnswerEvent?.payload as any)?.masked === true;
   const isBothRevealed = myAnswer && partnerAnswer && !isPartnerMasked;
@@ -49,7 +56,8 @@ export const GuessMyAnswerRenderer: React.FC<GuessMyAnswerProps> = ({
   const isCompleted = session.status === 'completed';
 
   const handleSelect = (option: string) => {
-    if (myAnswer || isSubmitting) return;
+    if (effectiveMyAnswer || isSubmitting) return;
+    setSelectedOption(option);
     submitEvent({
       type: 'answer_submitted',
       payload: {
@@ -116,15 +124,15 @@ export const GuessMyAnswerRenderer: React.FC<GuessMyAnswerProps> = ({
             key={idx}
             style={[
               styles.optionBtn,
-              myAnswer === option && styles.optionSelected,
+              effectiveMyAnswer === option && styles.optionSelected,
               isBothRevealed && partnerAnswer === option && styles.optionPartner,
             ]}
             onPress={() => handleSelect(option)}
-            disabled={!!myAnswer || isSubmitting}
+            disabled={!!effectiveMyAnswer || isSubmitting}
             activeOpacity={0.8}
           >
             <Text style={styles.optionText}>{option}</Text>
-            {myAnswer === option && (
+            {effectiveMyAnswer === option && (
               <Text style={styles.myBadge}>✓ {t('sessions.yourChoice')}</Text>
             )}
             {isBothRevealed && partnerAnswer === option && (
@@ -134,7 +142,7 @@ export const GuessMyAnswerRenderer: React.FC<GuessMyAnswerProps> = ({
         ))}
       </View>
 
-      {myAnswer && !partnerAnswerEvent ? (
+      {effectiveMyAnswer && !partnerAnswerEvent ? (
         <Card style={styles.statusCard}>
           <Text style={styles.statusText}>
             🔒 {t('sessions.waitingForPartner', { name: partnerName })}
@@ -142,7 +150,7 @@ export const GuessMyAnswerRenderer: React.FC<GuessMyAnswerProps> = ({
         </Card>
       ) : null}
 
-      {!myAnswer && partnerAnswerEvent ? (
+      {!effectiveMyAnswer && partnerAnswerEvent ? (
         <Card style={styles.partnerWaitingCard}>
           <Text style={styles.partnerWaitingText}>
             ⚡ {t('sessions.partnerWaitingAnswer', { name: partnerName })}

@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Input } from '@/shared/ui';
+import { Card, Button, Input, DatePickerField } from '@/shared/ui';
 import type { ImportantDate } from '@/shared/types';
-import { useAddImportantDate } from '../hooks/useUsData';
+import {
+  useAddImportantDate,
+  useUpdateImportantDate,
+  useDeleteImportantDate,
+} from '../hooks/useUsData';
+import { useAuthStore } from '@/features/auth';
+import { useActiveCouple } from '@/features/couple';
 import { theme } from '@/shared/theme';
 
 export interface ImportantDatesListProps {
@@ -12,22 +18,75 @@ export interface ImportantDatesListProps {
 
 export const ImportantDatesList: React.FC<ImportantDatesListProps> = ({ dates }) => {
   const { t } = useTranslation();
+  const user = useAuthStore((state) => state.user);
+  const { data: coupleData } = useActiveCouple();
+  const partnerName = coupleData?.partner?.display_name || 'Partner';
+
   const [showAdd, setShowAdd] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   const [title, setTitle] = useState('');
   const [dateStr, setDateStr] = useState('');
+  const [isRecurring, setIsRecurring] = useState(true);
 
-  const { mutate: addDate, isPending } = useAddImportantDate();
+  const { mutate: addDate, isPending: isAdding } = useAddImportantDate();
+  const { mutate: updateDate, isPending: isUpdating } = useUpdateImportantDate();
+  const { mutate: deleteDate } = useDeleteImportantDate();
 
-  const handleAdd = () => {
-    if (!title.trim() || !dateStr.trim()) return;
-    addDate({
-      title: title.trim(),
-      eventDate: dateStr.trim(),
-      category: 'anniversary',
-    });
+  const handleStartAdd = () => {
+    setEditingId(null);
     setTitle('');
     setDateStr('');
+    setIsRecurring(true);
+    setShowAdd(!showAdd);
+  };
+
+  const handleStartEdit = (item: ImportantDate) => {
+    setEditingId(item.id);
+    setTitle(item.title);
+    setDateStr(item.event_date);
+    setIsRecurring(item.is_recurring ?? true);
+    setShowAdd(true);
+  };
+
+  const handleSave = () => {
+    if (!title.trim() || !dateStr.trim()) return;
+
+    if (editingId) {
+      updateDate({
+        id: editingId,
+        title: title.trim(),
+        eventDate: dateStr.trim(),
+        isRecurring,
+      });
+    } else {
+      addDate({
+        title: title.trim(),
+        eventDate: dateStr.trim(),
+        category: 'anniversary',
+        isRecurring,
+      });
+    }
+
+    setTitle('');
+    setDateStr('');
+    setEditingId(null);
     setShowAdd(false);
+  };
+
+  const handleDelete = (id: string, itemTitle: string) => {
+    Alert.alert(
+      'Delete Date',
+      `Are you sure you want to remove "${itemTitle}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => deleteDate(id),
+        },
+      ]
+    );
   };
 
   return (
@@ -38,53 +97,105 @@ export const ImportantDatesList: React.FC<ImportantDatesListProps> = ({ dates })
           title={showAdd ? t('common.cancel') : `+ ${t('us.addDate')}`}
           size="sm"
           variant="ghost"
-          onPress={() => setShowAdd(!showAdd)}
+          onPress={handleStartAdd}
         />
       </View>
 
       {showAdd ? (
         <View style={styles.addForm}>
+          <Text style={styles.formTitle}>
+            {editingId ? 'Edit Important Date' : 'Add Special Date'}
+          </Text>
+
           <Input
-            placeholder={t('us.dateTitlePlaceholder')}
+            placeholder="e.g. First Date, First Kiss, First Trip..."
             value={title}
             onChangeText={setTitle}
           />
-          <Input
-            placeholder="YYYY-MM-DD"
+
+          <DatePickerField
+            placeholder="Select date"
             value={dateStr}
-            onChangeText={setDateStr}
+            onChange={setDateStr}
           />
-          <Button
-            title={t('common.save')}
-            variant="primary"
-            size="sm"
-            loading={isPending}
-            onPress={handleAdd}
-          />
+
+          <TouchableOpacity
+            style={styles.recurringRow}
+            onPress={() => setIsRecurring(!isRecurring)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.checkbox}>{isRecurring ? '☑' : '☐'}</Text>
+            <Text style={styles.recurringLabel}>Repeat every year (yearly reminder)</Text>
+          </TouchableOpacity>
+
+          <View style={styles.formActions}>
+            <Button
+              title={t('common.save')}
+              variant="primary"
+              size="sm"
+              loading={isAdding || isUpdating}
+              disabled={!title.trim() || !dateStr.trim()}
+              onPress={handleSave}
+              style={{ flex: 1 }}
+            />
+          </View>
         </View>
       ) : null}
 
       <View style={styles.list}>
         {dates.length === 0 ? (
-          <Text style={styles.emptyText}>{t('common.empty')}</Text>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No special dates added yet.</Text>
+            <Text style={styles.emptySubtext}>
+              Add moments like your first date, first trip, or memorable milestones!
+            </Text>
+          </View>
         ) : (
-          dates.map((d) => (
-            <View key={d.id} style={styles.dateRow}>
-              <View style={styles.dateIconWrapper}>
-                <Text style={styles.dateIcon}>💍</Text>
+          dates.map((d) => {
+            const addedByText =
+              d.created_by === user?.id ? 'Added by you' : `Added by ${partnerName}`;
+
+            return (
+              <View key={d.id} style={styles.dateRow}>
+                <View style={styles.dateIconWrapper}>
+                  <Text style={styles.dateIcon}>💍</Text>
+                </View>
+
+                <View style={styles.dateContent}>
+                  <Text style={styles.dateTitle}>{d.title}</Text>
+                  <Text style={styles.dateSub}>
+                    {new Date(d.event_date).toLocaleDateString('en-US', {
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </Text>
+                  <View style={styles.tagRow}>
+                    <Text style={styles.addedByTag}>{addedByText}</Text>
+                    {d.is_recurring && <Text style={styles.recurringTag}>🔁 Yearly</Text>}
+                  </View>
+                </View>
+
+                {/* Edit & Delete Action Buttons */}
+                <View style={styles.actionsCol}>
+                  <TouchableOpacity
+                    onPress={() => handleStartEdit(d)}
+                    style={styles.actionBtn}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Text style={styles.editIcon}>✎</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleDelete(d.id, d.title)}
+                    style={styles.actionBtn}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Text style={styles.deleteIcon}>✕</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-              <View style={styles.dateContent}>
-                <Text style={styles.dateTitle}>{d.title}</Text>
-                <Text style={styles.dateSub}>
-                  {new Date(d.event_date).toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </Text>
-              </View>
-            </View>
-          ))
+            );
+          })
         )}
       </View>
     </Card>
@@ -109,16 +220,41 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '800',
-    color: theme.colors.text, // #42362e
+    color: theme.colors.text,
     letterSpacing: -0.3,
   },
   addForm: {
     backgroundColor: theme.colors.surfaceSubtle,
     borderRadius: 14,
-    padding: 14,
+    padding: 16,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: theme.colors.borderLight,
+  },
+  formTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: 10,
+  },
+  recurringRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginVertical: 10,
+  },
+  checkbox: {
+    fontSize: 18,
+    color: theme.colors.primary,
+  },
+  recurringLabel: {
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    fontWeight: '500',
+  },
+  formActions: {
+    flexDirection: 'row',
+    marginTop: 6,
   },
   list: {
     gap: 10,
@@ -128,7 +264,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 14,
-    backgroundColor: theme.colors.surfaceSubtle, // #f0ece6
+    backgroundColor: theme.colors.surfaceSubtle,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: theme.colors.borderLight,
@@ -137,7 +273,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   dateIcon: {
-    fontSize: 20,
+    fontSize: 22,
   },
   dateContent: {
     flex: 1,
@@ -145,18 +281,65 @@ const styles = StyleSheet.create({
   dateTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: theme.colors.text, // #42362e
+    color: theme.colors.text,
     marginBottom: 2,
   },
   dateSub: {
     fontSize: 12,
-    color: theme.colors.textSecondary, // #a8917f
+    color: theme.colors.textSecondary,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+    alignItems: 'center',
+  },
+  addedByTag: {
+    fontSize: 11,
+    color: '#8A7568',
+    backgroundColor: '#EDE5DE',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  recurringTag: {
+    fontSize: 11,
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
+  actionsCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginLeft: 8,
+  },
+  actionBtn: {
+    padding: 4,
+  },
+  editIcon: {
+    fontSize: 15,
+    color: theme.colors.textSecondary,
+    fontWeight: '700',
+  },
+  deleteIcon: {
+    fontSize: 15,
+    color: '#DC2626',
+    fontWeight: '700',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 16,
   },
   emptyText: {
-    fontSize: 13,
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.textSecondary,
+    marginBottom: 4,
+  },
+  emptySubtext: {
+    fontSize: 12,
     color: theme.colors.textMuted,
-    fontStyle: 'italic',
     textAlign: 'center',
-    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
 });

@@ -1,12 +1,31 @@
 import { create } from 'zustand';
+import { TurboModuleRegistry, NativeModules } from 'react-native';
 import type { Session, User } from '@supabase/supabase-js';
-import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
 import { supabase, analytics, clearAppCache, push } from '@/services';
 import type { Profile } from '@/shared/types';
-import type { SignUpInput, LoginInput, ResetPasswordInput } from '../schemas';
 
-WebBrowser.maybeCompleteAuthSession();
+/**
+ * Check if RNGoogleSignin native module is registered in the native binary.
+ * Prevents TurboModuleRegistry.getEnforcing from throwing an Invariant Violation
+ * when dynamic import('@react-native-google-signin/google-signin') is evaluated.
+ */
+function isGoogleSigninNativeAvailable(): boolean {
+  try {
+    if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
+      return true;
+    }
+    if (typeof TurboModuleRegistry !== 'undefined' && typeof TurboModuleRegistry.get === 'function') {
+      const tm = TurboModuleRegistry.get('RNGoogleSignin');
+      if (tm != null) return true;
+    }
+    if (typeof NativeModules !== 'undefined' && (NativeModules as any)?.RNGoogleSignin != null) {
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
 
 interface AuthState {
   session: Session | null;
@@ -19,11 +38,8 @@ interface AuthState {
   setProfile: (profile: Profile | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  signUp: (data: SignUpInput) => Promise<{ error: Error | null; session?: Session | null; needsEmailConfirmation?: boolean }>;
-  signIn: (data: LoginInput) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  resetPassword: (data: ResetPasswordInput) => Promise<{ error: Error | null }>;
   fetchProfile: (userId: string) => Promise<Profile | null>;
   initAuth: () => () => void;
 }
@@ -45,7 +61,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   fetchProfile: async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
@@ -92,69 +108,66 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  signUp: async ({ email, password, displayName }: SignUpInput) => {
+  signInWithGoogle: async () => {
     set({ isLoading: true, error: null });
-    try {
-      const redirectUrl = Linking.createURL('auth/callback');
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            display_name: displayName,
-          },
-          emailRedirectTo: redirectUrl,
-        },
-      });
 
-      if (error) {
-        set({ isLoading: false, error: error.message });
-        return { error, session: null, needsEmailConfirmation: false };
-      }
-
-      let activeSession = data.session;
-
-      // Try automatic immediate login if session was null (works when confirm email is disabled)
-      if (!activeSession) {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (!signInError && signInData.session) {
-          activeSession = signInData.session;
-        }
-      }
-
-      if (data.user) {
-        analytics.track('account_created');
-        analytics.identify(data.user.id, { email });
-        if (activeSession) {
-          await get().fetchProfile(data.user.id);
-        }
-      }
-
-      const needsEmailConfirmation = !activeSession;
-
-      set({
-        session: activeSession,
-        user: activeSession?.user ?? data.user ?? null,
-        isLoading: false,
-      });
-
-      return { error: null, session: activeSession, needsEmailConfirmation };
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Signup failed');
+    // Guard against missing native module BEFORE importing the package
+    // @react-native-google-signin/google-signin executes TurboModuleRegistry.getEnforcing('RNGoogleSignin')
+    // at module evaluation time, which throws an Invariant Violation if not present in the native binary.
+    if (!isGoogleSigninNativeAvailable()) {
+      console.warn('[GoogleSignin] RNGoogleSignin native module is not registered in this binary.');
+      const error = new Error('Google sign-in needs the latest app build');
       set({ isLoading: false, error: error.message });
-      return { error, session: null, needsEmailConfirmation: false };
+      return { error };
     }
-  },
 
-  signIn: async ({ email, password }: LoginInput) => {
-    set({ isLoading: true, error: null });
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      let GoogleSignin: any;
+      let statusCodes: any;
+
+      try {
+        const googleModule = await import('@react-native-google-signin/google-signin');
+        GoogleSignin = googleModule.GoogleSignin;
+        statusCodes = googleModule.statusCodes;
+        if (!GoogleSignin) {
+          throw new Error('Google sign-in needs the latest app build');
+        }
+      } catch (nativeErr: any) {
+        console.warn('[GoogleSignin] Native module missing:', nativeErr);
+        const error = new Error('Google sign-in needs the latest app build');
+        set({ isLoading: false, error: error.message });
+        return { error };
+      }
+
+      // Configure Google Sign-In dynamically with env vars
+      const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '';
+      const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
+
+      if (!webClientId) {
+        console.warn('[GoogleSignin] EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID is not configured');
+      }
+
+      try {
+        GoogleSignin.configure({
+          webClientId: webClientId || undefined,
+          iosClientId: iosClientId || undefined,
+          scopes: ['profile', 'email'],
+        });
+      } catch (cfgErr) {
+        console.warn('[GoogleSignin] Configuration error:', cfgErr);
+      }
+
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const response = await GoogleSignin.signIn();
+      const idToken = response.data?.idToken || (response as any).idToken;
+
+      if (!idToken) {
+        throw new Error('No Google ID token received');
+      }
+
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: idToken,
       });
 
       if (error) {
@@ -170,87 +183,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       set({ session: data.session, user: data.user, isLoading: false });
       return { error: null };
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Login failed');
-      set({ isLoading: false, error: error.message });
-      return { error };
-    }
-  },
-
-  signInWithGoogle: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const redirectUrl = Linking.createURL('auth/callback');
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectUrl,
-          skipBrowserRedirect: true,
-        },
-      });
-
-      if (error) {
+    } catch (err: any) {
+      if (err?.message?.includes('RNGoogleSignin') || err?.message?.includes('TurboModuleRegistry')) {
+        const error = new Error('Google sign-in needs the latest app build');
         set({ isLoading: false, error: error.message });
         return { error };
       }
 
-      if (!data?.url) {
-        const err = new Error('No OAuth URL returned');
-        set({ isLoading: false, error: err.message });
-        return { error: err };
-      }
-
-      const res = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
-
-      if (res.type === 'success' && res.url) {
-        const parsed = Linking.parse(res.url);
-        const queryParams = parsed.queryParams;
-
-        if (queryParams?.code) {
-          const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(
-            String(queryParams.code)
-          );
-          if (sessionError) {
-            set({ isLoading: false, error: sessionError.message });
-            return { error: sessionError };
-          }
-          if (sessionData.user) {
-            analytics.identify(sessionData.user.id, { email: sessionData.user.email ?? null });
-            await get().fetchProfile(sessionData.user.id);
-          }
-          set({ session: sessionData.session, user: sessionData.user, isLoading: false });
+      try {
+        const googleModule = await import('@react-native-google-signin/google-signin');
+        const sc = googleModule.statusCodes;
+        if (err.code === sc?.SIGN_IN_CANCELLED || err.code === sc?.IN_PROGRESS) {
+          set({ isLoading: false });
           return { error: null };
         }
-
-        if (res.url.includes('#')) {
-          const hash = res.url.split('#')[1];
-          const params = new URLSearchParams(hash);
-          const accessToken = params.get('access_token');
-          const refreshToken = params.get('refresh_token');
-
-          if (accessToken && refreshToken) {
-            const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
-            if (sessionError) {
-              set({ isLoading: false, error: sessionError.message });
-              return { error: sessionError };
-            }
-            if (sessionData.user) {
-              analytics.identify(sessionData.user.id, { email: sessionData.user.email ?? null });
-              await get().fetchProfile(sessionData.user.id);
-            }
-            set({ session: sessionData.session, user: sessionData.user, isLoading: false });
-            return { error: null };
-          }
+        if (err.code === sc?.PLAY_SERVICES_NOT_AVAILABLE) {
+          const error = new Error('Google Play Services is not available');
+          set({ isLoading: false, error: error.message });
+          return { error };
         }
-      }
+      } catch {}
 
-      set({ isLoading: false });
-      return { error: null };
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Google sign-in failed');
+      const error = err instanceof Error ? err : new Error(err.message || 'Google sign-in failed');
       set({ isLoading: false, error: error.message });
       return { error };
     }
@@ -259,6 +213,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     set({ isLoading: true });
     try {
+      if (isGoogleSigninNativeAvailable()) {
+        try {
+          const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
+          await GoogleSignin.signOut();
+        } catch {}
+      }
       await supabase.auth.signOut();
       analytics.reset();
       clearAppCache();
@@ -266,26 +226,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (err) {
       console.warn('Error during sign out:', err);
       clearAppCache();
-      set({ isLoading: false });
-    }
-  },
-
-  resetPassword: async ({ email }: ResetPasswordInput) => {
-    set({ isLoading: true, error: null });
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      set({ isLoading: false, error: error?.message ?? null });
-      return { error: error ? new Error(error.message) : null };
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Reset failed');
-      set({ isLoading: false, error: error.message });
-      return { error };
+      set({ session: null, user: null, profile: null, isLoading: false });
     }
   },
 
   initAuth: () => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         set({ session, user: session?.user ?? null, isInitialized: true, isLoading: false });
         if (session?.user) {
           await get().fetchProfile(session.user.id);
@@ -310,4 +257,3 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     };
   },
 }));
-

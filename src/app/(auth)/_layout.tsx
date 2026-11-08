@@ -3,39 +3,12 @@ import { Stack } from 'expo-router';
 
 export default function AuthLayout() {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: true,
-        headerBackTitle: 'Back',
-        headerTintColor: '#6366F1',
-        headerTitleStyle: {
-          fontWeight: '700',
-          color: '#0F172A',
-        },
-        contentStyle: {
-          backgroundColor: '#FFFFFF',
-        },
-      }}
-    >
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen
         name="login"
         options={{
-          title: 'Log In',
+          title: 'Welcome',
           headerShown: false,
-        }}
-      />
-      <Stack.Screen
-        name="signup"
-        options={{
-          title: 'Create Account',
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen
-        name="reset-password"
-        options={{
-          title: 'Reset Password',
-          headerShown: true,
         }}
       />
       <Stack.Screen
@@ -48,4 +21,3 @@ export default function AuthLayout() {
     </Stack>
   );
 }
-

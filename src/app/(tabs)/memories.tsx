@@ -1,28 +1,47 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useMemories, MemoryCard, AddMemoryModal } from '@/features/memories';
 import { LoadingState, ErrorState, Button, EmptyState } from '@/shared/ui';
-import { theme } from '@/shared/theme';
+import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export default function MemoriesScreen() {
   const { t } = useTranslation();
   const { data: memories, isLoading, error, refetch } = useMemories();
   const [showAddModal, setShowAddModal] = useState(false);
 
+  const insets = useSafeAreaInsets();
+  let tabBarHeight = 56;
+  try {
+    tabBarHeight = useBottomTabBarHeight();
+  } catch {
+    tabBarHeight = 56;
+  }
+  const bottomPadding = tabBarHeight + insets.bottom + 16;
+
+  const handleOpenAdd = () => {
+    triggerHaptic('light');
+    setShowAddModal(true);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <View style={styles.headerText}>
-          <Text style={styles.title}>{t('memories.title')}</Text>
-          <Text style={styles.subtitle}>{t('memories.subtitle')}</Text>
+          <Text style={styles.title} maxFontSizeMultiplier={1.35}>
+            {t('memories.title')}
+          </Text>
+          <Text style={styles.subtitle} maxFontSizeMultiplier={1.35}>
+            {t('memories.subtitle')}
+          </Text>
         </View>
         <Button
           title={`+ ${t('memories.addMemory')}`}
           variant="primary"
           size="sm"
-          onPress={() => setShowAddModal(true)}
+          onPress={handleOpenAdd}
         />
       </View>
 
@@ -40,11 +59,14 @@ export default function MemoriesScreen() {
           title={t('memories.title')}
           description={t('memories.emptyMemories')}
           actionTitle={t('memories.addMemory')}
-          onAction={() => setShowAddModal(true)}
+          onAction={handleOpenAdd}
         />
       ) : (
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={false} onRefresh={() => { refetch(); }} />}
         >
           {memories?.map((memory) => (
@@ -64,36 +86,36 @@ export default function MemoriesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: theme.colors.background, // #f7f9f6
+    backgroundColor: theme.colors.background,
   },
   header: {
+    paddingHorizontal: scale(20),
+    paddingTop: scale(16),
+    paddingBottom: scale(14),
+    backgroundColor: theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 14,
-    backgroundColor: theme.colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.borderLight,
   },
   headerText: {
     flex: 1,
-    marginRight: 12,
+    marginRight: scale(12),
   },
   title: {
-    fontSize: 26,
+    fontSize: scale(26),
     fontWeight: '800',
-    color: theme.colors.text, // #42362e
-    marginBottom: 4,
+    color: theme.colors.text,
+    marginBottom: scale(4),
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 13,
-    color: theme.colors.textSecondary, // #a8917f
+    fontSize: scale(14),
+    color: theme.colors.textSecondary,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: scale(20),
+    paddingVertical: scale(16),
   },
 });

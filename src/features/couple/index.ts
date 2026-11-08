@@ -7,6 +7,7 @@ export {
   useCreateCouple,
   useAcceptInvite,
   useUnlinkCouple,
+  useUpdateStartDate,
   usePartnerUnlinkStore,
 } from './hooks/useCouple';
 export type { CoupleData, CoupleState } from './hooks/useCouple';

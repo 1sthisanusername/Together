@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityRoom } from '@/features/sessions';
 import { useActiveCouple } from '@/features/couple';
+import { GameErrorBoundary } from '@/shared/ui';
 
 export default function SessionScreen() {
   const router = useRouter();
@@ -11,11 +12,13 @@ export default function SessionScreen() {
   const partnerName = coupleData?.partner?.display_name || 'Partner';
 
   return (
-    <ActivityRoom
-      sessionId={id!}
-      onExit={() => router.back()}
-      partnerName={partnerName}
-    />
+    <GameErrorBoundary onExit={() => router.back()}>
+      <ActivityRoom
+        sessionId={id!}
+        onExit={() => router.back()}
+        partnerName={partnerName}
+      />
+    </GameErrorBoundary>
   );
 }
 

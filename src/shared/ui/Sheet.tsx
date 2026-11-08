@@ -7,7 +7,7 @@ import {
   StyleSheet,
   TouchableWithoutFeedback,
 } from 'react-native';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface SheetProps {
   visible: boolean;
@@ -36,9 +36,19 @@ export const Sheet: React.FC<SheetProps> = ({
         <View style={styles.sheetHandle} />
         {title ? (
           <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-              <Text style={styles.closeButton}>✕</Text>
+            <Text style={styles.title} maxFontSizeMultiplier={1.35}>
+              {title}
+            </Text>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeTouchArea}
+              hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
+              accessibilityRole="button"
+              accessibilityLabel="Close sheet"
+            >
+              <View style={styles.closePill}>
+                <Text style={styles.closeButton}>✕</Text>
+              </View>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -51,46 +61,61 @@ export const Sheet: React.FC<SheetProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(66, 54, 46, 0.45)', // Warm espresso tinted backdrop
+    backgroundColor: 'rgba(43, 33, 24, 0.65)', // Warm Ink backdrop
   },
   sheetContainer: {
-    backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 22,
-    paddingBottom: 40,
-    paddingTop: 14,
-    maxHeight: '85%',
-    shadowColor: theme.colors.text,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 8,
+    backgroundColor: theme.colors.background, // Paper #FFF4E3
+    borderTopLeftRadius: scale(24),
+    borderTopRightRadius: scale(24),
+    borderTopWidth: 2.5,
+    borderLeftWidth: 2.5,
+    borderRightWidth: 2.5,
+    borderColor: theme.colors.border,
+    paddingHorizontal: scale(20),
+    paddingBottom: scale(36),
+    paddingTop: scale(12),
   },
   sheetHandle: {
-    width: 44,
-    height: 5,
-    borderRadius: 3,
+    width: scale(44),
+    height: scale(6),
     backgroundColor: theme.colors.border,
+    borderRadius: scale(3),
     alignSelf: 'center',
-    marginBottom: 18,
+    marginBottom: scale(14),
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    alignItems: 'center',
+    marginBottom: scale(16),
   },
   title: {
-    fontSize: 20,
+    fontFamily: theme.typography.fontFamilies.display,
+    fontSize: scale(20),
     fontWeight: '800',
-    color: theme.colors.text, // #42362e
+    color: theme.colors.text,
     letterSpacing: -0.3,
   },
+  closeTouchArea: {
+    minWidth: 48,
+    minHeight: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closePill: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   closeButton: {
-    fontSize: 18,
-    color: theme.colors.textSecondary, // #a8917f
-    fontWeight: '600',
+    fontSize: scale(14),
+    fontWeight: '800',
+    color: theme.colors.text,
   },
   content: {
     width: '100%',

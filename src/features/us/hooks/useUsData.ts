@@ -108,10 +108,12 @@ export function useAddImportantDate() {
       title,
       eventDate,
       category,
+      isRecurring = true,
     }: {
       title: string;
       eventDate: string;
       category?: string;
+      isRecurring?: boolean;
     }) => {
       if (!user?.id || !coupleData?.couple?.id) throw new Error('Not authenticated');
 
@@ -123,12 +125,73 @@ export function useAddImportantDate() {
           title,
           event_date: eventDate,
           category: category || 'anniversary',
+          is_recurring: isRecurring,
         })
         .select('*')
         .single();
 
       if (error) throw new Error(error.message);
       return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['importantDates'] });
+      queryClient.invalidateQueries({ queryKey: ['homeData'] });
+    },
+  });
+}
+
+export function useUpdateImportantDate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      title,
+      eventDate,
+      category,
+      isRecurring,
+    }: {
+      id: string;
+      title: string;
+      eventDate: string;
+      category?: string;
+      isRecurring?: boolean;
+    }) => {
+      const { data, error } = await supabase
+        .from('important_dates')
+        .update({
+          title,
+          event_date: eventDate,
+          category: category || 'anniversary',
+          is_recurring: isRecurring ?? true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select('*')
+        .single();
+
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['importantDates'] });
+      queryClient.invalidateQueries({ queryKey: ['homeData'] });
+    },
+  });
+}
+
+export function useDeleteImportantDate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('important_dates')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw new Error(error.message);
+      return id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['importantDates'] });

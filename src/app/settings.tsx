@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SettingsView } from '@/features/settings';
-import { theme } from '@/shared/theme';
+import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -13,10 +13,23 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>← {t('common.back')}</Text>
+        <TouchableOpacity
+          onPress={() => {
+            triggerHaptic('light');
+            router.back();
+          }}
+          style={styles.backBtn}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+        >
+          <Text style={styles.backText} maxFontSizeMultiplier={1.35}>
+            ← {t('common.back')}
+          </Text>
         </TouchableOpacity>
-        <Text style={styles.title}>{t('settings.title')}</Text>
+        <Text style={styles.title} maxFontSizeMultiplier={1.35}>
+          {t('settings.title')}
+        </Text>
         <View style={styles.spacer} />
       </View>
       <SettingsView />
@@ -33,28 +46,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(14),
     backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.borderLight,
+    borderBottomColor: theme.colors.border,
   },
   backBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: scale(6),
+    paddingHorizontal: scale(8),
+    minHeight: 36,
+    justifyContent: 'center',
   },
   backText: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '700',
     color: theme.colors.primary,
   },
   title: {
-    fontSize: 18,
+    fontSize: scale(18),
     fontWeight: '800',
     color: theme.colors.text,
+    letterSpacing: -0.2,
   },
   spacer: {
-    width: 60,
+    width: scale(60),
   },
 });
-

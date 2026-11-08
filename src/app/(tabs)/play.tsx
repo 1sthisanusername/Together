@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useActivities, useStartActivity, ActivityCard } from '@/features/activities';
 import { LoadingState, ErrorState } from '@/shared/ui';
-import { theme } from '@/shared/theme';
+import { theme, scale, radii, triggerHaptic } from '@/shared/theme';
 
 export default function PlayScreen() {
   const router = useRouter();
@@ -17,8 +18,18 @@ export default function PlayScreen() {
   );
   const { mutateAsync: startActivity, isPending: isStarting } = useStartActivity();
 
+  const insets = useSafeAreaInsets();
+  let tabBarHeight = 56;
+  try {
+    tabBarHeight = useBottomTabBarHeight();
+  } catch {
+    tabBarHeight = 56;
+  }
+  const bottomPadding = tabBarHeight + insets.bottom + 16;
+
   const handleStart = async (activityId: string) => {
     try {
+      triggerHaptic('medium');
       const session = await startActivity(activityId);
       router.push(`/session/${session.id}`);
     } catch {
@@ -26,36 +37,63 @@ export default function PlayScreen() {
     }
   };
 
+  const handleFilterChange = (newFilter: 'all' | 'play' | 'deep_talk') => {
+    triggerHaptic('selection');
+    setFilter(newFilter);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Text style={styles.title}>{t('activities.title')}</Text>
-        <Text style={styles.subtitle}>{t('activities.subtitle')}</Text>
+        <Text style={styles.title} maxFontSizeMultiplier={1.35}>
+          {t('activities.title')}
+        </Text>
+        <Text style={styles.subtitle} maxFontSizeMultiplier={1.35}>
+          {t('activities.subtitle')}
+        </Text>
 
         <View style={styles.filterRow}>
           <TouchableOpacity
             style={[styles.filterBtn, filter === 'all' && styles.filterBtnActive]}
-            onPress={() => setFilter('all')}
+            onPress={() => handleFilterChange('all')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: filter === 'all' }}
           >
-            <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>
+            <Text
+              style={[styles.filterText, filter === 'all' && styles.filterTextActive]}
+              maxFontSizeMultiplier={1.35}
+            >
               {t('activities.tabAll')}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.filterBtn, filter === 'play' && styles.filterBtnActive]}
-            onPress={() => setFilter('play')}
+            onPress={() => handleFilterChange('play')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: filter === 'play' }}
           >
-            <Text style={[styles.filterText, filter === 'play' && styles.filterTextActive]}>
+            <Text
+              style={[styles.filterText, filter === 'play' && styles.filterTextActive]}
+              maxFontSizeMultiplier={1.35}
+            >
               {t('activities.tabPlay')}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.filterBtn, filter === 'deep_talk' && styles.filterBtnActive]}
-            onPress={() => setFilter('deep_talk')}
+            onPress={() => handleFilterChange('deep_talk')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: filter === 'deep_talk' }}
           >
-            <Text style={[styles.filterText, filter === 'deep_talk' && styles.filterTextActive]}>
+            <Text
+              style={[styles.filterText, filter === 'deep_talk' && styles.filterTextActive]}
+              maxFontSizeMultiplier={1.35}
+            >
               {t('activities.tabDeepTalk')}
             </Text>
           </TouchableOpacity>
@@ -73,7 +111,10 @@ export default function PlayScreen() {
         />
       ) : (
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={false} onRefresh={() => { refetch(); }} />}
         >
           {activities?.map((activity) => (
@@ -93,55 +134,58 @@ export default function PlayScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: theme.colors.background, // #f7f9f6
+    backgroundColor: theme.colors.background,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
+    paddingHorizontal: scale(20),
+    paddingTop: scale(16),
+    paddingBottom: scale(14),
     backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.borderLight,
+    borderBottomColor: theme.colors.border,
   },
   title: {
-    fontSize: 26,
+    fontSize: scale(26),
     fontWeight: '800',
-    color: theme.colors.text, // #42362e
-    marginBottom: 4,
+    color: theme.colors.text,
+    marginBottom: scale(4),
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 14,
-    color: theme.colors.textSecondary, // #a8917f
-    marginBottom: 16,
+    fontSize: scale(14),
+    color: theme.colors.textSecondary,
+    marginBottom: scale(16),
   },
   filterRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: scale(8),
   },
   filterBtn: {
-    paddingVertical: 7,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surfaceSubtle, // #f0ece6
+    paddingVertical: scale(8),
+    paddingHorizontal: scale(16),
+    borderRadius: radii.pill,
+    backgroundColor: theme.colors.surfaceSubtle,
     borderWidth: 1,
-    borderColor: theme.colors.borderLight,
+    borderColor: theme.colors.border,
+    minHeight: Math.max(38, scale(38)),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterBtnActive: {
-    backgroundColor: theme.colors.primary, // #b69788
+    backgroundColor: theme.colors.primary,
     borderColor: theme.colors.primary,
   },
   filterText: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '600',
     color: theme.colors.textSecondary,
   },
   filterTextActive: {
-    color: theme.colors.textInverse, // #ffffff
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: scale(20),
+    paddingVertical: scale(14),
   },
 });

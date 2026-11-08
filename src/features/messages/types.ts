@@ -15,8 +15,14 @@ export interface SendTextMessageParams {
 }
 
 export interface SendVoiceNoteParams {
-  fileBytes: Uint8Array | Blob;
+  uri?: string;
+  fileBytes?: Uint8Array | Blob;
   durationSeconds: number;
   fileName?: string;
+}
+
+export interface SendPhotoMessageParams {
+  uri: string;
+  caption?: string;
 }
 

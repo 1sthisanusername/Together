@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Input } from '@/shared/ui';
+import { Card, Button, Input, DatePickerField } from '@/shared/ui';
 import type { ImportantDate } from '@/shared/types';
 import { useAddImportantDate } from '../hooks/useUsData';
 import { theme } from '@/shared/theme';
@@ -56,16 +56,18 @@ export const NextReunionCountdownCard: React.FC<NextReunionCountdownCardProps> =
             />
           ) : (
             <View style={styles.inputContainer}>
-              <Input
-                placeholder="YYYY-MM-DD (e.g. 2026-12-20)"
+              <DatePickerField
+                placeholder="Select next reunion date"
                 value={targetDateStr}
-                onChangeText={setTargetDateStr}
+                minDate={new Date()}
+                onChange={setTargetDateStr}
               />
               <Button
                 title={t('common.save')}
                 variant="primary"
                 size="sm"
                 loading={isPending}
+                disabled={!targetDateStr.trim()}
                 onPress={handleSetDate}
               />
             </View>

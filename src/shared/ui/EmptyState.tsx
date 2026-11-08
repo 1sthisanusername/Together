@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Button } from './Button';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface EmptyStateProps {
   title: string;
@@ -20,9 +20,20 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      {icon && <View style={styles.iconContainer}>{icon}</View>}
-      <Text style={styles.title}>{title}</Text>
-      {description && <Text style={styles.description}>{description}</Text>}
+      {icon && (
+        <View style={styles.iconWrapper}>
+          <View style={styles.iconShadow} />
+          <View style={styles.iconContainer}>{icon}</View>
+        </View>
+      )}
+      <Text style={styles.title} maxFontSizeMultiplier={1.35}>
+        {title}
+      </Text>
+      {description && (
+        <Text style={styles.description} maxFontSizeMultiplier={1.35}>
+          {description}
+        </Text>
+      )}
       {actionTitle && onAction && (
         <Button
           title={actionTitle}
@@ -40,27 +51,50 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 32,
+    padding: scale(28),
+  },
+  iconWrapper: {
+    position: 'relative',
+    marginBottom: scale(18),
+  },
+  iconShadow: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    width: scale(72),
+    height: scale(72),
+    borderRadius: scale(20),
+    backgroundColor: theme.colors.shadowInk,
   },
   iconContainer: {
-    marginBottom: 16,
+    width: scale(72),
+    height: scale(72),
+    borderRadius: scale(20),
+    backgroundColor: theme.colors.secondary, // Sunshine #FFC93C
+    borderWidth: theme.borders.chunky,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 20,
+    fontFamily: theme.typography.fontFamilies.display,
+    fontSize: scale(20),
     fontWeight: '800',
-    color: theme.colors.text, // #42362e
+    color: theme.colors.text,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: scale(8),
     letterSpacing: -0.3,
   },
   description: {
-    fontSize: 14,
-    color: theme.colors.textSecondary, // #a8917f
+    fontFamily: theme.typography.fontFamilies.sansRegular,
+    fontSize: scale(14),
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 21,
-    marginBottom: 20,
+    lineHeight: scale(20),
+    marginBottom: scale(20),
+    maxWidth: scale(280),
   },
   button: {
-    minWidth: 160,
+    minWidth: scale(160),
   },
 });

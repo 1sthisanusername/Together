@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Card, Button } from '@/shared/ui';
@@ -44,10 +44,17 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
     (e) => e.type === 'answer_submitted' && (e.payload as any)?.round === currentRound?.id
   );
 
+  const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
+
+  useEffect(() => {
+    setSelectedChoice(null);
+  }, [currentRound?.id]);
+
   const myAnswerEvent = roundEvents.find((e) => e.user_id === myUserId);
   const partnerAnswerEvent = roundEvents.find((e) => e.user_id === partnerId);
 
   const myChoice = (myAnswerEvent?.payload as any)?.choice;
+  const effectiveMyChoice = myChoice || selectedChoice;
   const partnerChoice = (partnerAnswerEvent?.payload as any)?.choice;
   const isPartnerMasked = (partnerAnswerEvent?.payload as any)?.masked === true;
   const isBothRevealed = myChoice && partnerChoice && !isPartnerMasked;
@@ -56,7 +63,8 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
   const isCompleted = session.status === 'completed';
 
   const handleSelect = (choice: 'A' | 'B') => {
-    if (myChoice || isSubmitting) return;
+    if (effectiveMyChoice || isSubmitting) return;
+    setSelectedChoice(choice);
     submitEvent({
       type: 'answer_submitted',
       payload: {
@@ -122,16 +130,16 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
       <TouchableOpacity
         style={[
           styles.optionCard,
-          myChoice === 'A' && styles.optionSelected,
+          effectiveMyChoice === 'A' && styles.optionSelected,
           isBothRevealed && partnerChoice === 'A' && styles.optionPartnerPicked,
         ]}
         onPress={() => handleSelect('A')}
-        disabled={!!myChoice || isSubmitting}
+        disabled={!!effectiveMyChoice || isSubmitting}
         activeOpacity={0.8}
       >
         <Text style={styles.optionLetter}>A</Text>
         <Text style={styles.optionTitle}>{currentRound.optionA}</Text>
-        {myChoice === 'A' && <Text style={styles.pickBadge}>✓ {t('sessions.yourChoice')}</Text>}
+        {effectiveMyChoice === 'A' && <Text style={styles.pickBadge}>✓ {t('sessions.yourChoice')}</Text>}
         {isBothRevealed && partnerChoice === 'A' && (
           <Text style={styles.partnerBadge}>♥ {t('sessions.partnerChoice', { name: partnerName })}</Text>
         )}
@@ -145,23 +153,23 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
       <TouchableOpacity
         style={[
           styles.optionCard,
-          myChoice === 'B' && styles.optionSelected,
+          effectiveMyChoice === 'B' && styles.optionSelected,
           isBothRevealed && partnerChoice === 'B' && styles.optionPartnerPicked,
         ]}
         onPress={() => handleSelect('B')}
-        disabled={!!myChoice || isSubmitting}
+        disabled={!!effectiveMyChoice || isSubmitting}
         activeOpacity={0.8}
       >
         <Text style={styles.optionLetter}>B</Text>
         <Text style={styles.optionTitle}>{currentRound.optionB}</Text>
-        {myChoice === 'B' && <Text style={styles.pickBadge}>✓ {t('sessions.yourChoice')}</Text>}
+        {effectiveMyChoice === 'B' && <Text style={styles.pickBadge}>✓ {t('sessions.yourChoice')}</Text>}
         {isBothRevealed && partnerChoice === 'B' && (
           <Text style={styles.partnerBadge}>♥ {t('sessions.partnerChoice', { name: partnerName })}</Text>
         )}
       </TouchableOpacity>
 
       {/* Reveal Status Banner */}
-      {myChoice && !partnerAnswerEvent ? (
+      {effectiveMyChoice && !partnerAnswerEvent ? (
         <Card style={styles.statusCard}>
           <Text style={styles.statusText}>
             🔒 {t('sessions.waitingForPartner', { name: partnerName })}
@@ -169,7 +177,7 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
         </Card>
       ) : null}
 
-      {!myChoice && partnerAnswerEvent ? (
+      {!effectiveMyChoice && partnerAnswerEvent ? (
         <Card style={styles.partnerWaitingCard}>
           <Text style={styles.partnerWaitingText}>
             ⚡ {t('sessions.partnerWaitingAnswer', { name: partnerName })}

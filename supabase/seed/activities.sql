@@ -128,23 +128,68 @@ INSERT INTO public.activities (slug, title, description, kind, category, mode, d
 -- Guided Virtual Dates (Dates Tab)
 ('guided-date-candlelit-dinner', 'Virtual Candlelight Dinner', 'Turn an ordinary dinner into an intimate, romantic virtual date with timed courses and talk cards.', 'guided_date', 'dates', 'live', 45, 'moon', '{
   "steps": [
-    {"id": "step1", "title": "Date Preparation", "duration_minutes": 5, "description": "Set your table, dim the lights, light a candle if you have one, and grab your favorite meal and drink."},
-    {"id": "step2", "title": "The Toast", "duration_minutes": 5, "description": "Raise your glasses together. Share one thing about your partner that you felt deeply grateful for this past week."},
-    {"id": "step3", "title": "Main Course & Deep Conversation", "duration_minutes": 25, "description": "Enjoy your dinner together while answering these prompts: What made you smile today? What is something new you learned about yourself recently?"},
-    {"id": "step4", "title": "Dessert & Sweet Wishes", "duration_minutes": 10, "description": "Enjoy a sweet treat or warm tea. Share one dream date you cannot wait to take your partner on when you next reunite."}
+    {"id": "step1", "title": "Date Preparation", "duration_minutes": 5, "prompt": "Set your table, dim the lights, light a candle if you have one, and grab your favorite meal and drink.", "description": "Set your table, dim the lights, light a candle if you have one, and grab your favorite meal and drink.", "checklist": ["Table set and cleared", "Candle or warm light on", "Favorite meal & drink ready"]},
+    {"id": "step2", "title": "The Toast", "duration_minutes": 5, "prompt": "Raise your glasses together. Share one thing about your partner that you felt deeply grateful for this past week.", "description": "Raise your glasses together. Share one thing about your partner that you felt deeply grateful for this past week.", "checklist": ["Glasses raised together", "Gratitude shared"]},
+    {"id": "step3", "title": "Main Course & Deep Conversation", "duration_minutes": 25, "prompt": "Enjoy your dinner together while answering these prompts: What made you smile today? What is something new you learned about yourself recently?", "description": "Enjoy your dinner together while answering these prompts: What made you smile today? What is something new you learned about yourself recently?"},
+    {"id": "step4", "title": "Dessert & Sweet Wishes", "duration_minutes": 10, "prompt": "Enjoy a sweet treat or warm tea. Share one dream date you cannot wait to take your partner on when you next reunite.", "description": "Enjoy a sweet treat or warm tea. Share one dream date you cannot wait to take your partner on when you next reunite."}
   ]
 }'::jsonb),
 
 ('guided-date-movie-night', 'Synchronized Movie Night', 'Set up, grab your popcorn, countdown together, and dive into your chosen film.', 'guided_date', 'dates', 'live', 60, 'tv', '{
   "steps": [
-    {"id": "step1", "title": "Snack & Drink Prep", "duration_minutes": 5, "description": "Get your popcorn, snacks, drinks, and cozy blankets ready."},
-    {"id": "step2", "title": "Sync & 3-2-1 Play!", "duration_minutes": 3, "description": "Cue up your selected movie on both screens. Use our synced countdown timer to press Play at the exact same second!"},
-    {"id": "step3", "title": "Movie In Progress", "duration_minutes": 50, "description": "Enjoy the show! Send quick live emoji reactions to each other right from the screen."},
-    {"id": "step4", "title": "Post-Credits Review", "duration_minutes": 10, "description": "Rate the movie out of 10. Discuss your favorite scene and the craziest plot twist."}
+    {"id": "step1", "title": "Snack & Drink Prep", "duration_minutes": 5, "prompt": "Get your popcorn, snacks, drinks, and cozy blankets ready.", "description": "Get your popcorn, snacks, drinks, and cozy blankets ready.", "checklist": ["Popcorn & snacks ready", "Cozy blankets & cushions", "Movie paused at 00:00 on screen"]},
+    {"id": "step2", "title": "Sync & 3-2-1 Play!", "duration_minutes": 3, "prompt": "Cue up your selected movie on both screens. Use our synced countdown timer to press Play at the exact same second!", "description": "Cue up your selected movie on both screens. Use our synced countdown timer to press Play at the exact same second!"},
+    {"id": "step3", "title": "Movie In Progress", "duration_minutes": 50, "prompt": "Enjoy the show! Send quick live emoji reactions to each other right from the screen.", "description": "Enjoy the show! Send quick live emoji reactions to each other right from the screen."},
+    {"id": "step4", "title": "Post-Credits Review", "duration_minutes": 10, "prompt": "Rate the movie out of 10. Discuss your favorite scene and the craziest plot twist.", "description": "Rate the movie out of 10. Discuss your favorite scene and the craziest plot twist."}
   ]
 }'::jsonb),
 
-('guided-date-stargazing', 'Late Night Stargazing & Whispers', 'Step outside or look through your window into the night sky together.', 'guided_date', 'dates', 'live', 30, 'star', '{
+('guided-date-cooking-together', 'Cooking Together Across the Miles', 'Cook the same recipe or style of food simultaneously, sharing aromas, tasting spoons, and laughter.', 'guided_date', 'dates', 'live', 45, 'coffee', '{
+  "steps": [
+    {"id": "step1", "title": "Kitchen Setup & Ingredient Check", "duration_minutes": 5, "prompt": "Wash your hands, clear the counter, prop your phone up safely, and lay out your ingredients.", "description": "Wash your hands, clear the counter, prop your phone up safely, and lay out your ingredients.", "checklist": ["Phone propped up safely", "Ingredients & spices on counter", "Cooking playlist playing", "Apron / comfy clothes on"]},
+    {"id": "step2", "title": "Prep & Chop Together", "duration_minutes": 15, "prompt": "Chop, slice, and measure your ingredients. Compare your knife skills and share what smells amazing!", "description": "Chop, slice, and measure your ingredients. Compare your knife skills and share what smells amazing!"},
+    {"id": "step3", "title": "Sizzle & Simmer", "duration_minutes": 15, "prompt": "Stove on! Sizzle your ingredients, stir the pot, and taste test. Describe the flavors to each other.", "description": "Stove on! Sizzle your ingredients, stir the pot, and taste test. Describe the flavors to each other."},
+    {"id": "step4", "title": "Plate & Presentation Contest", "duration_minutes": 10, "prompt": "Plate your dishes like a 5-star restaurant! Hold up your plates to the camera and judge each other''s food art.", "description": "Plate your dishes like a 5-star restaurant! Hold up your plates to the camera and judge each other''s food art.", "checklist": ["Plated like 5-star restaurant", "Photo snapped of dishes", "First bite tasted together"]}
+  ]
+}'::jsonb),
+
+('guided-date-music-date', 'Music Date: Melody & Memory Swap', 'Exchange songs that define your journey, listen simultaneously, and share the untold stories behind each track.', 'guided_date', 'dates', 'live', 30, 'music', '{
+  "steps": [
+    {"id": "step1", "title": "Setting the Soundstage", "duration_minutes": 5, "prompt": "Grab your best headphones or speaker, get comfortable, and queue up your favorite music apps.", "description": "Grab your best headphones or speaker, get comfortable, and queue up your favorite music apps.", "checklist": ["Headphones or speaker connected", "Favorite beverage in hand", "Music app opened"]},
+    {"id": "step2", "title": "The Song That Reminds Me of You", "duration_minutes": 10, "prompt": "Partner A plays a song that reminds them of Partner B. Listen together, then explain why this song captures them.", "description": "Partner A plays a song that reminds them of Partner B. Listen together, then explain why this song captures them."},
+    {"id": "step3", "title": "Our Shared Nostalgia Anthem", "duration_minutes": 10, "prompt": "Partner B plays a track from a shared memory or trip. Relive the exact day and feeling when you both heard it.", "description": "Partner B plays a track from a shared memory or trip. Relive the exact day and feeling when you both heard it."},
+    {"id": "step4", "title": "Future Roadtrip / Slow Dance Track", "duration_minutes": 5, "prompt": "Pick one song for our future road trip or dream slow dance. Close your eyes and imagine the moment together.", "description": "Pick one song for our future road trip or dream slow dance. Close your eyes and imagine the moment together."}
+  ]
+}'::jsonb),
+
+('guided-date-question-date', 'Deep Question Date: Heart to Heart', 'A quiet sanctuary of meaningful questions to discover new depths in each other without distraction.', 'guided_date', 'dates', 'live', 35, 'message-circle', '{
+  "steps": [
+    {"id": "step1", "title": "Unwind & Settle In", "duration_minutes": 5, "prompt": "Turn off distractions, put notifications on silent, and take a deep breath together.", "description": "Turn off distractions, put notifications on silent, and take a deep breath together.", "checklist": ["Distractions silenced", "Comfortable quiet space", "Open mind & warm heart"]},
+    {"id": "step2", "title": "The Moment I Realized", "duration_minutes": 10, "prompt": "What was the exact moment you realized you had feelings for me? What was going through your mind?", "description": "What was the exact moment you realized you had feelings for me? What was going through your mind?"},
+    {"id": "step3", "title": "Silent Strength & Support", "duration_minutes": 10, "prompt": "What is something you are silently carrying or hoping for right now that I can support you in?", "description": "What is something you are silently carrying or hoping for right now that I can support you in?"},
+    {"id": "step4", "title": "Our Next Chapter", "duration_minutes": 10, "prompt": "When you imagine us 5 years from now on a typical Sunday morning, what does it look and feel like?", "description": "When you imagine us 5 years from now on a typical Sunday morning, what does it look and feel like."}
+  ]
+}'::jsonb),
+
+('guided-date-dream-vacation', 'Dream Vacation Blueprint', 'Co-create your next reunion getaway: choose the destination, dream stay, secret cafes, and bucket-list adventures.', 'guided_date', 'dates', 'live', 40, 'compass', '{
+  "steps": [
+    {"id": "step1", "title": "Destination Draft", "duration_minutes": 5, "prompt": "Pick a destination vibe: tropical beach, cozy mountain cabin, or historic walking city? Agree on one place for tonight!", "description": "Pick a destination vibe: tropical beach, cozy mountain cabin, or historic walking city? Agree on one place for tonight!", "checklist": ["Destination vibe agreed upon", "Shared excitement ready", "Map opened"]},
+    {"id": "step2", "title": "Our Dream Stay", "duration_minutes": 10, "prompt": "What kind of stay are we booking? A treehouse with a hot tub? An oceanfront villa? A cozy loft? Browse and describe it.", "description": "What kind of stay are we booking? A treehouse with a hot tub? An oceanfront villa? A cozy loft? Browse and describe it."},
+    {"id": "step3", "title": "The Foodie & Cafe Itinerary", "duration_minutes": 15, "prompt": "Plan day one''s meals: What are we having for breakfast in bed, street food lunch, and a sunset dinner?", "description": "Plan day one''s meals: What are we having for breakfast in bed, street food lunch, and a sunset dinner?"},
+    {"id": "step4", "title": "The One Unmissable Adventure", "duration_minutes": 10, "prompt": "Pick one unforgettable adventure to experience there: snorkeling, night market tour, stargazing hike, or wine tasting.", "description": "Pick one unforgettable adventure to experience there: snorkeling, night market tour, stargazing hike, or wine tasting."}
+  ]
+}'::jsonb),
+
+('guided-date-random-date-idea', 'Random Date Surprise Roulette', 'Fast, spontaneous, and unpredictable mini-games and challenges to keep your spark energetic and playful.', 'guided_date', 'dates', 'live', 25, 'sparkles', '{
+  "steps": [
+    {"id": "step1", "title": "Coin Toss for the Vibe", "duration_minutes": 5, "prompt": "Flip a coin: Heads means Partner A picks the music and vibe, Tails means Partner B picks!", "description": "Flip a coin: Heads means Partner A picks the music and vibe, Tails means Partner B picks!", "checklist": ["Coin or random generator ready", "Vibe master chosen"]},
+    {"id": "step2", "title": "3-Minute Blind Portrait", "duration_minutes": 5, "prompt": "Grab a pen and paper. You have 3 minutes to draw your partner from memory. No looking at paper while drawing!", "description": "Grab a pen and paper. You have 3 minutes to draw your partner from memory. No looking at paper while drawing!"},
+    {"id": "step3", "title": "Room Treasure Show & Tell", "duration_minutes": 10, "prompt": "Find the weirdest, oldest, or most sentimental item in your room right now. Present it to your partner like an auctioneer!", "description": "Find the weirdest, oldest, or most sentimental item in your room right now. Present it to your partner like an auctioneer!"},
+    {"id": "step4", "title": "60-Second Compliment Blitz", "duration_minutes": 5, "prompt": "Take turns showering each other with rapid-fire genuine compliments for 60 seconds each without stopping!", "description": "Take turns showering each other with rapid-fire genuine compliments for 60 seconds each without stopping!"}
+  ]
+}'::jsonb),
+
+('guided-date-stargazing', 'Late Night Stargazing & Whispers', 'Step outside or look through your window into the night sky together.', 'guided_date', 'relaxed', 'live', 30, 'star', '{
   "steps": [
     {"id": "step1", "title": "Look Up Together", "duration_minutes": 5, "description": "Find a window or step onto your balcony/yard. Look at the moon and stars knowing your partner is under that same sky."},
     {"id": "step2", "title": "Share a Wish", "duration_minutes": 10, "description": "If you could whisper one wish to a shooting star right now, what would it be?"},
@@ -152,7 +197,7 @@ INSERT INTO public.activities (slug, title, description, kind, category, mode, d
   ]
 }'::jsonb),
 
-('guided-date-book-club', 'Two-Person Cozy Book Club', 'Read a chapter of a shared book or poem out loud to each other.', 'guided_date', 'dates', 'live', 35, 'book-open', '{
+('guided-date-book-club', 'Two-Person Cozy Book Club', 'Read a chapter of a shared book or poem out loud to each other.', 'guided_date', 'relaxed', 'live', 35, 'book-open', '{
   "steps": [
     {"id": "step1", "title": "Settle In With Warm Tea", "duration_minutes": 5, "description": "Grab a hot drink, cozy cushions, and open your shared chapter."},
     {"id": "step2", "title": "Taking Turns Reading", "duration_minutes": 20, "description": "Partner A reads page 1, Partner B reads page 2. Listen to the soothing sound of your partner''s voice."},

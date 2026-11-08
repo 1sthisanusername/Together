@@ -114,8 +114,11 @@ export const activityRegistry: Record<string, ActivityRegistryEntry> = {
         z.object({
           id: z.string(),
           title: z.string(),
-          duration_minutes: z.number(),
-          description: z.string(),
+          prompt: z.string().optional(),
+          description: z.string().optional(),
+          duration_minutes: z.number().optional(),
+          timer_minutes: z.number().optional(),
+          checklist: z.array(z.string()).optional(),
         })
       ),
     }),

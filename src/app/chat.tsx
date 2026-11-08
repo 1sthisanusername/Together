@@ -8,7 +8,7 @@ export default function ChatScreen() {
   const router = useRouter();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <ChatThread onBack={() => router.back()} />
     </SafeAreaView>
   );

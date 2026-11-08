@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
+import { storage } from '@/services/storage';
 import { theme } from '@/shared/theme';
 
 export interface VoiceNotePlayerProps {
   mediaSignedUrl?: string | null;
+  bucketPath?: string | null;
+  mediaId?: string | null;
   durationSeconds?: number | null;
   playedAt?: string | null;
   isMyMessage: boolean;
@@ -12,45 +16,124 @@ export interface VoiceNotePlayerProps {
 
 export const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({
   mediaSignedUrl,
+  bucketPath,
+  mediaId,
   durationSeconds = 15,
   playedAt,
   isMyMessage,
   onPlayed,
 }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<1 | 1.5 | 2>(1);
-  const [progressSeconds, setProgressSeconds] = useState(0);
+  const [activeUrl, setActiveUrl] = useState<string | null>(mediaSignedUrl || null);
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const [isResolvingUrl, setIsResolvingUrl] = useState(false);
 
-  const totalDuration = Math.max(1, durationSeconds || 15);
-
+  // Sync activeUrl if parent provides a fresh signed URL
   useEffect(() => {
-    let interval: any = null;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setProgressSeconds((prev) => {
-          const next = prev + 0.25 * playbackSpeed;
-          if (next >= totalDuration) {
-            setIsPlaying(false);
-            return 0;
-          }
-          return next;
-        });
-      }, 250);
-    } else {
-      clearInterval(interval);
+    if (mediaSignedUrl && mediaSignedUrl !== activeUrl) {
+      setActiveUrl(mediaSignedUrl);
+      setPlaybackError(null);
     }
-    return () => clearInterval(interval);
-  }, [isPlaying, playbackSpeed, totalDuration]);
+  }, [mediaSignedUrl]);
 
-  const togglePlay = () => {
-    if (!isPlaying && !playedAt && !isMyMessage && onPlayed) {
-      onPlayed();
+  // Initialize native audio player via expo-audio safely
+  const player = useAudioPlayer(activeUrl ? { uri: activeUrl } : null);
+  const status = useAudioPlayerStatus(player);
+
+  const totalDuration = Math.max(1, durationSeconds || Math.round(status?.duration || 15));
+  const isPlaying = status?.playing ?? false;
+  const progressSeconds = status?.currentTime ?? 0;
+
+  // Resolve signed URL on demand if null or expired
+  const refreshSignedUrl = useCallback(async (): Promise<string | null> => {
+    try {
+      setIsResolvingUrl(true);
+      if (bucketPath) {
+        const freshUrl = await storage.getSignedUrl(bucketPath, 3600);
+        if (freshUrl) {
+          setActiveUrl(freshUrl);
+          setPlaybackError(null);
+          return freshUrl;
+        }
+      }
+      return null;
+    } catch (err) {
+      console.warn('[VoiceNotePlayer] Error resolving signed URL:', err);
+      return null;
+    } finally {
+      setIsResolvingUrl(false);
     }
-    setIsPlaying(!isPlaying);
+  }, [bucketPath]);
+
+  const togglePlay = async () => {
+    try {
+      setPlaybackError(null);
+
+      // 1. Ensure audio mode is set for playback
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        allowsRecording: false,
+      }).catch((err) => {
+        console.warn('[VoiceNotePlayer] Audio mode warning:', err);
+      });
+
+      // 2. If no activeUrl yet, attempt to resolve from storage
+      let urlToPlay = activeUrl;
+      if (!urlToPlay && (bucketPath || mediaId)) {
+        urlToPlay = await refreshSignedUrl();
+      }
+
+      if (!urlToPlay) {
+        setPlaybackError("Can't play this voice note");
+        return;
+      }
+
+      if (!player) {
+        setPlaybackError("Can't play this voice note");
+        return;
+      }
+
+      if (!isPlaying) {
+        if (!playedAt && !isMyMessage && onPlayed) {
+          try {
+            onPlayed();
+          } catch {}
+        }
+
+        try {
+          player.playbackRate = playbackSpeed;
+        } catch {}
+
+        try {
+          await player.play();
+        } catch (playErr) {
+          // Attempt refreshing signed URL once in case the current token expired
+          const fresh = await refreshSignedUrl();
+          if (!fresh) {
+            setPlaybackError("Can't play this voice note");
+          }
+        }
+      } else {
+        try {
+          player.pause();
+        } catch {}
+      }
+    } catch (err: any) {
+      console.warn('[VoiceNotePlayer] Playback toggle error:', err);
+      setPlaybackError("Can't play this voice note");
+    }
   };
 
   const cycleSpeed = () => {
-    setPlaybackSpeed((prev) => (prev === 1 ? 1.5 : prev === 1.5 ? 2 : 1));
+    try {
+      const nextSpeed: 1 | 1.5 | 2 = playbackSpeed === 1 ? 1.5 : playbackSpeed === 1.5 ? 2 : 1;
+      setPlaybackSpeed(nextSpeed);
+      if (player) {
+        player.playbackRate = nextSpeed;
+      }
+    } catch (err) {
+      console.warn('[VoiceNotePlayer] Speed toggle error:', err);
+    }
   };
 
   const formatTime = (secs: number) => {
@@ -64,17 +147,34 @@ export const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.topRow}>
-        <TouchableOpacity style={styles.playBtn} onPress={togglePlay} activeOpacity={0.8}>
-          <Text style={styles.playIcon}>{isPlaying ? '⏸' : '▶'}</Text>
+        <TouchableOpacity
+          style={[styles.playBtn, playbackError ? styles.playBtnError : null]}
+          onPress={togglePlay}
+          activeOpacity={0.8}
+          disabled={isResolvingUrl}
+        >
+          {isResolvingUrl ? (
+            <ActivityIndicator size="small" color="#ffffff" />
+          ) : (
+            <Text style={styles.playIcon}>{playbackError ? '⚠️' : isPlaying ? '⏸' : '▶'}</Text>
+          )}
         </TouchableOpacity>
 
         {/* Waveform / Progress bar */}
         <View style={styles.waveformContainer}>
           <View style={styles.track}>
-            <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+            <View
+              style={[
+                styles.progressFill,
+                { width: `${progressPercent}%` },
+                playbackError ? styles.progressFillError : null,
+              ]}
+            />
           </View>
           <View style={styles.timeRow}>
-            <Text style={styles.timeText}>{formatTime(progressSeconds)}</Text>
+            <Text style={[styles.timeText, playbackError ? styles.timeTextError : null]}>
+              {playbackError ? "Can't play voice note" : formatTime(progressSeconds)}
+            </Text>
             <Text style={styles.timeText}>{formatTime(totalDuration)}</Text>
           </View>
         </View>
@@ -85,13 +185,19 @@ export const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Played mark (Section 4: only "played" status on voice notes) */}
-      {!isMyMessage && (
+      {/* Played mark */}
+      {!isMyMessage && !playbackError && (
         <View style={styles.statusRow}>
           <View style={[styles.dot, playedAt ? styles.dotPlayed : styles.dotUnplayed]} />
           <Text style={styles.statusLabel}>{playedAt ? 'Played' : 'New Voice Note'}</Text>
         </View>
       )}
+
+      {playbackError ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorBannerText}>⚠️ Can't play this voice note</Text>
+        </View>
+      ) : null}
     </View>
   );
 };
@@ -114,6 +220,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  playBtnError: {
+    backgroundColor: '#E53E3E',
+  },
   playIcon: {
     fontSize: 16,
     color: '#ffffff',
@@ -135,6 +244,9 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     borderRadius: 3,
   },
+  progressFillError: {
+    backgroundColor: '#E53E3E',
+  },
   timeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -144,6 +256,9 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: theme.colors.textSecondary,
     fontWeight: '600',
+  },
+  timeTextError: {
+    color: '#E53E3E',
   },
   speedBtn: {
     paddingHorizontal: 8,
@@ -180,5 +295,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.textSecondary,
   },
+  errorBanner: {
+    marginTop: 6,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    backgroundColor: '#FFF0F0',
+    borderRadius: theme.radii.sm,
+    alignSelf: 'flex-start',
+  },
+  errorBannerText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#E53E3E',
+  },
 });
-

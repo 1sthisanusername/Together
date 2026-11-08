@@ -7,7 +7,9 @@ vi.mock('react-native', () => import('./mocks/react-native'));
 vi.mock('react-native-url-polyfill/auto', () => ({}));
 
 describe('Push Notifications End-to-End Infrastructure', () => {
-  const sqlPath = path.resolve(__dirname, '../supabase/server_rounds_and_push.sql');
+  const migrationPath = path.resolve(__dirname, '../supabase/migrations/20261108000004_server_rounds_and_push.sql');
+  const archivePath = path.resolve(__dirname, '../supabase/_archive/server_rounds_and_push.sql');
+  const sqlPath = fs.existsSync(migrationPath) ? migrationPath : archivePath;
   const sql = fs.readFileSync(sqlPath, 'utf-8');
 
   it('migration contains push_tokens table with RLS enabled and authenticated policies', () => {

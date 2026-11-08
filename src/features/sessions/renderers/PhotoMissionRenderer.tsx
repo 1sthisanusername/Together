@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Platform,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Input } from '@/shared/ui';
 import type { SessionData } from '../hooks/useSession';
@@ -40,7 +51,7 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
   const [mySignedUrl, setMySignedUrl] = useState<string | null>(null);
   const [partnerSignedUrl, setPartnerSignedUrl] = useState<string | null>(null);
 
-  const { mutate: submitEvent, isPending: isSubmitting } = useSubmitEvent(session.id);
+  const { mutateAsync: submitEventAsync, isPending: isSubmitting } = useSubmitEvent(session.id);
   const { mutate: completeSession, isPending: isCompleting } = useCompleteSession(session.id);
   const { mutate: saveMemory, isSuccess: isMemorySaved } = useSaveSessionAsMemory();
 
@@ -51,8 +62,78 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
     (e) => e.type === 'photo_submitted' && e.user_id === partnerId
   );
 
-  const bothSubmitted = !!mySubmission && !!partnerSubmission;
+  const isPartnerMasked = (partnerSubmission?.payload as any)?.masked === true;
+  const bothSubmitted = !!mySubmission && !!partnerSubmission && !isPartnerMasked;
   const isCompleted = session.status === 'completed';
+
+  const processImageUri = async (uri: string, width?: number, height?: number): Promise<string> => {
+    try {
+      const actions: ImageManipulator.Action[] = [];
+      const w = width || 0;
+      const h = height || 0;
+      if (w > 1600 || h > 1600) {
+        if (w >= h) {
+          actions.push({ resize: { width: 1600 } });
+        } else {
+          actions.push({ resize: { height: 1600 } });
+        }
+      }
+      const manipulated = await ImageManipulator.manipulateAsync(
+        uri,
+        actions,
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      return manipulated.uri;
+    } catch {
+      return uri;
+    }
+  };
+
+  const handlePickFromGallery = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Photo library access is needed to select a mission photo.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        const processedUri = await processImageUri(asset.uri, asset.width, asset.height);
+        setSelectedPhotoUrl(processedUri);
+      }
+    } catch (err: any) {
+      console.warn('Gallery pick error:', err);
+      Alert.alert('Gallery Error', err?.message || 'Could not select photo from gallery.');
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Camera access is needed to take a photo for the mission.');
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        const processedUri = await processImageUri(asset.uri, asset.width, asset.height);
+        setSelectedPhotoUrl(processedUri);
+      }
+    } catch (err: any) {
+      console.warn('Camera snap error:', err);
+      Alert.alert('Camera Error', err?.message || 'Could not capture photo from camera.');
+    }
+  };
 
   // Resolve signed URLs when submissions exist
   useEffect(() => {
@@ -87,40 +168,51 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
   }, [mySubmission, partnerSubmission]);
 
   const handleSubmit = async () => {
-    if (isSubmitting || isUploading || mySubmission) return;
+    if (isSubmitting || isUploading) return;
+    if (mySubmission) {
+      Alert.alert('Already Shared', 'You have already shared your photo for this mission!');
+      return;
+    }
+    if (!selectedPhotoUrl) {
+      Alert.alert('No Photo Selected', 'Please snap or select a photo first.');
+      return;
+    }
 
     try {
       setIsUploading(true);
 
-      // In browser/react-native: if we have a coupleId and file bytes we upload to couples-media bucket
       let mediaId: string | null = null;
       let bucketPath: string | null = null;
 
-      try {
-        const dummyBytes = new TextEncoder().encode(`photo_meta_${Date.now()}`);
+      const isRemote =
+        selectedPhotoUrl.startsWith('http://') || selectedPhotoUrl.startsWith('https://');
+
+      if (!isRemote) {
+        // Upload local photo via shared storage service
         const mediaFile = await storage.uploadMedia({
           coupleId: session.couple_id,
           userId: myUserId,
-          fileBytes: dummyBytes,
+          uri: selectedPhotoUrl,
           mimeType: 'image/jpeg',
           fileName: 'mission_photo.jpg',
         });
         mediaId = mediaFile.id;
         bucketPath = mediaFile.bucket_path;
-      } catch (err) {
-        console.warn('Storage upload fallback to direct URL:', err);
       }
 
-      submitEvent({
+      await submitEventAsync({
         type: 'photo_submitted',
         payload: {
           caption: caption.trim() || 'Shared a candid moment!',
-          photoUrl: selectedPhotoUrl,
+          photoUrl: bucketPath ? null : selectedPhotoUrl,
           media_id: mediaId,
           bucket_path: bucketPath,
           submittedAt: new Date().toISOString(),
         },
       });
+    } catch (err: any) {
+      console.warn('Photo mission submission error:', err);
+      Alert.alert('Submission Error', err?.message || 'Failed to submit photo. Please try again.');
     } finally {
       setIsUploading(false);
     }
@@ -197,7 +289,18 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
 
       {!mySubmission ? (
         <View style={styles.uploadSection}>
-          <Text style={styles.sectionSubtitle}>Select or Snap a Photo:</Text>
+          <Text style={styles.sectionSubtitle}>Take or Pick a Photo:</Text>
+
+          <View style={styles.actionButtonsRow}>
+            <TouchableOpacity style={styles.captureActionBtn} onPress={handleTakePhoto}>
+              <Text style={styles.captureActionText}>📸 Take Photo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.captureActionBtn} onPress={handlePickFromGallery}>
+              <Text style={styles.captureActionText}>🖼️ Pick from Gallery</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.orPresetsText}>or choose a sample moment:</Text>
           <View style={styles.presetRow}>
             {SAMPLE_PHOTOS.map((p, idx) => (
               <TouchableOpacity
@@ -305,7 +408,7 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
         </Card>
       ) : null}
 
-      {mySubmission ? (
+      {bothSubmitted ? (
         <Button
           title={t('sessions.completeSession')}
           variant="primary"
@@ -360,6 +463,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: theme.colors.textSecondary,
+    marginBottom: 8,
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+  },
+  captureActionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1.5,
+    borderColor: theme.colors.borderLight,
+  },
+  captureActionText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: theme.colors.text,
+  },
+  orPresetsText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.textMuted || '#94A3B8',
     marginBottom: 8,
   },
   presetRow: {

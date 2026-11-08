@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSession } from '../hooks/useSession';
 import { getActivityRenderer } from '@/features/activities/registry';
-import { LoadingState, ErrorState } from '@/shared/ui';
+import { LoadingState, ErrorState, GameErrorBoundary } from '@/shared/ui';
 import { theme } from '@/shared/theme';
 
 export interface ActivityRoomProps {
@@ -86,12 +86,21 @@ export const ActivityRoom: React.FC<ActivityRoomProps> = ({
         </View>
       ) : null}
 
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        <Component
-          data={sessionData}
-          partnerName={partnerName}
-          onFinish={onExit}
-        />
+      <ScrollView
+        style={styles.scrollFlex}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        scrollEnabled={sessionData.activity.kind !== 'drawing_guess'}
+        showsVerticalScrollIndicator={false}
+      >
+        <GameErrorBoundary onExit={onExit}>
+          <Component
+            data={sessionData}
+            partnerName={partnerName}
+            onFinish={onExit}
+          />
+        </GameErrorBoundary>
       </ScrollView>
     </SafeAreaView>
   );
@@ -154,6 +163,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: theme.colors.primary,
+  },
+  scrollFlex: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,

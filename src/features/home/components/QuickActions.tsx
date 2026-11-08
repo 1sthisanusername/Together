@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { theme } from '@/shared/theme';
+import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export interface QuickActionsProps {
   onPlayPress: () => void;
@@ -16,29 +16,58 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
 }) => {
   const { t } = useTranslation();
 
+  const handlePress = (action: () => void) => {
+    triggerHaptic('light');
+    action();
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>{t('home.quickPlay')}</Text>
       <View style={styles.row}>
-        <TouchableOpacity style={styles.card} onPress={onPlayPress} activeOpacity={0.85}>
-          <View style={[styles.iconCircle, styles.playCircle]}>
-            <Text style={styles.icon}>✨</Text>
+        {/* Play Card */}
+        <TouchableOpacity
+          style={styles.cardWrapper}
+          onPress={() => handlePress(onPlayPress)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.cardShadow} />
+          <View style={[styles.cardSurface, styles.playSurface]}>
+            <View style={[styles.iconCircle, styles.playCircle]}>
+              <Text style={styles.icon}>✨</Text>
+            </View>
+            <Text style={styles.cardTitle}>{t('home.startPlay')}</Text>
           </View>
-          <Text style={styles.cardTitle}>{t('home.startPlay')}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.card} onPress={onDatePress} activeOpacity={0.85}>
-          <View style={[styles.iconCircle, styles.dateCircle]}>
-            <Text style={styles.icon}>🕯️</Text>
+        {/* Date Card */}
+        <TouchableOpacity
+          style={styles.cardWrapper}
+          onPress={() => handlePress(onDatePress)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.cardShadow} />
+          <View style={[styles.cardSurface, styles.dateSurface]}>
+            <View style={[styles.iconCircle, styles.dateCircle]}>
+              <Text style={styles.icon}>🕯️</Text>
+            </View>
+            <Text style={styles.cardTitle}>{t('home.planDate')}</Text>
           </View>
-          <Text style={styles.cardTitle}>{t('home.planDate')}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.card} onPress={onLetterPress} activeOpacity={0.85}>
-          <View style={[styles.iconCircle, styles.letterCircle]}>
-            <Text style={styles.icon}>💌</Text>
+        {/* Letter Card */}
+        <TouchableOpacity
+          style={styles.cardWrapper}
+          onPress={() => handlePress(onLetterPress)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.cardShadow} />
+          <View style={[styles.cardSurface, styles.letterSurface]}>
+            <View style={[styles.iconCircle, styles.letterCircle]}>
+              <Text style={styles.icon}>💌</Text>
+            </View>
+            <Text style={styles.cardTitle}>{t('home.writeLetter')}</Text>
           </View>
-          <Text style={styles.cardTitle}>{t('home.writeLetter')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -48,61 +77,83 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    marginVertical: 14,
+    marginVertical: scale(12),
   },
   sectionTitle: {
-    fontSize: 16,
+    fontFamily: theme.typography.fontFamilies.display,
+    fontSize: scale(16),
     fontWeight: '800',
-    color: theme.colors.text, // #42362e
-    marginBottom: 12,
+    color: theme.colors.text,
+    marginBottom: scale(10),
     letterSpacing: -0.3,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: scale(10),
   },
-  card: {
+  cardWrapper: {
     flex: 1,
-    backgroundColor: theme.colors.surface, // #ffffff
-    borderRadius: 20,
-    paddingVertical: 18,
-    paddingHorizontal: 8,
+    position: 'relative',
+    marginRight: 3,
+    marginBottom: 3,
+  },
+  cardShadow: {
+    position: 'absolute',
+    top: 3,
+    left: 3,
+    right: -3,
+    bottom: -3,
+    backgroundColor: theme.colors.shadowInk,
+    borderRadius: scale(14),
+  },
+  cardSurface: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: scale(14),
+    paddingVertical: scale(14),
+    paddingHorizontal: scale(6),
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.borderLight,
-    shadowColor: theme.colors.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
+    borderWidth: theme.borders.chunky,
+    borderColor: theme.colors.border,
+  },
+  playSurface: {
+    backgroundColor: theme.colors.surface,
+  },
+  dateSurface: {
+    backgroundColor: theme.colors.surface,
+  },
+  letterSurface: {
+    backgroundColor: theme.colors.surface,
   },
   iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: scale(40),
+    height: scale(40),
+    borderRadius: scale(20),
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: scale(6),
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
   },
   playCircle: {
-    backgroundColor: theme.colors.surfaceSubtle, // #f0ece6
+    backgroundColor: theme.colors.secondary, // Sunshine #FFC93C
   },
   dateCircle: {
-    backgroundColor: theme.colors.primaryLight, // #f4ede8
+    backgroundColor: theme.colors.primary, // Tomato #FF5A3C
   },
   letterCircle: {
-    backgroundColor: theme.colors.secondaryLight, // #ede5de
+    backgroundColor: theme.colors.bubblegum, // Bubblegum #FF8FB1
   },
   icon: {
-    fontSize: 20,
+    fontSize: scale(18),
   },
   cardTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: theme.colors.text, // #42362e
+    fontFamily: theme.typography.fontFamilies.display,
+    fontSize: scale(12),
+    fontWeight: '800',
+    color: theme.colors.text,
     textAlign: 'center',
-    letterSpacing: 0.1,
+    letterSpacing: -0.1,
   },
 });

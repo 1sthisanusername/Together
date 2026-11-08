@@ -4,11 +4,16 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import '@/shared/i18n';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
 import { supabase, queryClient, push, restorePersistedCache } from '@/services';
 import { theme } from '@/shared/theme';
+import { InAppNotificationBanner, useNotificationRealtime } from '@/features/notifications';
+import { useFonts, BricolageGrotesque_700Bold } from '@expo-google-fonts/bricolage-grotesque';
+import { Figtree_400Regular, Figtree_600SemiBold, Figtree_700Bold } from '@expo-google-fonts/figtree';
+import { Caveat_600SemiBold, Caveat_700Bold } from '@expo-google-fonts/caveat';
 
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   return (
@@ -37,6 +42,9 @@ function RootRouteGuard({ children }: { children: React.ReactNode }) {
   const segments = useSegments();
   const { session, isInitialized } = useAuthStore();
   const { data: coupleData, isLoading: isCoupleLoading } = useActiveCouple();
+
+  // Listen to in-app notification real-time events while app is open
+  useNotificationRealtime();
 
   useEffect(() => {
     // Wait until local session restore has evaluated
@@ -88,12 +96,26 @@ function RootRouteGuard({ children }: { children: React.ReactNode }) {
     }
   }, [session, isInitialized, isCoupleLoading, coupleData?.state, segments, router]);
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <InAppNotificationBanner />
+    </>
+  );
 }
 
 export default function RootLayout() {
   const router = useRouter();
   const initAuth = useAuthStore((state) => state.initAuth);
+
+  const [fontsLoaded] = useFonts({
+    BricolageGrotesque_700Bold,
+    Figtree_400Regular,
+    Figtree_600SemiBold,
+    Figtree_700Bold,
+    Caveat_600SemiBold,
+    Caveat_700Bold,
+  });
 
   useEffect(() => {
     // Restore persisted query cache for instant app reopen
@@ -160,19 +182,22 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <RootRouteGuard>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="auth/callback" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="session/[id]" />
-            <Stack.Screen name="chat" />
-            <Stack.Screen name="settings" />
-          </Stack>
-        </RootRouteGuard>
-      </QueryClientProvider>
+      <KeyboardProvider statusBarTranslucent>
+        <QueryClientProvider client={queryClient}>
+          <RootRouteGuard>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" options={{ animation: 'none' }} />
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="auth/callback" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="session/[id]" />
+              <Stack.Screen name="chat" />
+              <Stack.Screen name="settings" />
+              <Stack.Screen name="notifications" />
+            </Stack>
+          </RootRouteGuard>
+        </QueryClientProvider>
+      </KeyboardProvider>
     </SafeAreaProvider>
   );
 }

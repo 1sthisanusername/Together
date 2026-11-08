@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
-import { Sheet, Input, Button, ErrorState } from '@/shared/ui';
+import { Sheet, Input, Button, ErrorState, DatePickerField } from '@/shared/ui';
 import { useSendLetter } from '../hooks/useLetters';
 
 export interface WriteLetterModalProps {
@@ -41,7 +42,12 @@ export const WriteLetterModal: React.FC<WriteLetterModalProps> = ({
 
   return (
     <Sheet visible={visible} onClose={onClose} title={t('letters.writeNew')}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        bottomOffset={24}
+      >
         {error ? (
           <ErrorState
             title={t('common.errorTitle')}
@@ -68,11 +74,12 @@ export const WriteLetterModal: React.FC<WriteLetterModalProps> = ({
           style={styles.contentInput}
         />
 
-        <Input
-          label="Optional Lock Date (YYYY-MM-DD)"
-          placeholder="e.g. 2026-12-25"
+        <DatePickerField
+          label="Optional Lock Date"
+          placeholder="Select unlock date"
           value={unlockDate}
-          onChangeText={setUnlockDate}
+          minDate={new Date()}
+          onChange={setUnlockDate}
         />
 
         <Button
@@ -84,7 +91,7 @@ export const WriteLetterModal: React.FC<WriteLetterModalProps> = ({
           onPress={handleSend}
           style={styles.sendButton}
         />
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Sheet>
   );
 };

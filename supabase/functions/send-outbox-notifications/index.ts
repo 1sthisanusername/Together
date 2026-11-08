@@ -163,6 +163,7 @@ Deno.serve(async (req) => {
             sound: 'default',
             title,
             body,
+            channelId: 'default',
             data: {
               deepLink: notif.deep_link,
               notificationId: notif.id,

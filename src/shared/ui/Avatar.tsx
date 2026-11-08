@@ -1,69 +1,148 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface AvatarProps {
   name: string;
   url?: string | null;
   size?: number;
+  showPresence?: boolean;
+  isOnline?: boolean;
+  stickerColor?: 'sunshine' | 'pool' | 'bubblegum' | 'tomato';
 }
 
-export const Avatar: React.FC<AvatarProps> = ({ name, url, size = 48 }) => {
+/**
+ * String & Stickers Sticker Avatar:
+ * Chunky 2.5px ink outline with hard offset ink shadow and vibrant sticker background.
+ */
+export const Avatar: React.FC<AvatarProps> = ({
+  name,
+  url,
+  size = 52,
+  showPresence = false,
+  isOnline = false,
+  stickerColor = 'sunshine',
+}) => {
+  const scaledSize = scale(size);
   const initials = (name || '?')
-  .split(' ')
-  .filter(Boolean)
-  .slice(0, 2)
-  .map((part) => part[0]?.toUpperCase())
-  .join('');
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
 
-  if (url) {
-    return (
-      <Image
-        source={{ uri: url }}
+  const bgColors: Record<string, string> = {
+    sunshine: theme.colors.secondary, // Sunshine #FFC93C
+    pool: theme.colors.pool,          // Pool #2EC4B6
+    bubblegum: theme.colors.bubblegum,// Bubblegum #FF8FB1
+    tomato: theme.colors.primary,     // Tomato #FF5A3C
+  };
+
+  const backgroundColor = bgColors[stickerColor] || theme.colors.secondary;
+  const shadowOffset = 3;
+
+  return (
+    <View style={[styles.wrapper, { width: scaledSize + shadowOffset, height: scaledSize + shadowOffset }]}>
+      {/* 1. Hard Offset Ink Shadow */}
+      <View
         style={[
-          styles.image,
+          styles.shadowUnderlay,
           {
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            borderWidth: 1.5,
-            borderColor: theme.colors.borderLight,
+            width: scaledSize,
+            height: scaledSize,
+            borderRadius: scaledSize / 2,
+            top: shadowOffset,
+            left: shadowOffset,
           },
         ]}
       />
-    );
-  }
 
-  return (
-    <View
-      style={[
-        styles.fallback,
-        {
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-        },
-      ]}
-    >
-      <Text style={[styles.initials, { fontSize: size * 0.4 }]}>{initials || '?'}</Text>
+      {/* 2. Avatar Sticker Surface */}
+      {url ? (
+        <Image
+          source={{ uri: url }}
+          style={[
+            styles.image,
+            {
+              width: scaledSize,
+              height: scaledSize,
+              borderRadius: scaledSize / 2,
+            },
+          ]}
+        />
+      ) : (
+        <View
+          style={[
+            styles.fallback,
+            {
+              width: scaledSize,
+              height: scaledSize,
+              borderRadius: scaledSize / 2,
+              backgroundColor,
+            },
+          ]}
+        >
+          <Text
+            style={[styles.initials, { fontSize: scaledSize * 0.38 }]}
+            maxFontSizeMultiplier={1.2}
+          >
+            {initials || '?'}
+          </Text>
+        </View>
+      )}
+
+      {/* 3. Playful Presence Dot */}
+      {showPresence && (
+        <View
+          style={[
+            styles.presenceDot,
+            isOnline ? styles.presenceOnline : styles.presenceOffline,
+          ]}
+        />
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  fallback: {
-    backgroundColor: theme.colors.surfaceSubtle, // #f0ece6
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: theme.colors.border, // #d2ccc4
+  wrapper: {
+    position: 'relative',
   },
-  initials: {
-    color: theme.colors.text, // #42362e
-    fontWeight: '700',
-    letterSpacing: 0.5,
+  shadowUnderlay: {
+    position: 'absolute',
+    backgroundColor: theme.colors.shadowInk,
   },
   image: {
-    backgroundColor: theme.colors.surfaceSubtle,
+    borderWidth: 2.5,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+  fallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2.5,
+    borderColor: theme.colors.border,
+  },
+  initials: {
+    fontFamily: theme.typography.fontFamilies.display,
+    color: theme.colors.text,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  presenceDot: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+  },
+  presenceOnline: {
+    backgroundColor: theme.colors.pool, // Pool Teal #2EC4B6
+  },
+  presenceOffline: {
+    backgroundColor: theme.colors.textMuted,
   },
 });

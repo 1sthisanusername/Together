@@ -1,47 +1,51 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { signUpSchema, loginSchema, resetPasswordSchema } from '../src/features/auth/schemas';
+
+// Mock dependencies
+vi.mock('react-native', () => import('./mocks/react-native'));
+vi.mock('react-native-url-polyfill/auto', () => ({}));
+vi.mock('expo-secure-store', () => import('./mocks/expo-secure-store'));
+vi.mock('@react-native-google-signin/google-signin', () => import('./mocks/google-signin'));
+
 import { acceptInviteSchema, createCoupleSchema } from '../src/features/couple/schemas';
+import { useAuthStore } from '../src/features/auth/hooks/useAuth';
+import { supabase } from '../src/services/supabase';
 
-describe('Auth Validation Schemas', () => {
-  it('validates a correct sign up payload', () => {
-    const valid = {
-      email: 'alex@example.com',
-      password: 'password123',
-      displayName: 'Alex',
-    };
-    const parsed = signUpSchema.parse(valid);
-    expect(parsed.email).toBe('alex@example.com');
-    expect(parsed.displayName).toBe('Alex');
+describe('Google-Only Auth Architecture', () => {
+  it('useAuthStore has signInWithGoogle and signOut', () => {
+    const state = useAuthStore.getState();
+    expect(typeof state.signInWithGoogle).toBe('function');
+    expect(typeof state.signOut).toBe('function');
   });
 
-  it('rejects short passwords (< 8 chars)', () => {
-    const invalid = {
-      email: 'alex@example.com',
-      password: 'short',
-      displayName: 'Alex',
-    };
-    expect(() => signUpSchema.parse(invalid)).toThrow(/at least 8 characters/);
+  it('signInWithGoogle signs in and sets authenticated session', async () => {
+    vi.spyOn(supabase.auth, 'signInWithIdToken').mockResolvedValueOnce({
+      data: {
+        session: { access_token: 'fake-jwt', user: { id: 'u1', email: 'test@gmail.com' } } as any,
+        user: { id: 'u1', email: 'test@gmail.com' } as any,
+      },
+      error: null,
+    });
+    vi.spyOn(useAuthStore.getState(), 'fetchProfile').mockResolvedValue(null);
+
+    const { signInWithGoogle } = useAuthStore.getState();
+    const result = await signInWithGoogle();
+
+    expect(result.error).toBeNull();
+    const state = useAuthStore.getState();
+    expect(state.session).toBeDefined();
+    expect(state.user).toBeDefined();
   });
 
-  it('rejects invalid emails', () => {
-    const invalid = {
-      email: 'not-an-email',
-      password: 'password123',
-      displayName: 'Alex',
-    };
-    expect(() => signUpSchema.parse(invalid)).toThrow(/valid email/);
-  });
+  it('signOut clears local session, user, and profile', async () => {
+    const { signOut } = useAuthStore.getState();
+    await signOut();
 
-  it('validates login input', () => {
-    expect(() => loginSchema.parse({ email: 'valid@example.com', password: 'secret' })).not.toThrow();
-    expect(() => loginSchema.parse({ email: 'invalid', password: 'secret' })).toThrow();
-  });
-
-  it('validates reset password input', () => {
-    expect(() => resetPasswordSchema.parse({ email: 'valid@example.com' })).not.toThrow();
-    expect(() => resetPasswordSchema.parse({ email: '' })).toThrow();
+    const state = useAuthStore.getState();
+    expect(state.session).toBeNull();
+    expect(state.user).toBeNull();
+    expect(state.profile).toBeNull();
   });
 });
 

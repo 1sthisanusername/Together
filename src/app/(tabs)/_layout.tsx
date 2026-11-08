@@ -1,8 +1,8 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
+import { HomeIcon, PlayIcon, DatesIcon, MemoriesIcon, UsIcon } from '@/shared/ui';
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -11,25 +11,22 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.colors.primary, // #b69788
-        tabBarInactiveTintColor: theme.colors.secondary, // #a8917f
+        tabBarActiveTintColor: theme.colors.primary, // Tomato #FF5A3C
+        tabBarInactiveTintColor: theme.colors.textSecondary, // Ink Muted #7A6E63
         tabBarStyle: {
-          backgroundColor: theme.colors.surface, // #ffffff
-          borderTopColor: theme.colors.border, // #d2ccc4
-          borderTopWidth: 1,
-          height: 64,
-          paddingBottom: 10,
-          paddingTop: 8,
-          shadowColor: theme.colors.text,
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.03,
-          shadowRadius: 8,
-          elevation: 4,
+          backgroundColor: theme.colors.background, // Paper #FFF4E3
+          borderTopColor: theme.colors.border, // Ink #2B2118
+          borderTopWidth: 2,
+          height: scale(62),
+          paddingBottom: scale(10),
+          paddingTop: scale(8),
+          elevation: 0,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-          letterSpacing: 0.2,
+          fontFamily: theme.typography.fontFamilies.display,
+          fontSize: scale(11),
+          fontWeight: '800',
+          letterSpacing: -0.1,
         },
       }}
     >
@@ -37,35 +34,35 @@ export default function TabLayout() {
         name="home"
         options={{
           title: t('nav.home'),
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>🏠</Text>,
+          tabBarIcon: ({ color }) => <HomeIcon color={color} size={scale(20)} />,
         }}
       />
       <Tabs.Screen
         name="play"
         options={{
           title: t('nav.play'),
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>✨</Text>,
+          tabBarIcon: ({ color }) => <PlayIcon color={color} size={scale(20)} />,
         }}
       />
       <Tabs.Screen
         name="dates"
         options={{
           title: t('nav.dates'),
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>🕯️</Text>,
+          tabBarIcon: ({ color }) => <DatesIcon color={color} size={scale(20)} />,
         }}
       />
       <Tabs.Screen
         name="memories"
         options={{
           title: t('nav.memories'),
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>🎞️</Text>,
+          tabBarIcon: ({ color }) => <MemoriesIcon color={color} size={scale(20)} />,
         }}
       />
       <Tabs.Screen
         name="us"
         options={{
           title: t('nav.us'),
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>🤍</Text>,
+          tabBarIcon: ({ color }) => <UsIcon color={color} size={scale(20)} />,
         }}
       />
     </Tabs>

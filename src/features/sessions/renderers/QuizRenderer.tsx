@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Input } from '@/shared/ui';
@@ -34,6 +34,13 @@ export const QuizRenderer: React.FC<QuizProps> = ({
   const { mutate: completeSession, isPending: isCompleting } = useCompleteSession(session.id);
   const { mutate: saveMemory, isSuccess: isMemorySaved } = useSaveSessionAsMemory();
 
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedOption(null);
+    setTextInput('');
+  }, [currentRound?.id]);
+
   const roundEvents = events.filter(
     (e) => e.type === 'answer_submitted' && (e.payload as any)?.round === currentRound?.id
   );
@@ -42,6 +49,7 @@ export const QuizRenderer: React.FC<QuizProps> = ({
   const partnerAnswerEvent = roundEvents.find((e) => e.user_id === partnerId);
 
   const myAnswer = (myAnswerEvent?.payload as any)?.answer;
+  const effectiveMyAnswer = myAnswer || selectedOption;
   const partnerAnswer = (partnerAnswerEvent?.payload as any)?.answer;
   const isPartnerMasked = (partnerAnswerEvent?.payload as any)?.masked === true;
   const isBothRevealed = myAnswer && partnerAnswer && !isPartnerMasked;
@@ -50,7 +58,8 @@ export const QuizRenderer: React.FC<QuizProps> = ({
   const isCompleted = session.status === 'completed';
 
   const handleAnswer = (val: string) => {
-    if (!val.trim() || myAnswer || isSubmitting) return;
+    if (!val.trim() || effectiveMyAnswer || isSubmitting) return;
+    setSelectedOption(val.trim());
     submitEvent({
       type: 'answer_submitted',
       payload: {
@@ -119,14 +128,14 @@ export const QuizRenderer: React.FC<QuizProps> = ({
               key={idx}
               style={[
                 styles.optionBtn,
-                myAnswer === opt && styles.optionSelected,
+                effectiveMyAnswer === opt && styles.optionSelected,
                 isBothRevealed && partnerAnswer === opt && styles.optionPartner,
               ]}
               onPress={() => handleAnswer(opt)}
-              disabled={!!myAnswer || isSubmitting}
+              disabled={!!effectiveMyAnswer || isSubmitting}
             >
               <Text style={styles.optionText}>{opt}</Text>
-              {myAnswer === opt && <Text style={styles.myBadge}>✓ {t('sessions.yourChoice')}</Text>}
+              {effectiveMyAnswer === opt && <Text style={styles.myBadge}>✓ {t('sessions.yourChoice')}</Text>}
               {isBothRevealed && partnerAnswer === opt && (
                 <Text style={styles.partnerBadge}>♥ {t('sessions.partnerChoice', { name: partnerName })}</Text>
               )}
@@ -135,7 +144,7 @@ export const QuizRenderer: React.FC<QuizProps> = ({
         </View>
       ) : (
         <View style={styles.textSection}>
-          {!myAnswer ? (
+          {!effectiveMyAnswer ? (
             <>
               <Input
                 placeholder="Share your thoughts..."
@@ -156,13 +165,13 @@ export const QuizRenderer: React.FC<QuizProps> = ({
           ) : (
             <Card style={styles.lockedCard}>
               <Text style={styles.lockedLabel}>{t('sessions.yourChoice')}:</Text>
-              <Text style={styles.lockedValue}>{myAnswer}</Text>
+              <Text style={styles.lockedValue}>{effectiveMyAnswer}</Text>
             </Card>
           )}
         </View>
       )}
 
-      {myAnswer && !partnerAnswerEvent ? (
+      {effectiveMyAnswer && !partnerAnswerEvent ? (
         <Card style={styles.statusCard}>
           <Text style={styles.statusText}>
             🔒 {t('sessions.waitingForPartner', { name: partnerName })}
@@ -170,7 +179,7 @@ export const QuizRenderer: React.FC<QuizProps> = ({
         </Card>
       ) : null}
 
-      {!myAnswer && partnerAnswerEvent ? (
+      {!effectiveMyAnswer && partnerAnswerEvent ? (
         <Card style={styles.partnerWaitingCard}>
           <Text style={styles.partnerWaitingText}>
             ⚡ {t('sessions.partnerWaitingAnswer', { name: partnerName })}

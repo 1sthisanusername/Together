@@ -1,21 +1,44 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Modal,
+  ScrollView,
+  Dimensions,
+} from 'react-native';
+import { Image } from 'expo-image';
 import { Card } from '@/shared/ui';
-import type { Memory } from '@/shared/types';
+import type { MemoryWithMedia } from '../hooks/useMemories';
 import { useDeleteMemory } from '../hooks/useMemories';
+import { useAuthStore } from '@/features/auth';
 import { theme } from '@/shared/theme';
 
 export interface MemoryCardProps {
-  memory: Memory;
+  memory: MemoryWithMedia;
 }
 
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
 export const MemoryCard: React.FC<MemoryCardProps> = ({ memory }) => {
+  const user = useAuthStore((state) => state.user);
   const { mutate: deleteMemory, isPending: isDeleting } = useDeleteMemory();
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+
+  const isUploader = memory.created_by === user?.id;
+  const photoUrls = memory.photoUrls || [];
 
   const handleDelete = () => {
+    if (!isUploader) {
+      Alert.alert('Permission Denied', 'Only the partner who added this memory can delete it.');
+      return;
+    }
+
     Alert.alert(
       'Delete Memory',
-      'Are you sure you want to delete this memory? This cannot be undone.',
+      'Are you sure you want to delete this memory and its photos? This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -24,7 +47,7 @@ export const MemoryCard: React.FC<MemoryCardProps> = ({ memory }) => {
           onPress: () =>
             deleteMemory({
               memoryId: memory.id,
-              mediaId: memory.media_id,
+              createdBy: memory.created_by,
             }),
         },
       ]
@@ -43,19 +66,75 @@ export const MemoryCard: React.FC<MemoryCardProps> = ({ memory }) => {
         </Text>
         <View style={styles.headerRight}>
           {memory.favorite && <Text style={styles.favoriteBadge}>⭐ Favorite</Text>}
-          <TouchableOpacity
-            onPress={handleDelete}
-            disabled={isDeleting}
-            style={styles.deleteBtn}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Text style={styles.deleteText}>✕</Text>
-          </TouchableOpacity>
+          {/* Delete button: only accessible to the uploader */}
+          {isUploader && (
+            <TouchableOpacity
+              onPress={handleDelete}
+              disabled={isDeleting}
+              style={styles.deleteBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.deleteText}>✕</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
       <Text style={styles.title}>{memory.title}</Text>
       {memory.note ? <Text style={styles.note}>{memory.note}</Text> : null}
+
+      {/* Photo Gallery Grid / Carousel */}
+      {photoUrls.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.photosScroll}
+        >
+          {photoUrls.map((url, idx) => (
+            <TouchableOpacity
+              key={`${url}_${idx}`}
+              onPress={() => setFullscreenImage(url)}
+              activeOpacity={0.85}
+              style={styles.photoWrapper}
+            >
+              <Image
+                source={{ uri: url }}
+                style={styles.photoThumbnail}
+                contentFit="cover"
+                transition={200}
+                cachePolicy="memory-disk"
+              />
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
+
+      {/* Fullscreen Photo Modal */}
+      <Modal
+        visible={!!fullscreenImage}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFullscreenImage(null)}
+      >
+        <View style={styles.fullscreenOverlay}>
+          <TouchableOpacity
+            style={styles.closeFullscreenBtn}
+            onPress={() => setFullscreenImage(null)}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Text style={styles.closeFullscreenText}>✕</Text>
+          </TouchableOpacity>
+
+          {fullscreenImage && (
+            <Image
+              source={{ uri: fullscreenImage }}
+              style={styles.fullscreenImage}
+              contentFit="contain"
+              cachePolicy="memory-disk"
+            />
+          )}
+        </View>
+      </Modal>
     </Card>
   );
 };
@@ -98,18 +177,58 @@ const styles = StyleSheet.create({
   deleteText: {
     fontSize: 12,
     color: theme.colors.textSecondary,
-    fontWeight: '700',
   },
   title: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
     color: theme.colors.text,
     marginBottom: 6,
-    letterSpacing: -0.3,
   },
   note: {
     fontSize: 14,
     color: theme.colors.textSecondary,
-    lineHeight: 21,
+    lineHeight: 20,
+    marginBottom: 10,
+  },
+  photosScroll: {
+    flexDirection: 'row',
+    marginTop: 8,
+  },
+  photoWrapper: {
+    marginRight: 10,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  photoThumbnail: {
+    width: 100,
+    height: 100,
+    borderRadius: 12,
+  },
+  fullscreenOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeFullscreenBtn: {
+    position: 'absolute',
+    top: 50,
+    right: 24,
+    zIndex: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeFullscreenText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  fullscreenImage: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT * 0.8,
   },
 });
