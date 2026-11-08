@@ -71,7 +71,7 @@ export function useSession(sessionId: string) {
     if (!sessionId) return;
 
     const channel = supabase
-      .channel(`session_${sessionId}`)
+      .channel(`session_${sessionId}_${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         {

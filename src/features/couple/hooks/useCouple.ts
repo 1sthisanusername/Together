@@ -103,7 +103,7 @@ export const useActiveCouple = () => {
     if (!user) return;
 
     const channel = supabase
-      .channel(`couple_members_${user.id}`)
+      .channel(`couple_members_${user.id}_${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         {
