@@ -96,3 +96,4 @@ if (!sql.includes('-- 2. STORAGE CONFIGURATION')) {
 } else {
   console.log('Already appended!');
 }
+

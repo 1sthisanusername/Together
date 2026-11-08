@@ -36,3 +36,4 @@ sql = sql.replace(/(DROP POLICY IF EXISTS "([^"]+)" ON ([^\n;]+);\s*)+DROP POLIC
 
 fs.writeFileSync(srcPath, sql, 'utf8');
 console.log('Successfully updated full_schema_and_seed.sql with idempotent triggers and policies!');
+
