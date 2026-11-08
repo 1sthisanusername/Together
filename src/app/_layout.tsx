@@ -2,21 +2,12 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import '@/shared/i18n';
 import { useAuthStore } from '@/features/auth';
-import { supabase } from '@/services';
+import { supabase, queryClient } from '@/services';
 import { theme } from '@/shared/theme';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 2,
-      staleTime: 1000 * 30, // 30 seconds
-    },
-  },
-});
 
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   return (

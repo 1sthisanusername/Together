@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { Session, User } from '@supabase/supabase-js';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
-import { supabase, analytics } from '@/services';
+import { supabase, analytics, clearAppCache } from '@/services';
 import type { Profile } from '@/shared/types';
 import type { SignUpInput, LoginInput, ResetPasswordInput } from '../schemas';
 
@@ -260,9 +260,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       await supabase.auth.signOut();
       analytics.reset();
+      clearAppCache();
       set({ session: null, user: null, profile: null, isLoading: false });
     } catch (err) {
       console.warn('Error during sign out:', err);
+      clearAppCache();
       set({ isLoading: false });
     }
   },

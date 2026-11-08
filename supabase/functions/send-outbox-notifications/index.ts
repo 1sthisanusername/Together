@@ -15,11 +15,25 @@ interface NotificationRow {
 
 Deno.serve(async (req) => {
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    // FIX 5: Enforce authorization check on Edge Function
+    const authHeader = req.headers.get('Authorization') ?? '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const cronSecret = Deno.env.get('CRON_SECRET') ?? '';
+
+    const expectedBearer = `Bearer ${supabaseServiceKey}`;
+    const expectedCron = cronSecret ? `Bearer ${cronSecret}` : '';
+
+    if (!authHeader || (authHeader !== expectedBearer && (!expectedCron || authHeader !== expectedCron))) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      return new Response(JSON.stringify({ error: 'Missing environment variables' }), {
+      return new Response(JSON.stringify({ error: 'Service configuration unavailable' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -37,7 +51,8 @@ Deno.serve(async (req) => {
       .limit(50);
 
     if (fetchError) {
-      return new Response(JSON.stringify({ error: fetchError.message }), {
+      console.error('[send-outbox-notifications] Fetch error:', fetchError.message);
+      return new Response(JSON.stringify({ error: 'Unable to process notifications' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -105,8 +120,8 @@ Deno.serve(async (req) => {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: message }), {
+    console.error('[send-outbox-notifications] Internal error:', err);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
