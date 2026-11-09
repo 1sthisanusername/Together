@@ -10,8 +10,8 @@ import {
 } from '@/shared/utils';
 import { useUpdateStartDate } from '@/features/couple';
 import { theme, scale, triggerHaptic } from '@/shared/theme';
-import { PartnerString } from './PartnerString';
 
+// Together couple header: clean layout with partner names and relationship duration
 export interface CoupleHeaderProps {
   coupleName?: string | null;
   me: Profile | null;
@@ -25,7 +25,6 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
   me,
   partner,
   startDate,
-  isPartnerOnline = false,
 }) => {
   const { t } = useTranslation();
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -78,14 +77,9 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* 1. Header arrangement: Together ❤️ + Both Names + Duration on Left */}
+      {/* Names and Relationship Duration (Logo on top in bar, then names, then days) */}
       <View style={styles.headerBlock}>
-        <View style={styles.togetherRow}>
-          <Text style={styles.togetherTitle}>Together</Text>
-          <Text style={styles.heartIcon}>❤️</Text>
-        </View>
-
-        {/* Both Partner Names underneath Together heading */}
+        {/* Partner Names */}
         <Text style={styles.partnerNames} numberOfLines={1}>
           {myDisplayName} ❤️ {partnerDisplayName}
         </Text>
@@ -122,16 +116,7 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
         )}
       </View>
 
-      {/* 2. Automatic Online Presence Telephone String */}
-      <PartnerString
-        myName={myDisplayName}
-        myAvatarUrl={me?.avatar_url}
-        partnerName={partnerDisplayName}
-        partnerAvatarUrl={partner?.avatar_url}
-        isPartnerOnline={isPartnerOnline}
-      />
-
-      {/* 3. Date Picker Modal / Form (when updating start date) */}
+      {/* Date Picker Modal / Form (when updating start date) */}
       {showDatePicker && (
         <View style={styles.pickerWrapper}>
           <View style={styles.pickerShadow} />
@@ -181,35 +166,21 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: scale(4),
+    paddingVertical: scale(2),
     width: '100%',
   },
   headerBlock: {
     paddingHorizontal: scale(18),
-    marginBottom: scale(6),
+    marginTop: scale(4),
+    marginBottom: scale(8),
     alignItems: 'flex-start',
-  },
-  togetherRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: scale(6),
-  },
-  togetherTitle: {
-    fontFamily: theme.typography.fontFamilies.display,
-    fontSize: scale(26),
-    fontWeight: '800',
-    color: theme.colors.text,
-    letterSpacing: -0.5,
-  },
-  heartIcon: {
-    fontSize: scale(22),
   },
   partnerNames: {
     fontFamily: theme.typography.fontFamilies.display,
-    fontSize: scale(18),
-    fontWeight: '700',
+    fontSize: scale(22),
+    fontWeight: '800',
     color: theme.colors.text,
-    marginTop: scale(2),
+    letterSpacing: -0.3,
   },
   durationBadgeWrapper: {
     position: 'relative',
@@ -232,7 +203,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: theme.colors.border,
     paddingHorizontal: scale(12),
-    paddingVertical: scale(4),
+    paddingVertical: scale(5),
     borderRadius: scale(12),
   },
   durationText: {
