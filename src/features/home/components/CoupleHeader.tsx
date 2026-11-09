@@ -14,6 +14,7 @@ export interface CoupleHeaderProps {
   partner: Profile | null;
   daysTogether: number | null;
   startDate?: string | null;
+  isPartnerOnline?: boolean;
 }
 
 export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
@@ -21,6 +22,7 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
   me,
   partner,
   startDate,
+  isPartnerOnline = false,
 }) => {
   const { t } = useTranslation();
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -69,7 +71,7 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
         myAvatarUrl={me?.avatar_url}
         partnerName={partner?.display_name || 'Partner'}
         partnerAvatarUrl={partner?.avatar_url}
-        initialOnline={true}
+        isPartnerOnline={isPartnerOnline}
       />
 
       {/* 3. Together Since Breakdown & Days Counter Badge */}

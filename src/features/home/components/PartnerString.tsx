@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -11,14 +11,15 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { Avatar } from '@/shared/ui';
-import { theme, scale, triggerHaptic } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface PartnerStringProps {
   myName: string;
   myAvatarUrl?: string | null;
   partnerName: string;
   partnerAvatarUrl?: string | null;
-  initialOnline?: boolean;
+  isPartnerOnline?: boolean;
+  isMyOnline?: boolean;
 }
 
 export const PartnerString: React.FC<PartnerStringProps> = ({
@@ -26,16 +27,15 @@ export const PartnerString: React.FC<PartnerStringProps> = ({
   myAvatarUrl,
   partnerName,
   partnerAvatarUrl,
-  initialOnline = true,
+  isPartnerOnline = false,
+  isMyOnline = true,
 }) => {
-  const [isOnline, setIsOnline] = useState(initialOnline);
-
   // Wiggle animation for tight string when online
   const wiggleY = useSharedValue(0);
   const wiggleRotate = useSharedValue(0);
 
   useEffect(() => {
-    if (isOnline) {
+    if (isPartnerOnline) {
       // Rapid, tight telephone string vibration wave
       wiggleY.value = withRepeat(
         withSequence(
@@ -67,7 +67,7 @@ export const PartnerString: React.FC<PartnerStringProps> = ({
       cancelAnimation(wiggleY);
       cancelAnimation(wiggleRotate);
     };
-  }, [isOnline, wiggleY, wiggleRotate]);
+  }, [isPartnerOnline, wiggleY, wiggleRotate]);
 
   const animatedWiggleStyle = useAnimatedStyle(() => {
     return {
@@ -77,11 +77,6 @@ export const PartnerString: React.FC<PartnerStringProps> = ({
       ],
     };
   });
-
-  const toggleOnline = () => {
-    triggerHaptic('light');
-    setIsOnline(!isOnline);
-  };
 
   const stringWidth = scale(130);
   const stringHeight = scale(65);
@@ -97,7 +92,7 @@ export const PartnerString: React.FC<PartnerStringProps> = ({
             url={myAvatarUrl}
             size={56}
             showPresence
-            isOnline={true}
+            isOnline={isMyOnline}
             stickerColor="pool"
           />
           <Text style={styles.nameLabel} numberOfLines={1}>
@@ -107,7 +102,7 @@ export const PartnerString: React.FC<PartnerStringProps> = ({
 
         {/* The Connecting Partner String */}
         <View style={[styles.stringCanvasWrapper, { width: stringWidth, height: stringHeight }]}>
-          {isOnline ? (
+          {isPartnerOnline ? (
             /* TIGHT STRING (WITH REANIMATED WIGGLE) */
             <Animated.View style={[styles.stringContainer, animatedWiggleStyle]}>
               <Svg width={stringWidth} height={stringHeight} viewBox={`0 0 ${stringWidth} ${stringHeight}`}>
@@ -144,12 +139,15 @@ export const PartnerString: React.FC<PartnerStringProps> = ({
                   strokeLinecap="round"
                   strokeDasharray="5,3"
                 />
+                {/* Tie knot on left */}
                 <Circle cx={6} cy={scale(20)} r={3.5} fill={theme.colors.border} />
+                {/* Tie knot on right */}
                 <Circle cx={stringWidth - 6} cy={scale(20)} r={3.5} fill={theme.colors.border} />
               </Svg>
 
-              {/* Hanging Slack Tag */}
-              <View style={[styles.slackTag, { top: stringHeight - scale(26) }]}>
+              {/* Resting Tag */}
+              <View style={styles.slackTag}>
+                <View style={styles.slackShadow} />
                 <View style={styles.slackBadge}>
                   <Text style={styles.slackText}>away 💤</Text>
                 </View>
@@ -159,45 +157,38 @@ export const PartnerString: React.FC<PartnerStringProps> = ({
         </View>
 
         {/* Partner */}
-        <TouchableOpacity style={styles.avatarCol} onPress={toggleOnline} activeOpacity={0.85}>
+        <View style={styles.avatarCol}>
           <Avatar
             name={partnerName || 'Partner'}
             url={partnerAvatarUrl}
             size={56}
             showPresence
-            isOnline={isOnline}
+            isOnline={isPartnerOnline}
             stickerColor="sunshine"
           />
           <Text style={styles.nameLabel} numberOfLines={1}>
             {partnerName || 'Partner'}
           </Text>
-        </TouchableOpacity>
+        </View>
       </View>
 
-      {/* 2. Interactive Status Pill (Tap to toggle state) */}
-      <TouchableOpacity
-        style={styles.statusTogglePill}
-        onPress={toggleOnline}
-        activeOpacity={0.8}
-        accessibilityRole="button"
-        accessibilityLabel={`Toggle string state, currently ${isOnline ? 'online' : 'away'}`}
-      >
+      {/* 2. Automatic Online Status Indicator Pill */}
+      <View style={styles.statusTogglePill}>
         <View style={styles.statusPillShadow} />
         <View
           style={[
             styles.statusPillSurface,
-            isOnline ? styles.pillOnline : styles.pillOffline,
+            isPartnerOnline ? styles.pillOnline : styles.pillOffline,
           ]}
         >
-          <Text style={styles.statusDot}>{isOnline ? '🟢' : '⚪'}</Text>
+          <Text style={styles.statusDot}>{isPartnerOnline ? '🟢' : '⚪'}</Text>
           <Text style={styles.statusPillText}>
-            {isOnline
-              ? 'Partner is Online • String is tight ⚡'
-              : 'Partner is Away • String is slack 💤'}
+            {isPartnerOnline
+              ? `${partnerName} is Online • String is tight ⚡`
+              : `${partnerName} is Away • String is slack 💤`}
           </Text>
-          <Text style={styles.tapHint}>(tap)</Text>
         </View>
-      </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -219,33 +210,28 @@ const styles = StyleSheet.create({
     width: scale(72),
   },
   nameLabel: {
-    fontFamily: theme.typography.fontFamilies.display,
+    marginTop: scale(6),
+    fontFamily: theme.typography.families.bold,
     fontSize: scale(13),
-    fontWeight: '800',
     color: theme.colors.text,
-    marginTop: scale(4),
-    letterSpacing: -0.2,
+    textAlign: 'center',
   },
   stringCanvasWrapper: {
-    alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
+    alignItems: 'center',
     marginHorizontal: scale(2),
   },
   stringContainer: {
     width: '100%',
     height: '100%',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
     position: 'relative',
   },
-
-  // Connected Tag (Tight String)
   connectedTag: {
     position: 'absolute',
-    top: '25%',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignSelf: 'center',
+    top: scale(6),
   },
   connectedShadow: {
     position: 'absolute',
@@ -253,91 +239,84 @@ const styles = StyleSheet.create({
     left: 2,
     right: -2,
     bottom: -2,
-    backgroundColor: theme.colors.shadowInk,
-    borderRadius: scale(8),
+    backgroundColor: theme.colors.border,
+    borderRadius: 8,
   },
   connectedBadge: {
-    backgroundColor: theme.colors.secondary, // Sunshine #FFC93C
+    backgroundColor: theme.colors.stickers.matcha, // Fresh Mint
     borderWidth: 1.5,
     borderColor: theme.colors.border,
-    borderRadius: scale(8),
+    borderRadius: 8,
     paddingHorizontal: scale(8),
     paddingVertical: scale(2),
   },
   connectedText: {
-    fontFamily: theme.typography.fontFamilies.display,
-    fontSize: scale(10),
-    fontWeight: '800',
+    fontFamily: theme.typography.families.bold,
+    fontSize: scale(11),
     color: theme.colors.text,
-    letterSpacing: 0.1,
   },
-
-  // Slack Tag (Hanging String)
   slackTag: {
     position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ rotate: '-5deg' }],
+    alignSelf: 'center',
+    bottom: scale(10),
+  },
+  slackShadow: {
+    position: 'absolute',
+    top: 2,
+    left: 2,
+    right: -2,
+    bottom: -2,
+    backgroundColor: theme.colors.border,
+    borderRadius: 8,
   },
   slackBadge: {
     backgroundColor: theme.colors.surface,
     borderWidth: 1.5,
     borderColor: theme.colors.border,
-    borderRadius: scale(6),
-    paddingHorizontal: scale(7),
-    paddingVertical: scale(1.5),
+    borderRadius: 8,
+    paddingHorizontal: scale(8),
+    paddingVertical: scale(2),
   },
   slackText: {
-    fontFamily: theme.typography.fontFamilies.handwritten,
-    fontSize: scale(13),
-    fontWeight: '700',
+    fontFamily: theme.typography.families.bold,
+    fontSize: scale(11),
     color: theme.colors.textSecondary,
   },
-
-  // Interactive Status Toggle Pill
   statusTogglePill: {
     position: 'relative',
     marginTop: scale(4),
   },
   statusPillShadow: {
     position: 'absolute',
-    top: 2.5,
-    left: 2.5,
-    right: -2.5,
-    bottom: -2.5,
-    backgroundColor: theme.colors.shadowInk,
-    borderRadius: scale(20),
+    top: 3,
+    left: 3,
+    right: -3,
+    bottom: -3,
+    backgroundColor: theme.colors.border,
+    borderRadius: 14,
   },
   statusPillSurface: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
     paddingHorizontal: scale(14),
     paddingVertical: scale(6),
-    borderRadius: scale(20),
-    borderWidth: theme.borders.chunky,
-    borderColor: theme.colors.border,
     gap: scale(6),
   },
   pillOnline: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#E8F5E9',
   },
   pillOffline: {
-    backgroundColor: theme.colors.surfaceSubtle,
+    backgroundColor: theme.colors.surface,
   },
   statusDot: {
-    fontSize: scale(9),
+    fontSize: scale(10),
   },
   statusPillText: {
-    fontFamily: theme.typography.fontFamilies.sans,
+    fontFamily: theme.typography.families.bold,
     fontSize: scale(12),
-    fontWeight: '800',
     color: theme.colors.text,
   },
-  tapHint: {
-    fontFamily: theme.typography.fontFamilies.handwritten,
-    fontSize: scale(13),
-    color: theme.colors.primary,
-    fontWeight: '700',
-  },
 });
-

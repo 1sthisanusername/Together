@@ -25,9 +25,11 @@ import {
   useSendTextMessage,
   useSendVoiceNote,
   useSendPhotoMessage,
+  useRetryChatMessage,
 } from '../hooks/useMessages';
 import { MessageItem } from './MessageItem';
 import { VoiceNoteRecorder } from './VoiceNoteRecorder';
+import { PhotoPreviewModal } from './PhotoPreviewModal';
 import { LoadingState, EmptyState } from '@/shared/ui';
 import { theme } from '@/shared/theme';
 
@@ -45,15 +47,18 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
   const { mutateAsync: sendText, isPending: isSendingText } = useSendTextMessage();
   const { mutateAsync: sendVoice, isPending: isSendingVoice } = useSendVoiceNote();
   const { mutateAsync: sendPhoto, isPending: isSendingPhoto } = useSendPhotoMessage();
+  const { mutate: retryMessage } = useRetryChatMessage();
 
   const insets = useSafeAreaInsets();
   const [inputText, setInputText] = useState('');
+  const [previewImageUri, setPreviewImageUri] = useState<string | null>(null);
   const scrollViewRef = useRef<any>(null);
 
   const [recordingState, setRecordingState] = useState({
     isRecording: false,
     durationSeconds: 0,
     isCancelled: false,
+    isPreviewing: false,
   });
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -114,8 +119,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
         quality: 0.8,
       });
       if (!result.canceled && result.assets && result.assets[0]?.uri) {
-        await sendPhoto({ uri: result.assets[0].uri });
-        setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+        setPreviewImageUri(result.assets[0].uri);
       }
     } catch (err: any) {
       Alert.alert('Error', err?.message || 'Failed to capture photo');
@@ -135,11 +139,26 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
         quality: 0.8,
       });
       if (!result.canceled && result.assets && result.assets[0]?.uri) {
-        await sendPhoto({ uri: result.assets[0].uri });
-        setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+        setPreviewImageUri(result.assets[0].uri);
       }
     } catch (err: any) {
       Alert.alert('Error', err?.message || 'Failed to select photo');
+    }
+  };
+
+  const handleSendPhotoWithCaption = async ({
+    uri,
+    caption,
+  }: {
+    uri: string;
+    caption?: string;
+  }) => {
+    setPreviewImageUri(null);
+    try {
+      await sendPhoto({ uri, caption });
+      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+    } catch {
+      // Handled by optimistic failure status
     }
   };
 
@@ -198,6 +217,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
                 message={msg}
                 isMyMessage={msg.sender_id === user?.id}
                 viewerTimezone={viewerTimezone}
+                onRetry={(failedMsg) => retryMessage(failedMsg)}
               />
             ))}
           </ScrollView>
@@ -207,7 +227,13 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
       {/* Input bar inside KeyboardStickyView - exactly ONE offset mechanism */}
       <KeyboardStickyView offset={{ closed: insets.bottom, opened: 0 }}>
         <View style={styles.inputBarContainer}>
-          <View style={[styles.pill, recordingState.isRecording && styles.pillRecording]}>
+          <View
+            style={[
+              styles.pill,
+              recordingState.isRecording && styles.pillRecording,
+              recordingState.isPreviewing && styles.pillRecording,
+            ]}
+          >
             {recordingState.isRecording ? (
               <View style={styles.recordingRow}>
                 <View style={styles.timerPill}>
@@ -227,6 +253,16 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
                   {recordingState.isCancelled ? 'Release to cancel ✕' : '‹ Slide left to cancel'}
                 </Text>
 
+                <VoiceNoteRecorder
+                  onSendVoiceNote={handleSendVoiceNote}
+                  isUploading={isSendingVoice}
+                  pillMode
+                  onRecordingChange={setRecordingState}
+                />
+              </View>
+            ) : recordingState.isPreviewing ? (
+              <View style={styles.previewModeRow}>
+                <Text style={styles.previewModeTitle}>Preview voice note</Text>
                 <VoiceNoteRecorder
                   onSendVoiceNote={handleSendVoiceNote}
                   isUploading={isSendingVoice}
@@ -304,6 +340,15 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
           </View>
         </View>
       </KeyboardStickyView>
+
+      {/* Photo Preview & Caption Modal before sending */}
+      <PhotoPreviewModal
+        visible={!!previewImageUri}
+        imageUri={previewImageUri}
+        isSending={isSendingPhoto}
+        onSend={handleSendPhotoWithCaption}
+        onCancel={() => setPreviewImageUri(null)}
+      />
     </View>
   );
 };
@@ -498,5 +543,17 @@ const styles = StyleSheet.create({
   cancelHintTextActive: {
     color: '#DC2626',
     fontWeight: '800',
+  },
+  previewModeRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+  },
+  previewModeTitle: {
+    fontFamily: theme.typography.families.bold,
+    fontSize: 13,
+    color: theme.colors.text,
   },
 });

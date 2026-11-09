@@ -245,37 +245,61 @@ export function useDeleteMemory() {
 
       const coupleId = coupleData.couple.id;
 
-      // 1. Fetch attached media files
-      const { data: mediaFiles } = await supabase
-        .from('media_files')
-        .select('id, bucket_path, owner_id')
-        .eq('couple_id', coupleId)
-        .eq('memory_id', memoryId);
+      // Optimistically remove from local query cache so it disappears instantly
+      queryClient.setQueryData<MemoryWithMedia[]>(['memories', coupleId], (prev = []) =>
+        prev.filter((m) => m.id !== memoryId)
+      );
 
-      // 2. Remove files from storage and delete media_files records
-      if (mediaFiles && mediaFiles.length > 0) {
-        const filePaths = mediaFiles
-          .filter((m) => m.owner_id === user.id)
-          .map((m) => m.bucket_path);
+      // 1. Attempt atomic permanent deletion via RPC
+      let deletedViaRpc = false;
+      try {
+        const { data: rpcRes, error: rpcErr } = await (supabase.rpc as any)(
+          'delete_memory_permanently',
+          { p_memory_id: memoryId }
+        );
 
-        if (filePaths.length > 0) {
-          await supabase.storage.from('couples-media').remove(filePaths);
+        if (!rpcErr && rpcRes && (rpcRes as any).success) {
+          deletedViaRpc = true;
+          // Clean up remote storage files if any were attached
+          if ((rpcRes as any).file_paths && (rpcRes as any).file_paths.length > 0) {
+            await supabase.storage.from('couples-media').remove((rpcRes as any).file_paths);
+          }
+        }
+      } catch (e) {
+        // Fallback to direct permanent delete if RPC not available in test harness
+      }
+
+      if (!deletedViaRpc) {
+        // 2. Direct permanent delete fallback
+        const { data: mediaFiles } = await supabase
+          .from('media_files')
+          .select('id, bucket_path, owner_id')
+          .eq('couple_id', coupleId)
+          .eq('memory_id', memoryId);
+
+        if (mediaFiles && mediaFiles.length > 0) {
+          const filePaths = mediaFiles.map((m) => m.bucket_path);
+          if (filePaths.length > 0) {
+            await supabase.storage.from('couples-media').remove(filePaths);
+          }
           await supabase
             .from('media_files')
             .delete()
-            .eq('memory_id', memoryId)
-            .eq('owner_id', user.id);
+            .eq('memory_id', memoryId);
+        }
+
+        const { error: deleteErr } = await supabase
+          .from('memories')
+          .delete()
+          .eq('id', memoryId)
+          .eq('couple_id', coupleId);
+
+        if (deleteErr) {
+          // Invalidate to rollback if failed
+          queryClient.invalidateQueries({ queryKey: ['memories'] });
+          throw new Error(deleteErr.message);
         }
       }
-
-      // 3. Soft-delete the memory
-      const { error: memError } = await supabase
-        .from('memories')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', memoryId)
-        .eq('couple_id', coupleId);
-
-      if (memError) throw new Error(memError.message);
 
       analytics.track('memory_deleted');
       return { memoryId };

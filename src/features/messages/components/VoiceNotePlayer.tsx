@@ -142,6 +142,22 @@ export const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
+  const [trackWidth, setTrackWidth] = useState(0);
+
+  const handleTrackPress = (e: any) => {
+    if (!player || totalDuration <= 0 || trackWidth <= 0) return;
+    try {
+      const locationX = e.nativeEvent.locationX;
+      const fraction = Math.max(0, Math.min(1, locationX / trackWidth));
+      const targetSecs = fraction * totalDuration;
+      if (typeof player.seekTo === 'function') {
+        player.seekTo(targetSecs);
+      }
+    } catch (err) {
+      console.warn('[VoiceNotePlayer] Seek error:', err);
+    }
+  };
+
   const progressPercent = Math.min(100, Math.max(0, (progressSeconds / totalDuration) * 100));
 
   return (
@@ -160,9 +176,14 @@ export const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({
           )}
         </TouchableOpacity>
 
-        {/* Waveform / Progress bar */}
+        {/* Waveform / Progress bar with touch seeking */}
         <View style={styles.waveformContainer}>
-          <View style={styles.track}>
+          <TouchableOpacity
+            style={styles.track}
+            activeOpacity={0.9}
+            onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
+            onPress={handleTrackPress}
+          >
             <View
               style={[
                 styles.progressFill,
@@ -170,7 +191,7 @@ export const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({
                 playbackError ? styles.progressFillError : null,
               ]}
             />
-          </View>
+          </TouchableOpacity>
           <View style={styles.timeRow}>
             <Text style={[styles.timeText, playbackError ? styles.timeTextError : null]}>
               {playbackError ? "Can't play voice note" : formatTime(progressSeconds)}

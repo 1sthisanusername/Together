@@ -8,7 +8,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import '@/shared/i18n';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
-import { supabase, queryClient, push, restorePersistedCache } from '@/services';
+import { supabase, queryClient, push, notificationRouter, restorePersistedCache } from '@/services';
 import { theme } from '@/shared/theme';
 import { InAppNotificationBanner, useNotificationRealtime } from '@/features/notifications';
 import { useFonts, BricolageGrotesque_700Bold } from '@expo-google-fonts/bricolage-grotesque';
@@ -87,12 +87,18 @@ function RootRouteGuard({ children }: { children: React.ReactNode }) {
         }
         break;
 
-      case 'ACTIVE':
-        // 2 members active -> Main tabs (or allowed sub-routes like settings, session)
-        if (inAuthGroup || isRootIndex) {
+      case 'ACTIVE': {
+        // 2 members active -> Main tabs (or pending deep link from notification)
+        notificationRouter.markReady(true);
+        const pending = notificationRouter.getPendingRoute();
+        if (pending) {
+          notificationRouter.clearPendingRoute();
+          router.replace(pending as any);
+        } else if (inAuthGroup || isRootIndex) {
           router.replace('/(tabs)/home');
         }
         break;
+      }
     }
   }, [session, isInitialized, isCoupleLoading, coupleData?.state, segments, router]);
 
@@ -161,19 +167,28 @@ export default function RootLayout() {
       }
     });
 
+    // Register centralized notification router dispatcher
+    notificationRouter.registerDispatcher((route) => {
+      try {
+        router.push(route as any);
+      } catch (err) {
+        console.warn('Navigation error in notificationRouter dispatcher:', err);
+      }
+    });
+
     // Handle deep-linking when user taps a push notification
     const removePushListener = push.setupNotificationResponseListener((deepLink) => {
       try {
         if (deepLink) {
-          const target = deepLink.replace(/^together:\/\//, '/');
-          router.push(target as any);
+          notificationRouter.setPendingRoute(deepLink);
         }
       } catch (err) {
-        console.warn('Error navigating to push deep link:', err);
+        console.warn('Error handling push deep link:', err);
       }
     });
 
     return () => {
+      notificationRouter.unregisterDispatcher();
       unsubscribe();
       subscription.remove();
       removePushListener();

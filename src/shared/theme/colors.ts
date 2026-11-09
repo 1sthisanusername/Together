@@ -85,6 +85,14 @@ export const theme = {
     warningLight: '#FFF8E6',
     danger: palette.danger,
     dangerLight: '#FFEAE5',
+
+    // Stickers
+    stickers: {
+      sunshine: palette.sunshine,
+      pool: palette.pool,
+      bubblegum: palette.bubblegum,
+      matcha: palette.pool,
+    },
   },
 
   darkColors: {
@@ -112,6 +120,13 @@ export const theme = {
       sansRegular: 'Figtree_400Regular',
       handwritten: 'Caveat_700Bold',
       handwrittenRegular: 'Caveat_600SemiBold',
+    },
+    families: {
+      display: 'BricolageGrotesque_700Bold',
+      bold: 'BricolageGrotesque_700Bold',
+      body: 'Figtree_400Regular',
+      sans: 'Figtree_600SemiBold',
+      handwritten: 'Caveat_700Bold',
     },
   },
 

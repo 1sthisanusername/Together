@@ -100,20 +100,23 @@ export function useMessages() {
             if (newRow.deleted_at) return;
 
             let signedUrl: string | null = null;
+            let mediaObj: MediaFile | null = null;
             if (newRow.media_id) {
               const { data: media } = await supabase
                 .from('media_files')
-                .select('bucket_path')
+                .select('*')
                 .eq('id', newRow.media_id)
                 .maybeSingle();
 
               if (media?.bucket_path) {
                 signedUrl = await storage.getSignedUrl(media.bucket_path, 3600);
               }
+              mediaObj = media as MediaFile;
             }
 
             const newMsg: ChatMessage = {
               ...newRow,
+              media: mediaObj,
               mediaSignedUrl: signedUrl,
               status: 'sent',
             };
@@ -339,50 +342,120 @@ export function useSendPhotoMessage() {
       const localId = `local_photo_${Date.now()}_${Math.random().toString(36).substring(7)}`;
       const idempotencyKey = `${user.id}_photo_${Date.now()}`;
 
-      // 1. Upload photo to couples-media bucket
-      const mediaFile = await storage.uploadMedia({
-        coupleId,
-        userId: user.id,
-        uri,
-        mimeType: 'image/jpeg',
-        fileName: 'chat_photo.jpg',
-      });
-
-      const signedUrl = await storage.getSignedUrl(mediaFile.bucket_path, 3600);
-
-      // 2. Insert message referencing media_files
-      const { data, error } = await supabase
-        .from('messages')
-        .insert({
+      // 1. Optimistic render with local uri for immediate display
+      const optimisticMsg: ChatMessage = {
+        id: localId,
+        couple_id: coupleId,
+        sender_id: user.id,
+        recipient_id: partnerId,
+        content: caption || null,
+        media_id: null,
+        media: {
+          id: localId,
           couple_id: coupleId,
-          sender_id: user.id,
-          recipient_id: partnerId,
-          content: caption || null,
-          media_id: mediaFile.id,
-          idempotency_key: idempotencyKey,
-        })
-        .select('*')
-        .single();
-
-      if (error) throw new Error(error.message);
-
-      const fullMsg: ChatMessage = {
-        ...data,
-        media: mediaFile,
-        mediaSignedUrl: signedUrl,
-        status: 'sent',
+          owner_id: user.id,
+          memory_id: null,
+          bucket_path: '',
+          mime_type: 'image/jpeg',
+          file_size: null,
+          duration_seconds: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        mediaSignedUrl: uri,
+        played_at: null,
+        deleted_at: null,
+        idempotency_key: idempotencyKey,
+        created_at: new Date().toISOString(),
+        status: 'sending',
+        localId,
       };
 
       queryClient.setQueryData<ChatMessage[]>(['messages', coupleId], (prev = []) => [
         ...(prev || []),
-        fullMsg,
+        optimisticMsg,
       ]);
 
-      analytics.track('message_sent');
-      return fullMsg;
+      try {
+        // 2. Upload photo to couples-media bucket
+        const mediaFile = await storage.uploadMedia({
+          coupleId,
+          userId: user.id,
+          uri,
+          mimeType: 'image/jpeg',
+          fileName: `chat_photo_${Date.now()}.jpg`,
+        });
+
+        const signedUrl = await storage.getSignedUrl(mediaFile.bucket_path, 3600);
+
+        // 3. Insert message referencing media_files
+        const { data, error } = await supabase
+          .from('messages')
+          .insert({
+            couple_id: coupleId,
+            sender_id: user.id,
+            recipient_id: partnerId,
+            content: caption || null,
+            media_id: mediaFile.id,
+            idempotency_key: idempotencyKey,
+          })
+          .select('*')
+          .single();
+
+        if (error) throw new Error(error.message);
+
+        const fullMsg: ChatMessage = {
+          ...data,
+          media: mediaFile,
+          mediaSignedUrl: signedUrl,
+          status: 'sent',
+          localId,
+        };
+
+        queryClient.setQueryData<ChatMessage[]>(['messages', coupleId], (prev = []) =>
+          prev.map((m) => (m.localId === localId ? fullMsg : m))
+        );
+
+        analytics.track('message_sent');
+        return fullMsg;
+      } catch (err: any) {
+        queryClient.setQueryData<ChatMessage[]>(['messages', coupleId], (prev = []) =>
+          prev.map((m) => (m.localId === localId ? { ...m, status: 'failed' } : m))
+        );
+        throw new Error(err.message || 'Failed to send photo');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', coupleId] });
+    },
+  });
+}
+
+export function useRetryChatMessage() {
+  const queryClient = useQueryClient();
+  const sendText = useSendTextMessage();
+  const sendPhoto = useSendPhotoMessage();
+  const { data: coupleData } = useActiveCouple();
+  const coupleId = coupleData?.couple?.id;
+
+  return useMutation({
+    mutationFn: async (failedMessage: ChatMessage) => {
+      if (!coupleId) throw new Error('No active couple');
+
+      // Remove failed message from local optimistic list
+      queryClient.setQueryData<ChatMessage[]>(['messages', coupleId], (prev = []) =>
+        prev.filter((m) => m.id !== failedMessage.id && m.localId !== failedMessage.localId)
+      );
+
+      // Re-dispatch based on message type
+      if (failedMessage.media?.mime_type?.startsWith('image/') || failedMessage.mediaSignedUrl) {
+        return sendPhoto.mutateAsync({
+          uri: failedMessage.mediaSignedUrl || '',
+          caption: failedMessage.content || undefined,
+        });
+      } else if (failedMessage.content) {
+        return sendText.mutateAsync({ content: failedMessage.content });
+      }
     },
   });
 }

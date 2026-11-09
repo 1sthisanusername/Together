@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { Card } from '@/shared/ui';
+import { Card, ThemedConfirmDialog } from '@/shared/ui';
 import type { MemoryWithMedia } from '../hooks/useMemories';
 import { useDeleteMemory } from '../hooks/useMemories';
 import { useAuthStore } from '@/features/auth';
@@ -26,32 +26,14 @@ export const MemoryCard: React.FC<MemoryCardProps> = ({ memory }) => {
   const user = useAuthStore((state) => state.user);
   const { mutate: deleteMemory, isPending: isDeleting } = useDeleteMemory();
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const isUploader = memory.created_by === user?.id;
   const photoUrls = memory.photoUrls || [];
 
   const handleDelete = () => {
-    if (!isUploader) {
-      Alert.alert('Permission Denied', 'Only the partner who added this memory can delete it.');
-      return;
-    }
-
-    Alert.alert(
-      'Delete Memory',
-      'Are you sure you want to delete this memory and its photos? This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () =>
-            deleteMemory({
-              memoryId: memory.id,
-              createdBy: memory.created_by,
-            }),
-        },
-      ]
-    );
+    if (!isUploader) return;
+    setShowDeleteConfirm(true);
   };
 
   return (
@@ -135,6 +117,25 @@ export const MemoryCard: React.FC<MemoryCardProps> = ({ memory }) => {
           )}
         </View>
       </Modal>
+
+      {/* Themed Confirmation Dialog for Permanent Memory Deletion */}
+      <ThemedConfirmDialog
+        visible={showDeleteConfirm}
+        emoji="🗑️"
+        title="Delete Memory"
+        message="Permanently delete this memory and its photos? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Keep"
+        isDestructive
+        isLoading={isDeleting}
+        onConfirm={() => {
+          deleteMemory(
+            { memoryId: memory.id, createdBy: memory.created_by },
+            { onSettled: () => setShowDeleteConfirm(false) }
+          );
+        }}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </Card>
   );
 };

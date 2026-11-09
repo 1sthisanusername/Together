@@ -10,6 +10,7 @@ import {
   ActiveSessionBanner,
   QuickActions,
   useHomeData,
+  usePresence,
 } from '@/features/home';
 import { useActiveCouple } from '@/features/couple';
 import { useAuthStore } from '@/features/auth';
@@ -26,6 +27,7 @@ export default function HomeScreen() {
   const profile = useAuthStore((state) => state.profile);
   const { data: coupleData, isLoading: isCoupleLoading } = useActiveCouple();
   const { data: homeData, isLoading: isHomeLoading, error, refetch } = useHomeData();
+  const { isPartnerOnline } = usePresence();
   const { data: unreadNotifsCount = 0 } = useUnreadNotificationsCount();
 
   const [showLetterModal, setShowLetterModal] = useState(false);
@@ -33,6 +35,13 @@ export default function HomeScreen() {
   const isInitialLoading = (isCoupleLoading || isHomeLoading) && (!homeData || !coupleData);
 
   const partnerName = coupleData?.partner?.display_name || 'Partner';
+
+  const isSessionFresh =
+    !!homeData?.activeSession?.created_at &&
+    Date.now() - new Date(homeData.activeSession.created_at).getTime() < 30 * 60 * 1000;
+
+  const shouldShowActiveSession =
+    !!homeData?.activeSession && isPartnerOnline && isSessionFresh;
 
   const insets = useSafeAreaInsets();
   let tabBarHeight = 56;
@@ -141,9 +150,10 @@ export default function HomeScreen() {
             partner={coupleData.partner}
             daysTogether={homeData.daysTogether}
             startDate={homeData.startDate}
+            isPartnerOnline={isPartnerOnline}
           />
 
-          {homeData.activeSession ? (
+          {shouldShowActiveSession ? (
             <ActiveSessionBanner
               onJoin={() => router.push(`/session/${homeData.activeSession!.id}`)}
             />
