@@ -143,6 +143,7 @@ const styles = StyleSheet.create({
     bottom: -motion.pressOffset,
     backgroundColor: theme.colors.shadowInk,
     borderRadius: theme.roundness.md,
+    zIndex: 0,
   },
   shadow_sm: {
     borderRadius: theme.roundness.sm,
@@ -156,6 +157,8 @@ const styles = StyleSheet.create({
 
   // Surface
   surfaceBase: {
+    position: 'relative',
+    zIndex: 1,
     borderRadius: theme.roundness.md,
     alignItems: 'center',
     justifyContent: 'center',

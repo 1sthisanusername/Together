@@ -96,8 +96,11 @@ const styles = StyleSheet.create({
     bottom: -INPUT_SHADOW,
     backgroundColor: theme.colors.shadowInk,
     borderRadius: theme.roundness.md,
+    zIndex: 0,
   },
   input: {
+    position: 'relative',
+    zIndex: 1,
     backgroundColor: theme.colors.surface, // Clean sticker white #FFFFFF
     borderWidth: theme.borders.chunky,
     borderColor: theme.colors.border,

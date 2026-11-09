@@ -63,8 +63,11 @@ const styles = StyleSheet.create({
     bottom: -SHADOW_OFFSET,
     backgroundColor: theme.colors.shadowInk,
     borderRadius: theme.roundness.lg,
+    zIndex: 0,
   },
   cardSurface: {
+    position: 'relative',
+    zIndex: 1,
     borderRadius: theme.roundness.lg,
     padding: scale(16),
     borderWidth: theme.borders.chunky,
