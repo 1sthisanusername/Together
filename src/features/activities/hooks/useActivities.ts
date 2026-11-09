@@ -5,11 +5,12 @@ import { useActiveCouple } from '@/features/couple';
 import type { Activity, ActivitySession } from '@/shared/types';
 
 import { FALLBACK_ACTIVITIES } from '../fallbackActivities';
+import { ENABLE_SIMULTANEOUS_ACTIVITIES } from '../config';
 
 export function useActivities(category?: string) {
   return useQuery<Activity[]>({
     queryKey: ['activities', category],
-    queryFn: async () => {
+    queryFn: async (): Promise<Activity[]> => {
       let query = supabase.from('activities').select('*').order('title', { ascending: true });
 
       if (category && category !== 'all') {
@@ -17,23 +18,31 @@ export function useActivities(category?: string) {
       }
 
       const { data, error } = await query;
-      if (error) {
+      let activities: Activity[] = (data as Activity[]) || [];
+      if (error || !data || data.length === 0) {
         // Fallback on offline or unseeded database
-        return filterFallback(category);
+        activities = filterFallback(category);
       }
-      if (!data || data.length === 0) {
-        return filterFallback(category);
+
+      // Hide unsupported simultaneous activities (e.g. live drawing without sync infrastructure)
+      if (!ENABLE_SIMULTANEOUS_ACTIVITIES) {
+        activities = activities.filter((a) => a.kind !== 'drawing_guess');
       }
-      return data;
+
+      return activities;
     },
   });
 }
 
 function filterFallback(category?: string): Activity[] {
-  if (!category || category === 'all') {
-    return FALLBACK_ACTIVITIES;
+  let list = FALLBACK_ACTIVITIES;
+  if (category && category !== 'all') {
+    list = list.filter((a) => a.category === category);
   }
-  return FALLBACK_ACTIVITIES.filter((a) => a.category === category);
+  if (!ENABLE_SIMULTANEOUS_ACTIVITIES) {
+    list = list.filter((a) => a.kind !== 'drawing_guess');
+  }
+  return list;
 }
 
 export function useStartActivity() {

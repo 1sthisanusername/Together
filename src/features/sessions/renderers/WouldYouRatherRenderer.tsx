@@ -9,7 +9,7 @@ import {
   useSaveSessionAsMemory,
   useAdvanceRound,
 } from '../hooks/useSession';
-import { theme } from '@/shared/theme';
+import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export interface WouldYouRatherProps {
   data: SessionData;
@@ -28,8 +28,9 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
     rounds: { id: number; question: string; optionA: string; optionB: string }[];
   };
 
+  const [playMode, setPlayMode] = useState<'couple' | 'solo'>('couple');
   const rounds = config?.rounds || [];
-  // Server-authoritative round index (never kept on client)
+  // Server-authoritative round index
   const serverRound = session.current_round || 1;
   const currentRoundIdx = Math.min(Math.max(0, rounds.length - 1), Math.max(0, serverRound - 1));
   const currentRound = rounds[currentRoundIdx] || rounds[0];
@@ -64,6 +65,7 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
 
   const handleSelect = (choice: 'A' | 'B') => {
     if (effectiveMyChoice || isSubmitting) return;
+    triggerHaptic('selection');
     setSelectedChoice(choice);
     submitEvent({
       type: 'answer_submitted',
@@ -71,11 +73,13 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
         round: currentRound.id,
         choice,
         choiceText: choice === 'A' ? currentRound.optionA : currentRound.optionB,
+        playMode,
       },
     });
   };
 
   const handleNextRound = () => {
+    triggerHaptic('light');
     if (isLastRound) {
       completeSession(activity.id);
     } else {
@@ -84,11 +88,34 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
   };
 
   if (isCompleted) {
+    // Gather all user's answers for summary
+    const myAllEvents = events.filter(
+      (e) => e.type === 'answer_submitted' && e.user_id === myUserId
+    );
+
     return (
       <View style={styles.completedContainer}>
         <Text style={styles.completedEmoji}>🎉</Text>
-        <Text style={styles.completedTitle}>{t('sessions.sessionCompletedTitle')}</Text>
-        <Text style={styles.completedSubtitle}>{t('sessions.sessionCompletedSubtitle')}</Text>
+        <Text style={styles.completedTitle}>
+          {playMode === 'solo' ? 'Solo Play Completed! 🌟' : t('sessions.sessionCompletedTitle')}
+        </Text>
+        <Text style={styles.completedSubtitle}>
+          {playMode === 'solo'
+            ? `You completed all ${rounds.length} questions! Answers are saved.`
+            : t('sessions.sessionCompletedSubtitle')}
+        </Text>
+
+        {/* Solo Mode Summary of choices */}
+        {playMode === 'solo' && myAllEvents.length > 0 && (
+          <View style={styles.summaryBox}>
+            <Text style={styles.summaryTitle}>Your Choices:</Text>
+            {myAllEvents.slice(0, 5).map((ev, i) => (
+              <Text key={i} style={styles.summaryItem}>
+                • Round {(ev.payload as any)?.round || i + 1}: {(ev.payload as any)?.choiceText || `Choice ${(ev.payload as any)?.choice}`}
+              </Text>
+            ))}
+          </View>
+        )}
 
         <Button
           title={isMemorySaved ? t('sessions.savedToMemories') : t('sessions.saveAsMemory')}
@@ -99,7 +126,7 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
             saveMemory({
               sessionId: session.id,
               title: activity.title,
-              note: `Completed all ${rounds.length} rounds of ${activity.title} together!`,
+              note: `Completed all ${rounds.length} rounds of ${activity.title} in ${playMode} mode!`,
             })
           }
           style={styles.saveButton}
@@ -118,6 +145,35 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
 
   return (
     <View style={styles.container}>
+      {/* Mode Selector Header: Couple Mode vs Solo Mode */}
+      <View style={styles.modeSelectorRow}>
+        <TouchableOpacity
+          style={[styles.modeTab, playMode === 'couple' && styles.modeTabActive]}
+          onPress={() => {
+            triggerHaptic('selection');
+            setPlayMode('couple');
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.modeTabText, playMode === 'couple' && styles.modeTabTextActive]}>
+            💕 Couple Mode
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.modeTab, playMode === 'solo' && styles.modeTabActive]}
+          onPress={() => {
+            triggerHaptic('selection');
+            setPlayMode('solo');
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.modeTabText, playMode === 'solo' && styles.modeTabTextActive]}>
+            🎮 Solo Mode
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.progressHeader}>
         <Text style={styles.roundText}>
           {t('sessions.round', { current: currentRoundIdx + 1, total: rounds.length })}
@@ -168,16 +224,40 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
         )}
       </TouchableOpacity>
 
-      {/* Reveal Status Banner */}
-      {effectiveMyChoice && !partnerAnswerEvent ? (
+      {/* Solo Mode: Immediate progression */}
+      {playMode === 'solo' && effectiveMyChoice ? (
+        <View style={styles.soloNextContainer}>
+          <Text style={styles.soloAnsweredText}>✓ Choice recorded!</Text>
+          <Button
+            title={isLastRound ? 'Finish All Questions 🎉' : 'Next Question →'}
+            variant="primary"
+            size="lg"
+            loading={isCompleting || isAdvancing}
+            onPress={handleNextRound}
+            style={styles.nextButton}
+          />
+        </View>
+      ) : null}
+
+      {/* Couple Mode: Status Banners */}
+      {playMode === 'couple' && effectiveMyChoice && !partnerAnswerEvent ? (
         <Card style={styles.statusCard}>
           <Text style={styles.statusText}>
             🔒 {t('sessions.waitingForPartner', { name: partnerName })}
           </Text>
+          <TouchableOpacity
+            style={styles.switchSoloBtn}
+            onPress={() => setPlayMode('solo')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.switchSoloText}>
+              Switch to Solo Mode to keep answering now →
+            </Text>
+          </TouchableOpacity>
         </Card>
       ) : null}
 
-      {!effectiveMyChoice && partnerAnswerEvent ? (
+      {playMode === 'couple' && !effectiveMyChoice && partnerAnswerEvent ? (
         <Card style={styles.partnerWaitingCard}>
           <Text style={styles.partnerWaitingText}>
             ⚡ {t('sessions.partnerWaitingAnswer', { name: partnerName })}
@@ -185,7 +265,8 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
         </Card>
       ) : null}
 
-      {isBothRevealed ? (
+      {/* Couple Mode: Both Revealed */}
+      {playMode === 'couple' && isBothRevealed ? (
         <View style={styles.revealSection}>
           <Card style={myChoice === partnerChoice ? styles.matchCard : styles.differCard}>
             <Text style={styles.revealTitle}>
@@ -197,7 +278,7 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
             title={isLastRound ? t('sessions.completeSession') : t('sessions.nextRound')}
             variant="primary"
             size="lg"
-            loading={isCompleting}
+            loading={isCompleting || isAdvancing}
             onPress={handleNextRound}
             style={styles.nextButton}
           />
@@ -211,6 +292,36 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     width: '100%',
+  },
+  modeSelectorRow: {
+    flexDirection: 'row',
+    backgroundColor: '#EFE7DA',
+    padding: scale(3),
+    borderRadius: scale(12),
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    marginBottom: scale(16),
+  },
+  modeTab: {
+    flex: 1,
+    paddingVertical: scale(6),
+    alignItems: 'center',
+    borderRadius: scale(9),
+  },
+  modeTabActive: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  modeTabText: {
+    fontFamily: theme.typography.fontFamilies.sans,
+    fontSize: scale(12),
+    fontWeight: '600',
+    color: theme.colors.textMuted,
+  },
+  modeTabTextActive: {
+    fontWeight: '800',
+    color: theme.colors.text,
   },
   progressHeader: {
     alignItems: 'center',
@@ -331,6 +442,50 @@ const styles = StyleSheet.create({
   nextButton: {
     width: '100%',
     marginTop: 16,
+  },
+  soloNextContainer: {
+    marginTop: scale(16),
+    alignItems: 'center',
+    width: '100%',
+  },
+  soloAnsweredText: {
+    fontFamily: theme.typography.fontFamilies.sans,
+    fontSize: scale(13),
+    fontWeight: '700',
+    color: theme.colors.primary,
+    marginBottom: scale(8),
+  },
+  switchSoloBtn: {
+    marginTop: scale(10),
+    paddingVertical: scale(4),
+  },
+  switchSoloText: {
+    fontFamily: theme.typography.fontFamilies.sans,
+    fontSize: scale(12),
+    fontWeight: '700',
+    color: theme.colors.primary,
+  },
+  summaryBox: {
+    width: '100%',
+    backgroundColor: theme.colors.surfaceSubtle,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    borderRadius: scale(14),
+    padding: scale(14),
+    marginBottom: scale(20),
+  },
+  summaryTitle: {
+    fontFamily: theme.typography.fontFamilies.display,
+    fontSize: scale(14),
+    fontWeight: '800',
+    color: theme.colors.text,
+    marginBottom: scale(8),
+  },
+  summaryItem: {
+    fontFamily: theme.typography.fontFamilies.sans,
+    fontSize: scale(12),
+    color: theme.colors.text,
+    lineHeight: scale(18),
   },
   completedContainer: {
     alignItems: 'center',
