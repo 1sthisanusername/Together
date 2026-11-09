@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { TurboModuleRegistry, NativeModules } from 'react-native';
+import { TurboModuleRegistry, NativeModules, Platform } from 'react-native';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase, analytics, clearAppCache, push } from '@/services';
 import type { Profile } from '@/shared/types';
@@ -111,7 +111,38 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signInWithGoogle: async () => {
     set({ isLoading: true, error: null });
 
-    // Guard against missing native module BEFORE importing the package
+    // On Web, use standard Supabase OAuth redirect flow
+    if (Platform.OS === 'web') {
+      try {
+        const redirectTo =
+          typeof window !== 'undefined'
+            ? `${window.location.origin}/auth/callback`
+            : undefined;
+
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo,
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'consent',
+            },
+          },
+        });
+
+        if (error) {
+          set({ isLoading: false, error: error.message });
+          return { error };
+        }
+        return { error: null };
+      } catch (err: any) {
+        const error = new Error(err?.message || 'Web Google sign-in failed');
+        set({ isLoading: false, error: error.message });
+        return { error };
+      }
+    }
+
+    // Native Android/iOS: Guard against missing native module BEFORE importing the package
     // @react-native-google-signin/google-signin executes TurboModuleRegistry.getEnforcing('RNGoogleSignin')
     // at module evaluation time, which throws an Invariant Violation if not present in the native binary.
     if (!isGoogleSigninNativeAvailable()) {

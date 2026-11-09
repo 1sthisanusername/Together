@@ -53,3 +53,4 @@ CREATE POLICY "vault_items_couple_delete" ON public.vault_items
     couple_id = public.get_active_couple_id(auth.uid()) AND
     created_by = auth.uid()
   );
+
