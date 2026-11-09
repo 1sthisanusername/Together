@@ -171,20 +171,20 @@ const styles = StyleSheet.create({
   },
   headerBlock: {
     paddingHorizontal: scale(18),
-    marginTop: scale(4),
-    marginBottom: scale(8),
+    marginTop: scale(2),
+    marginBottom: scale(6),
     alignItems: 'flex-start',
   },
   partnerNames: {
     fontFamily: theme.typography.fontFamilies.display,
-    fontSize: scale(22),
-    fontWeight: '800',
+    fontSize: scale(15),
+    fontWeight: '700',
     color: theme.colors.text,
-    letterSpacing: -0.3,
+    letterSpacing: 0.1,
   },
   durationBadgeWrapper: {
     position: 'relative',
-    marginTop: scale(6),
+    marginTop: scale(4),
   },
   durationShadow: {
     position: 'absolute',
