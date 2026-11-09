@@ -134,6 +134,47 @@ export function calculateTogetherDuration(
   };
 }
 
+export type DurationDisplayFormat = 'total_days' | 'years_months_days' | 'both';
+
+/**
+ * Formats relationship duration according to user preference:
+ * 1. total_days: "418 days together"
+ * 2. years_months_days: "1 year, 1 month, 23 days together"
+ * 3. both: "1 year, 1 month, 23 days • 418 days together"
+ */
+export function formatRelationshipDuration(
+  startDateStr: string,
+  format: DurationDisplayFormat = 'total_days',
+  asOfDateStr?: string
+): string {
+  const duration = calculateTogetherDuration(startDateStr, asOfDateStr);
+  const totalDays = duration.totalDays;
+
+  const parts: string[] = [];
+  if (duration.years > 0) {
+    parts.push(`${duration.years} ${duration.years === 1 ? 'year' : 'years'}`);
+  }
+  if (duration.months > 0) {
+    parts.push(`${duration.months} ${duration.months === 1 ? 'month' : 'months'}`);
+  }
+  if (duration.days > 0 || parts.length === 0) {
+    parts.push(`${duration.days} ${duration.days === 1 ? 'day' : 'days'}`);
+  }
+
+  const ymdText = `${parts.join(', ')} together`;
+  const daysText = `${totalDays} ${totalDays === 1 ? 'day' : 'days'} together`;
+
+  switch (format) {
+    case 'years_months_days':
+      return ymdText;
+    case 'both':
+      return `${parts.join(', ')} • ${daysText}`;
+    case 'total_days':
+    default:
+      return daysText;
+  }
+}
+
 /**
  * Calculates the next upcoming yearly anniversary
  * Handles leap day (Feb 29) gracefully: falls on Feb 28 in non-leap years.

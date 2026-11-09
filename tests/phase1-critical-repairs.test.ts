@@ -147,3 +147,4 @@ describe('Phase 1: Critical Repairs Verification', () => {
     expect(content).toContain('couples-media');
   });
 });
+

@@ -3,9 +3,13 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Button, DatePickerField } from '@/shared/ui';
 import type { Profile } from '@/shared/types';
-import { calculateTogetherDuration, calculateDaysTogether } from '@/shared/utils';
+import {
+  calculateDaysTogether,
+  formatRelationshipDuration,
+  type DurationDisplayFormat,
+} from '@/shared/utils';
 import { useUpdateStartDate } from '@/features/couple';
-import { theme, scale } from '@/shared/theme';
+import { theme, scale, triggerHaptic } from '@/shared/theme';
 import { PartnerString } from './PartnerString';
 
 export interface CoupleHeaderProps {
@@ -18,7 +22,6 @@ export interface CoupleHeaderProps {
 }
 
 export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
-  coupleName,
   me,
   partner,
   startDate,
@@ -28,11 +31,26 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dateInput, setDateInput] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [durationFormat, setDurationFormat] = useState<DurationDisplayFormat>('total_days');
 
   const { mutate: updateDate, isPending } = useUpdateStartDate();
 
-  const duration = startDate ? calculateTogetherDuration(startDate) : null;
+  const myDisplayName = me?.display_name || 'You';
+  const partnerDisplayName = partner?.display_name || 'Partner';
+
   const totalDays = startDate ? calculateDaysTogether(startDate) : null;
+  const durationText = startDate
+    ? formatRelationshipDuration(startDate, durationFormat)
+    : null;
+
+  const cycleDurationFormat = () => {
+    triggerHaptic('light');
+    setDurationFormat((prev) => {
+      if (prev === 'total_days') return 'years_months_days';
+      if (prev === 'years_months_days') return 'both';
+      return 'total_days';
+    });
+  };
 
   const handleSaveDate = () => {
     if (!dateInput.trim()) return;
@@ -60,58 +78,60 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* 1. Couple Title Sticker */}
-      <View style={styles.titleWrapper}>
-        <Text style={styles.coupleTitle}>{coupleName || 'Together'}</Text>
+      {/* 1. Header arrangement: Together ❤️ + Both Names + Duration on Left */}
+      <View style={styles.headerBlock}>
+        <View style={styles.togetherRow}>
+          <Text style={styles.togetherTitle}>Together</Text>
+          <Text style={styles.heartIcon}>❤️</Text>
+        </View>
+
+        {/* Both Partner Names underneath Together heading */}
+        <Text style={styles.partnerNames} numberOfLines={1}>
+          {myDisplayName} ❤️ {partnerDisplayName}
+        </Text>
+
+        {/* Relationship Duration with format cycling on tap & edit on long press */}
+        {durationText ? (
+          <TouchableOpacity
+            style={styles.durationBadgeWrapper}
+            onPress={cycleDurationFormat}
+            onLongPress={() => {
+              setDateInput(startDate || '');
+              setShowDatePicker(!showDatePicker);
+            }}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={`${durationText}. Tap to toggle display format.`}
+          >
+            <View style={styles.durationShadow} />
+            <View style={styles.durationSurface}>
+              <Text style={styles.durationText}>{durationText}</Text>
+              <Text style={styles.durationCycleHint}>↻</Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.setAnniversaryBtn}
+            onPress={() => setShowDatePicker(!showDatePicker)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.setAnniversaryText}>
+              💕 Set your start date to count days together
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      {/* 2. Partner String (Slack when away, tight with a wiggle when online) */}
+      {/* 2. Automatic Online Presence Telephone String */}
       <PartnerString
-        myName={me?.display_name || 'You'}
+        myName={myDisplayName}
         myAvatarUrl={me?.avatar_url}
-        partnerName={partner?.display_name || 'Partner'}
+        partnerName={partnerDisplayName}
         partnerAvatarUrl={partner?.avatar_url}
         isPartnerOnline={isPartnerOnline}
       />
 
-      {/* 3. Together Since Breakdown & Days Counter Badge */}
-      {duration && totalDays !== null ? (
-        <TouchableOpacity
-          style={styles.counterWrapper}
-          onPress={() => {
-            setDateInput(startDate || '');
-            setShowDatePicker(!showDatePicker);
-          }}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="Anniversary date tracker"
-        >
-          <View style={styles.counterShadow} />
-          <View style={styles.counterSurface}>
-            <Text style={styles.durationText}>{duration.formattedText}</Text>
-            <Text style={styles.counterLabel}>
-              ({totalDays} {totalDays === 1 ? 'day' : 'days'} together 💕)
-            </Text>
-          </View>
-        </TouchableOpacity>
-      ) : (
-        /* Empty state: friendly sticker prompt to set anniversary */
-        <TouchableOpacity
-          style={styles.emptyPromptWrapper}
-          onPress={() => setShowDatePicker(!showDatePicker)}
-          activeOpacity={0.8}
-        >
-          <View style={styles.emptyShadow} />
-          <View style={styles.emptySurface}>
-            <Text style={styles.emptyPromptIcon}>💕</Text>
-            <Text style={styles.emptyPromptText}>
-              When did you two get together? Tap to count your days together!
-            </Text>
-          </View>
-        </TouchableOpacity>
-      )}
-
-      {/* 4. Date Picker Form */}
+      {/* 3. Date Picker Modal / Form (when updating start date) */}
       {showDatePicker && (
         <View style={styles.pickerWrapper}>
           <View style={styles.pickerShadow} />
@@ -127,7 +147,7 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
               }}
             />
             {errorMsg && (
-              <Text style={{ color: theme.colors.danger, fontSize: 12, marginTop: -8, marginBottom: 8, fontWeight: '700' }}>
+              <Text style={styles.errorText}>
                 {errorMsg}
               </Text>
             )}
@@ -161,100 +181,85 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    paddingVertical: scale(8),
+    paddingVertical: scale(4),
     width: '100%',
   },
-  titleWrapper: {
-    marginBottom: scale(4),
-  },
-  coupleTitle: {
-    fontFamily: theme.typography.fontFamilies.display,
-    fontSize: scale(24),
-    fontWeight: '800',
-    color: theme.colors.text,
-    letterSpacing: -0.4,
-  },
-
-  // Counter Badge
-  counterWrapper: {
-    position: 'relative',
-    marginVertical: scale(8),
-  },
-  counterShadow: {
-    position: 'absolute',
-    top: 3,
-    left: 3,
-    right: -3,
-    bottom: -3,
-    backgroundColor: theme.colors.shadowInk,
-    borderRadius: scale(16),
-  },
-  counterSurface: {
-    backgroundColor: theme.colors.secondary, // Sunshine #FFC93C
-    borderWidth: theme.borders.chunky,
-    borderColor: theme.colors.border,
+  headerBlock: {
     paddingHorizontal: scale(18),
-    paddingVertical: scale(8),
-    borderRadius: scale(16),
-    alignItems: 'center',
+    marginBottom: scale(6),
+    alignItems: 'flex-start',
   },
-  durationText: {
+  togetherRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(6),
+  },
+  togetherTitle: {
     fontFamily: theme.typography.fontFamilies.display,
-    fontSize: scale(15),
+    fontSize: scale(26),
     fontWeight: '800',
     color: theme.colors.text,
+    letterSpacing: -0.5,
   },
-  counterLabel: {
-    fontFamily: theme.typography.fontFamilies.sans,
-    fontSize: scale(12),
+  heartIcon: {
+    fontSize: scale(22),
+  },
+  partnerNames: {
+    fontFamily: theme.typography.fontFamilies.display,
+    fontSize: scale(18),
     fontWeight: '700',
     color: theme.colors.text,
     marginTop: scale(2),
   },
-
-  // Empty Prompt
-  emptyPromptWrapper: {
+  durationBadgeWrapper: {
     position: 'relative',
-    marginVertical: scale(8),
-    maxWidth: '92%',
+    marginTop: scale(6),
   },
-  emptyShadow: {
+  durationShadow: {
     position: 'absolute',
-    top: 3,
-    left: 3,
-    right: -3,
-    bottom: -3,
+    top: 2,
+    left: 2,
+    right: -2,
+    bottom: -2,
     backgroundColor: theme.colors.shadowInk,
-    borderRadius: scale(14),
+    borderRadius: scale(12),
   },
-  emptySurface: {
+  durationSurface: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.surface,
-    borderWidth: theme.borders.chunky,
+    gap: scale(6),
+    backgroundColor: theme.colors.secondary, // Sunshine #FFC93C
+    borderWidth: 1.5,
     borderColor: theme.colors.border,
-    paddingHorizontal: scale(14),
-    paddingVertical: scale(10),
-    borderRadius: scale(14),
-    gap: scale(8),
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(4),
+    borderRadius: scale(12),
   },
-  emptyPromptIcon: {
-    fontSize: scale(18),
-  },
-  emptyPromptText: {
+  durationText: {
     fontFamily: theme.typography.fontFamilies.sans,
     fontSize: scale(13),
-    color: theme.colors.text,
     fontWeight: '700',
-    flex: 1,
+    color: theme.colors.text,
   },
-
-  // Date Picker Form
+  durationCycleHint: {
+    fontSize: scale(11),
+    color: theme.colors.text,
+    opacity: 0.6,
+  },
+  setAnniversaryBtn: {
+    marginTop: scale(6),
+    paddingVertical: scale(4),
+  },
+  setAnniversaryText: {
+    fontFamily: theme.typography.fontFamilies.sans,
+    fontSize: scale(12),
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
   pickerWrapper: {
     position: 'relative',
-    width: '92%',
-    marginTop: scale(12),
+    marginHorizontal: scale(18),
+    marginVertical: scale(12),
   },
   pickerShadow: {
     position: 'absolute',
@@ -267,22 +272,28 @@ const styles = StyleSheet.create({
   },
   pickerForm: {
     backgroundColor: theme.colors.surface,
-    padding: scale(16),
-    borderRadius: scale(16),
     borderWidth: theme.borders.chunky,
     borderColor: theme.colors.border,
+    borderRadius: scale(16),
+    padding: scale(16),
   },
   pickerTitle: {
     fontFamily: theme.typography.fontFamilies.display,
-    fontSize: scale(14),
+    fontSize: scale(16),
     fontWeight: '800',
     color: theme.colors.text,
-    marginBottom: scale(10),
-    textAlign: 'center',
+    marginBottom: scale(12),
+  },
+  errorText: {
+    color: theme.colors.danger,
+    fontSize: 12,
+    marginTop: -8,
+    marginBottom: 8,
+    fontWeight: '700',
   },
   formRow: {
     flexDirection: 'row',
-    gap: scale(10),
+    gap: scale(8),
     marginTop: scale(8),
   },
 });

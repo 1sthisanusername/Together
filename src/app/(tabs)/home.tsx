@@ -9,6 +9,8 @@ import {
   TimeZoneClockCard,
   ActiveSessionBanner,
   QuickActions,
+  DailyQuestionCard,
+  QuickPhotosCard,
   useHomeData,
   usePresence,
 } from '@/features/home';
@@ -143,7 +145,7 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={false} onRefresh={() => { refetch(); }} />}
         >
-          {/* Partner String Header (Slack when away, tight with wiggle when online) */}
+          {/* 1. Header (Together ❤️ + Both Names + Duration) & Live Telephone String */}
           <CoupleHeader
             coupleName={homeData.coupleName}
             me={profile}
@@ -153,13 +155,20 @@ export default function HomeScreen() {
             isPartnerOnline={isPartnerOnline}
           />
 
+          {/* 2. Activity Indicator: only when partner is actively online and session is fresh */}
           {shouldShowActiveSession ? (
             <ActiveSessionBanner
               onJoin={() => router.push(`/session/${homeData.activeSession!.id}`)}
             />
           ) : null}
 
-          {/* TimeZone Sticker Clock */}
+          {/* 3. Daily Question Prompt Card */}
+          <DailyQuestionCard partnerName={partnerName} />
+
+          {/* 4. Quick Photos Polaroid Carousel */}
+          <QuickPhotosCard />
+
+          {/* 5. TimeZone Sticker Clock */}
           <TimeZoneClockCard
             partnerName={partnerName}
             myTimeInfo={homeData.myTimeInfo}
@@ -167,6 +176,7 @@ export default function HomeScreen() {
             timeDifferenceHours={homeData.timeDifferenceHours}
           />
 
+          {/* 6. Reunion Countdown Card */}
           {homeData.nextMeeting ? (
             <NextReunionCountdownCard
               nextMeeting={homeData.nextMeeting}
@@ -174,7 +184,7 @@ export default function HomeScreen() {
             />
           ) : null}
 
-          {/* Quick Actions Sticker Cards */}
+          {/* 7. Quick Actions Sticker Cards */}
           <QuickActions
             onPlayPress={() => router.push('/(tabs)/play')}
             onDatePress={() => router.push('/(tabs)/dates')}

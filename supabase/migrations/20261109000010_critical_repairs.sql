@@ -107,3 +107,4 @@ BEGIN
   WHERE id = auth.uid();
 END;
 $$;
+
