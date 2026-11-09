@@ -13,6 +13,8 @@ npm-debug.*
 web-build/
 .DS_Store
 credentials.json
+*serviceaccount*.json
+*serviceaccoun*.json
 *-firebase-adminsdk-*.json
 ARCHITECTURE_DOC_EXTRACTED.txt
 

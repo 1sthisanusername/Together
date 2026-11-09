@@ -22,6 +22,8 @@ web-build/
 
 # Firebase credentials
 credentials.json
+*serviceaccount*.json
+*serviceaccoun*.json
 *-firebase-adminsdk-*.json
 
 # Temporary files
