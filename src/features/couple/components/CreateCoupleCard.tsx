@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { Card, Button, Input, ErrorState } from '@/shared/ui';
 import { createCoupleSchema, type CreateCoupleInput } from '../schemas';
 import { useCreateCouple } from '../hooks/useCouple';
+import { useAuthStore } from '@/features/auth';
+import { useUpdateProfile } from '@/features/settings';
 import { theme } from '@/shared/theme';
 
 export interface CreateCoupleCardProps {
@@ -14,6 +16,8 @@ export interface CreateCoupleCardProps {
 
 export const CreateCoupleCard: React.FC<CreateCoupleCardProps> = ({ onSuccess }) => {
   const { t } = useTranslation();
+  const profile = useAuthStore((state) => state.profile);
+  const { mutateAsync: updateProfile } = useUpdateProfile();
   const { mutateAsync: createCouple, isPending, error, reset } = useCreateCouple();
 
   const {
@@ -23,12 +27,16 @@ export const CreateCoupleCard: React.FC<CreateCoupleCardProps> = ({ onSuccess })
   } = useForm<CreateCoupleInput>({
     resolver: zodResolver(createCoupleSchema),
     defaultValues: {
+      nickname: profile?.display_name || '',
       coupleName: '',
     },
   });
 
   const onSubmit = async (data: CreateCoupleInput) => {
     try {
+      if (data.nickname?.trim() && data.nickname.trim() !== profile?.display_name) {
+        await updateProfile({ displayName: data.nickname.trim() });
+      }
       await createCouple(data.coupleName);
       onSuccess?.();
     } catch {
@@ -49,6 +57,21 @@ export const CreateCoupleCard: React.FC<CreateCoupleCardProps> = ({ onSuccess })
           retryTitle={t('common.retry')}
         />
       ) : null}
+
+      <Controller
+        control={control}
+        name="nickname"
+        render={({ field: { onChange, onBlur, value } }) => (
+          <Input
+            label="Your Nickname"
+            placeholder="e.g. Milindh, Honey, etc."
+            onBlur={onBlur}
+            onChangeText={onChange}
+            value={value}
+            error={errors.nickname?.message}
+          />
+        )}
+      />
 
       <Controller
         control={control}

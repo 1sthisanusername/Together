@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { Card, Button, Input, ErrorState } from '@/shared/ui';
 import { acceptInviteSchema, type AcceptInviteInput } from '../schemas';
 import { useAcceptInvite } from '../hooks/useCouple';
+import { useAuthStore } from '@/features/auth';
+import { useUpdateProfile } from '@/features/settings';
 import { theme } from '@/shared/theme';
 
 export interface JoinCoupleCardProps {
@@ -14,6 +16,8 @@ export interface JoinCoupleCardProps {
 
 export const JoinCoupleCard: React.FC<JoinCoupleCardProps> = ({ onSuccess }) => {
   const { t } = useTranslation();
+  const profile = useAuthStore((state) => state.profile);
+  const { mutateAsync: updateProfile } = useUpdateProfile();
   const { mutateAsync: acceptInvite, isPending, error, reset } = useAcceptInvite();
 
   const {
@@ -23,6 +27,7 @@ export const JoinCoupleCard: React.FC<JoinCoupleCardProps> = ({ onSuccess }) => 
   } = useForm<AcceptInviteInput>({
     resolver: zodResolver(acceptInviteSchema),
     defaultValues: {
+      nickname: profile?.display_name || '',
       inviteCode: '',
     },
   });
@@ -30,6 +35,9 @@ export const JoinCoupleCard: React.FC<JoinCoupleCardProps> = ({ onSuccess }) => 
   const onSubmit = async (data: AcceptInviteInput) => {
     Keyboard.dismiss();
     try {
+      if (data.nickname?.trim() && data.nickname.trim() !== profile?.display_name) {
+        await updateProfile({ displayName: data.nickname.trim() });
+      }
       await acceptInvite(data.inviteCode);
       onSuccess?.();
     } catch {
@@ -50,6 +58,21 @@ export const JoinCoupleCard: React.FC<JoinCoupleCardProps> = ({ onSuccess }) => 
           retryTitle={t('common.retry')}
         />
       ) : null}
+
+      <Controller
+        control={control}
+        name="nickname"
+        render={({ field: { onChange, onBlur, value } }) => (
+          <Input
+            label="Your Nickname"
+            placeholder="e.g. Vrush, Sweetie, etc."
+            onBlur={onBlur}
+            onChangeText={onChange}
+            value={value}
+            error={errors.nickname?.message}
+          />
+        )}
+      />
 
       <Controller
         control={control}

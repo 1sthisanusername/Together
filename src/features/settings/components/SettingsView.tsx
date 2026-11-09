@@ -75,6 +75,9 @@ export const SettingsView: React.FC = () => {
           value={displayName}
           onChangeText={setDisplayName}
         />
+        <Text style={styles.fieldHint}>
+          Your partner sees this nickname in your space. Changing it only updates your name, never your partner's.
+        </Text>
 
         {/* Interactive Time Zone Selector */}
         <View style={styles.timeZoneField}>
@@ -196,6 +199,13 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginBottom: 6,
     letterSpacing: 0.1,
+  },
+  fieldHint: {
+    fontSize: 12,
+    color: theme.colors.textMuted,
+    marginTop: -8,
+    marginBottom: 14,
+    lineHeight: 16,
   },
   timeZonePickerBtn: {
     flexDirection: 'row',
