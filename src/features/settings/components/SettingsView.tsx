@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Input } from '@/shared/ui';
 import { useAuthStore } from '@/features/auth';
 import { useUnlinkCouple, UnlinkCoupleDialog } from '@/features/couple';
 import { useUpdateProfile } from '../hooks/useSettings';
 import { TimeZonePickerModal, getUtcOffsetString } from './TimeZonePickerModal';
-import { theme } from '@/shared/theme';
+import { theme, triggerHaptic } from '@/shared/theme';
 
 export const SettingsView: React.FC = () => {
+  const router = useRouter();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const profile = useAuthStore((state) => state.profile);
@@ -84,6 +86,16 @@ export const SettingsView: React.FC = () => {
 
       <Text style={styles.sectionHeading}>{t('settings.coupleSection')}</Text>
       <Card style={styles.card}>
+        <Button
+          title="🔒 Open Private Vault"
+          variant="primary"
+          size="md"
+          onPress={() => {
+            triggerHaptic('medium');
+            router.push('/vault');
+          }}
+          style={styles.vaultBtn}
+        />
         <Button
           title={t('settings.unlinkCouple')}
           variant="outline"
@@ -189,6 +201,9 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     marginTop: 8,
+  },
+  vaultBtn: {
+    marginBottom: 12,
   },
   unlinkBtn: {
     borderColor: theme.colors.danger,

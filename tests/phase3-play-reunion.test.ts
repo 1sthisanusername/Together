@@ -54,3 +54,4 @@ describe('Phase 3: Play Tab, Activities & Reunion Extensions Verification', () =
     expect(sql).toContain('SECURITY DEFINER');
   });
 });
+

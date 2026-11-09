@@ -1,26 +1,45 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase, analytics } from '@/services';
+import { supabase, analytics, push } from '@/services';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
 import type { Letter } from '@/shared/types';
 
-export function useLetters() {
+export type StationeryTheme =
+  | 'parchment_cream'
+  | 'rose_petal'
+  | 'matcha_mint'
+  | 'midnight_sky';
+
+export type SealSticker = '❤️' | '💌' | '🌸' | '🌙' | '✨';
+
+export interface EnhancedLetter extends Letter {
+  stationery_theme?: StationeryTheme;
+  seal_sticker?: SealSticker;
+  is_vault?: boolean;
+}
+
+export function useLetters(options?: { includeVaultOnly?: boolean }) {
   const user = useAuthStore((state) => state.user);
   const { data: coupleData } = useActiveCouple();
 
-  return useQuery<Letter[]>({
-    queryKey: ['letters', coupleData?.couple?.id],
+  return useQuery<EnhancedLetter[]>({
+    queryKey: ['letters', coupleData?.couple?.id, options?.includeVaultOnly],
     enabled: !!coupleData?.couple?.id && !!user?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query: any = supabase
         .from('letters')
         .select('*')
         .eq('couple_id', coupleData!.couple.id)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false });
+        .is('deleted_at', null);
+
+      if (options?.includeVaultOnly) {
+        query = query.eq('is_vault', true);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw new Error(error.message);
-      return data ?? [];
+      return (data as EnhancedLetter[]) ?? [];
     },
   });
 }
@@ -28,6 +47,7 @@ export function useLetters() {
 export function useSendLetter() {
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
+  const profile = useAuthStore((state) => state.profile);
   const { data: coupleData } = useActiveCouple();
 
   return useMutation({
@@ -35,17 +55,22 @@ export function useSendLetter() {
       title,
       content,
       unlockAt,
+      stationeryTheme = 'parchment_cream',
+      sealSticker = '❤️',
+      isVault = false,
     }: {
       title: string;
       content: string;
       unlockAt?: string | null;
+      stationeryTheme?: StationeryTheme;
+      sealSticker?: SealSticker;
+      isVault?: boolean;
     }) => {
       if (!user?.id || !coupleData?.couple?.id || !coupleData.partner?.id) {
         throw new Error('Not ready to send letter');
       }
 
-      const { data, error } = await supabase
-        .from('letters')
+      const { data, error } = await (supabase.from('letters') as any)
         .insert({
           couple_id: coupleData.couple.id,
           sender_id: user.id,
@@ -53,11 +78,30 @@ export function useSendLetter() {
           title,
           content,
           unlock_at: unlockAt || null,
+          stationery_theme: stationeryTheme,
+          seal_sticker: sealSticker,
+          is_vault: isVault,
         })
         .select('*')
         .single();
 
       if (error) throw new Error(error.message);
+
+      // Notify partner
+      push.queueNotification({
+        recipientId: coupleData.partner.id,
+        coupleId: coupleData.couple.id,
+        type: 'letter',
+        payload: {
+          title: `You received a letter from ${profile?.display_name || 'your partner'} 💌`,
+          body: unlockAt
+            ? `Sealed until ${new Date(unlockAt).toLocaleDateString()}`
+            : 'Ready for you to tear open!',
+        },
+        deepLink: 'together://(tabs)/dates',
+      }).catch(() => {});
+
+      (analytics.track as any)('letter_sent');
       return data;
     },
     onSuccess: () => {
@@ -84,4 +128,3 @@ export function useOpenLetter() {
     },
   });
 }
-

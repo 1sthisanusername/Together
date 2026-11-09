@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -90,6 +90,29 @@ export default function DatesScreen() {
               isStarting={isStarting}
             />
           ))}
+
+          {/* Private Couple Vault Card */}
+          <TouchableOpacity
+            style={styles.vaultCard}
+            onPress={() => {
+              triggerHaptic('medium');
+              router.push('/vault');
+            }}
+            activeOpacity={0.85}
+          >
+            <View style={styles.vaultCardLeft}>
+              <View style={styles.vaultIconBadge}>
+                <Text style={styles.vaultIconEmoji}>🔒</Text>
+              </View>
+              <View style={styles.vaultCardTextCol}>
+                <Text style={styles.vaultCardTitle}>Private Couple Vault</Text>
+                <Text style={styles.vaultCardSub}>PIN-protected secret letters & notes</Text>
+              </View>
+            </View>
+            <View style={styles.vaultCardPill}>
+              <Text style={styles.vaultCardPillText}>Open →</Text>
+            </View>
+          </TouchableOpacity>
 
           {/* Open When Letters Section */}
           <View style={styles.lettersHeaderRow}>
@@ -193,5 +216,67 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     paddingVertical: scale(16),
     textAlign: 'center',
+  },
+  vaultCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFF4E3',
+    borderWidth: 2,
+    borderColor: '#2B2118',
+    borderRadius: 16,
+    padding: scale(14),
+    marginTop: scale(16),
+    shadowColor: '#2B2118',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  vaultCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(12),
+    flex: 1,
+  },
+  vaultIconBadge: {
+    width: scale(40),
+    height: scale(40),
+    borderRadius: scale(20),
+    backgroundColor: '#FFC93C',
+    borderWidth: 2,
+    borderColor: '#2B2118',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vaultIconEmoji: {
+    fontSize: scale(20),
+  },
+  vaultCardTextCol: {
+    flex: 1,
+  },
+  vaultCardTitle: {
+    fontSize: scale(15),
+    fontWeight: '800',
+    color: '#2B2118',
+  },
+  vaultCardSub: {
+    fontSize: scale(11),
+    color: '#7A6B5D',
+    fontWeight: '600',
+    marginTop: scale(2),
+  },
+  vaultCardPill: {
+    paddingVertical: scale(6),
+    paddingHorizontal: scale(12),
+    backgroundColor: '#2EC4B6',
+    borderWidth: 2,
+    borderColor: '#2B2118',
+    borderRadius: 12,
+  },
+  vaultCardPillText: {
+    fontSize: scale(12),
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
 });
