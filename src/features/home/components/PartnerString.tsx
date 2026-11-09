@@ -241,8 +241,11 @@ const styles = StyleSheet.create({
     bottom: -2,
     backgroundColor: theme.colors.border,
     borderRadius: 8,
+    zIndex: 0,
   },
   connectedBadge: {
+    position: 'relative',
+    zIndex: 1,
     backgroundColor: theme.colors.stickers.matcha, // Fresh Mint
     borderWidth: 1.5,
     borderColor: theme.colors.border,
@@ -268,8 +271,11 @@ const styles = StyleSheet.create({
     bottom: -2,
     backgroundColor: theme.colors.border,
     borderRadius: 8,
+    zIndex: 0,
   },
   slackBadge: {
+    position: 'relative',
+    zIndex: 1,
     backgroundColor: theme.colors.surface,
     borderWidth: 1.5,
     borderColor: theme.colors.border,
@@ -294,8 +300,11 @@ const styles = StyleSheet.create({
     bottom: -3,
     backgroundColor: theme.colors.border,
     borderRadius: 14,
+    zIndex: 0,
   },
   statusPillSurface: {
+    position: 'relative',
+    zIndex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 14,

@@ -111,13 +111,18 @@ const styles = StyleSheet.create({
   shadowUnderlay: {
     position: 'absolute',
     backgroundColor: theme.colors.shadowInk,
+    zIndex: 0,
   },
   image: {
+    position: 'relative',
+    zIndex: 1,
     borderWidth: 2.5,
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
   },
   fallback: {
+    position: 'relative',
+    zIndex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2.5,
@@ -131,6 +136,7 @@ const styles = StyleSheet.create({
   },
   presenceDot: {
     position: 'absolute',
+    zIndex: 2,
     bottom: 2,
     right: 2,
     width: 14,

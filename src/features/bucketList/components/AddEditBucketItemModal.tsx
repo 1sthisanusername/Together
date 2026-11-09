@@ -233,8 +233,11 @@ const styles = StyleSheet.create({
     bottom: -5,
     backgroundColor: theme.colors.shadowInk,
     borderRadius: scale(20),
+    zIndex: 0,
   },
   modalSurface: {
+    position: 'relative',
+    zIndex: 1,
     backgroundColor: theme.colors.surface,
     borderWidth: 2.5,
     borderColor: theme.colors.border,

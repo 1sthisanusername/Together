@@ -80,8 +80,11 @@ const styles = StyleSheet.create({
     bottom: -4,
     backgroundColor: '#2B2118',
     borderRadius: 18,
+    zIndex: 0,
   },
   cardSurface: {
+    position: 'relative',
+    zIndex: 1,
     backgroundColor: '#FFFFFF',
     borderWidth: 2,
     borderColor: '#2B2118',

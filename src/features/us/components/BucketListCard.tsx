@@ -139,8 +139,11 @@ const styles = StyleSheet.create({
     bottom: -4,
     backgroundColor: theme.colors.shadowInk,
     borderRadius: scale(18),
+    zIndex: 0,
   },
   cardSurface: {
+    position: 'relative',
+    zIndex: 1,
     backgroundColor: theme.colors.surface,
     borderWidth: 2,
     borderColor: theme.colors.border,

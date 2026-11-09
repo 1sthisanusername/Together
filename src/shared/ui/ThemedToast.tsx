@@ -142,8 +142,11 @@ const styles = StyleSheet.create({
     bottom: -4,
     backgroundColor: theme.colors.border,
     borderRadius: 16,
+    zIndex: 0,
   },
   toastSurface: {
+    position: 'relative',
+    zIndex: 1,
     backgroundColor: theme.colors.background, // Paper #FFF4E3
     borderRadius: 16,
     borderWidth: 2,

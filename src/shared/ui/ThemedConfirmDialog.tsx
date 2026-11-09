@@ -135,8 +135,11 @@ const styles = StyleSheet.create({
     bottom: -5,
     backgroundColor: theme.colors.border,
     borderRadius: 20,
+    zIndex: 0,
   },
   dialogSurface: {
+    position: 'relative',
+    zIndex: 1,
     backgroundColor: theme.colors.background, // Paper #FFF4E3
     borderRadius: 20,
     borderWidth: 2.5,

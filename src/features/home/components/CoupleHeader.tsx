@@ -209,8 +209,11 @@ const styles = StyleSheet.create({
     bottom: -2,
     backgroundColor: theme.colors.shadowInk,
     borderRadius: scale(12),
+    zIndex: 0,
   },
   durationSurface: {
+    position: 'relative',
+    zIndex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: scale(6),
@@ -255,8 +258,11 @@ const styles = StyleSheet.create({
     bottom: -4,
     backgroundColor: theme.colors.shadowInk,
     borderRadius: scale(16),
+    zIndex: 0,
   },
   pickerForm: {
+    position: 'relative',
+    zIndex: 1,
     backgroundColor: theme.colors.surface,
     borderWidth: theme.borders.chunky,
     borderColor: theme.colors.border,

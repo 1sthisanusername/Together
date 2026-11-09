@@ -65,8 +65,11 @@ const styles = StyleSheet.create({
     height: scale(72),
     borderRadius: scale(20),
     backgroundColor: theme.colors.shadowInk,
+    zIndex: 0,
   },
   iconContainer: {
+    position: 'relative',
+    zIndex: 1,
     width: scale(72),
     height: scale(72),
     borderRadius: scale(20),

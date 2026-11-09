@@ -257,8 +257,11 @@ const styles = StyleSheet.create({
     bottom: -2.5,
     backgroundColor: theme.colors.shadowInk,
     borderRadius: scale(12),
+    zIndex: 0,
   },
   actionBtnSurface: {
+    position: 'relative',
+    zIndex: 1,
     width: scale(38),
     height: scale(38),
     borderRadius: scale(12),

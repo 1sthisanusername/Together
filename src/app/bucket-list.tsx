@@ -368,8 +368,11 @@ const styles = StyleSheet.create({
     bottom: -2,
     backgroundColor: theme.colors.shadowInk,
     borderRadius: scale(10),
+    zIndex: 0,
   },
   btnSurface: {
+    position: 'relative',
+    zIndex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: scale(10),
@@ -492,8 +495,11 @@ const styles = StyleSheet.create({
     bottom: -4,
     backgroundColor: theme.colors.shadowInk,
     borderRadius: scale(16),
+    zIndex: 0,
   },
   emptyCardSurface: {
+    position: 'relative',
+    zIndex: 1,
     backgroundColor: theme.colors.surface,
     borderWidth: 2,
     borderColor: theme.colors.border,
