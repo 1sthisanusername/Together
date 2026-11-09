@@ -39,3 +39,4 @@ describe('Phase A: Camera Tab & Shared Home Page Photo', () => {
     expect(content).toContain('home_photo_updated_by');
   });
 });
+

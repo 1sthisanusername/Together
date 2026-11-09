@@ -32,3 +32,4 @@ describe('Phase B: Horizontal Swipe Navigation', () => {
     expect(content).toContain('Math.abs(gestureState.dx) > Math.abs(gestureState.dy)');
   });
 });
+
