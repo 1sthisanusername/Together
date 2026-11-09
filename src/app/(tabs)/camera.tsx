@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useHomePhoto, useUpdateHomePhoto } from '@/features/home';
-import { Button, ErrorState } from '@/shared/ui';
+import { Button, ErrorState, SwipeTabWrapper } from '@/shared/ui';
 import { triggerHaptic } from '@/shared/theme';
 
 export default function CameraScreen() {
@@ -77,7 +77,8 @@ export default function CameraScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
+      <SwipeTabWrapper currentTab="camera">
+        <View style={styles.header}>
         <Text style={styles.title}>Home Cover Photo</Text>
         <Text style={styles.subtitle}>
           Take or choose a photo that will appear on your shared home screen for both of you.
@@ -147,6 +148,7 @@ export default function CameraScreen() {
           />
         )}
       </View>
+      </SwipeTabWrapper>
     </SafeAreaView>
   );
 }

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useMemories, MemoryCard, AddMemoryModal } from '@/features/memories';
-import { LoadingState, ErrorState, Button, EmptyState } from '@/shared/ui';
+import { LoadingState, ErrorState, Button, EmptyState, SwipeTabWrapper } from '@/shared/ui';
 import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export default function MemoriesScreen() {
@@ -28,7 +28,8 @@ export default function MemoriesScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
+      <SwipeTabWrapper currentTab="memories">
+        <View style={styles.header}>
         <View style={styles.headerText}>
           <Text style={styles.title} maxFontSizeMultiplier={1.35}>
             {t('memories.title')}
@@ -75,10 +76,11 @@ export default function MemoriesScreen() {
         </ScrollView>
       )}
 
-      <AddMemoryModal
-        visible={showAddModal}
-        onClose={() => setShowAddModal(false)}
-      />
+        <AddMemoryModal
+          visible={showAddModal}
+          onClose={() => setShowAddModal(false)}
+        />
+      </SwipeTabWrapper>
     </SafeAreaView>
   );
 }

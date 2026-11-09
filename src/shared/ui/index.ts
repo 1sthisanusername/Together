@@ -13,3 +13,4 @@ export * from './TabIcons';
 export * from './ErrorBoundary';
 export * from './ThemedConfirmDialog';
 export * from './ThemedToast';
+export * from './SwipeTabWrapper';

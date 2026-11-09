@@ -20,7 +20,7 @@ import { useAuthStore } from '@/features/auth';
 import { WriteLetterModal } from '@/features/letters';
 import { NextReunionCountdownCard } from '@/features/us';
 import { useUnreadNotificationsCount } from '@/features/notifications';
-import { LoadingState, ErrorState } from '@/shared/ui';
+import { LoadingState, ErrorState, SwipeTabWrapper } from '@/shared/ui';
 import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export default function HomeScreen() {
@@ -62,7 +62,8 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Playful Top Bar with Chunky Sticker Badges */}
+      <SwipeTabWrapper currentTab="home">
+        {/* Playful Top Bar with Chunky Sticker Badges */}
       <View style={styles.topBar}>
         <View style={styles.brandContainer}>
           <Text style={styles.brandTitle}>Together</Text>
@@ -197,11 +198,12 @@ export default function HomeScreen() {
         </ScrollView>
       )}
 
-      <WriteLetterModal
-        visible={showLetterModal}
-        onClose={() => setShowLetterModal(false)}
-        partnerName={partnerName}
-      />
+        <WriteLetterModal
+          visible={showLetterModal}
+          onClose={() => setShowLetterModal(false)}
+          partnerName={partnerName}
+        />
+      </SwipeTabWrapper>
     </SafeAreaView>
   );
 }

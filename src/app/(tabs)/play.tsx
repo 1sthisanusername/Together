@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useActivities, useStartActivity, ActivityCard } from '@/features/activities';
-import { LoadingState, ErrorState } from '@/shared/ui';
+import { LoadingState, ErrorState, SwipeTabWrapper } from '@/shared/ui';
 import { theme, scale, radii, triggerHaptic } from '@/shared/theme';
 
 export default function PlayScreen() {
@@ -44,7 +44,8 @@ export default function PlayScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
+      <SwipeTabWrapper currentTab="play">
+        <View style={styles.header}>
         <Text style={styles.title} maxFontSizeMultiplier={1.35}>
           {t('activities.title')}
         </Text>
@@ -127,6 +128,7 @@ export default function PlayScreen() {
           ))}
         </ScrollView>
       )}
+      </SwipeTabWrapper>
     </SafeAreaView>
   );
 }

@@ -12,7 +12,7 @@ import {
   CoupleProfileCard,
 } from '@/features/us';
 import { useHomeData } from '@/features/home';
-import { LoadingState, ErrorState } from '@/shared/ui';
+import { LoadingState, ErrorState, SwipeTabWrapper } from '@/shared/ui';
 import { theme, scale } from '@/shared/theme';
 
 export default function UsScreen() {
@@ -40,7 +40,8 @@ export default function UsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
+      <SwipeTabWrapper currentTab="us">
+        <View style={styles.header}>
         <Text style={styles.title} maxFontSizeMultiplier={1.35}>
           {t('us.title')}
         </Text>
@@ -80,6 +81,7 @@ export default function UsScreen() {
           <BucketListCard items={bucketItems || []} />
         </ScrollView>
       )}
+      </SwipeTabWrapper>
     </SafeAreaView>
   );
 }
