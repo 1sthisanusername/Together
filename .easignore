@@ -12,5 +12,7 @@ npm-debug.*
 *.orig.*
 web-build/
 .DS_Store
+credentials.json
+*-firebase-adminsdk-*.json
 ARCHITECTURE_DOC_EXTRACTED.txt
 
