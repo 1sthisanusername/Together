@@ -77,7 +77,9 @@ describe('STRING & STICKERS Design System & Motion Tokens', () => {
     const appJson = JSON.parse(content);
 
     expect(appJson.expo.splash.backgroundColor).toBe('#FFF4E3');
-    expect(appJson.expo.android.splash.backgroundColor).toBe('#FFF4E3');
+    if (appJson.expo.android?.splash) {
+      expect(appJson.expo.android.splash.backgroundColor).toBe('#FFF4E3');
+    }
     expect(appJson.expo.android.adaptiveIcon.backgroundColor).toBe('#FFF4E3');
   });
 

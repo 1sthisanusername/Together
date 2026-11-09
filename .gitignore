@@ -21,7 +21,6 @@ web-build/
 .env*.local
 
 # Firebase credentials
-google-services.json
 *-firebase-adminsdk-*.json
 
 # Temporary files

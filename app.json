@@ -17,19 +17,20 @@
       "bundleIdentifier": "com.together.couplesapp"
     },
     "android": {
-      "splash": {
-        "image": "./assets/splash-icon.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#FFF4E3"
-      },
       "adaptiveIcon": {
         "backgroundColor": "#FFF4E3",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.together.couplesapp",
-      "predictiveBackGestureEnabled": false
+      "googleServicesFile": "./google-services.json",
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -44,7 +45,8 @@
             "enableShrinkResourcesInReleaseBuilds": true,
             "buildArchs": [
               "arm64-v8a"
-            ]
+            ],
+            "enableMinifyInReleaseBuilds": true
           }
         }
       ],
@@ -60,7 +62,7 @@
         }
       },
       "eas": {
-        "projectId": "c510d504-0c36-482b-b71e-aabb35477de6"
+        "projectId": "0b482586-98db-4f59-bdc7-c5a8aa1118d1"
       }
     }
   }

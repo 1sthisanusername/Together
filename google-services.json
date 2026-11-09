@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "516925864411",
+    "project_id": "together-dc2bc",
+    "storage_bucket": "together-dc2bc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:516925864411:android:2095bb622e6c2e4982cffe",
+        "android_client_info": {
+          "package_name": "com.together.couplesapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzK5Z4NuJ3i_MbkueNCwX_AClyIb3IcuA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
