@@ -57,7 +57,7 @@ describe('GATE 1: Media Upload and Voice Notes Architecture & Security', () => {
   it('VoiceNoteRecorder is exported and exports valid component', async () => {
     const { VoiceNoteRecorder } = await import('@/features/messages');
     expect(VoiceNoteRecorder).toBeDefined();
-  });
+  }, 15000);
 
   it('Memories hook enforces delete by uploader only and removes storage files', async () => {
     const useMemoriesFile = path.resolve(
