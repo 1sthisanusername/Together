@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Input } from '@/shared/ui';
 import { useAuthStore } from '@/features/auth';
-import { useUnlinkCouple, UnlinkCoupleDialog } from '@/features/couple';
+import { useUnlinkCouple, UnlinkCoupleDialog, useActiveCouple } from '@/features/couple';
 import { useUpdateProfile } from '../hooks/useSettings';
 import { TimeZonePickerModal, getUtcOffsetString } from './TimeZonePickerModal';
+import { createBackupArchive } from '../services/googleDriveBackup';
 import { theme, triggerHaptic } from '@/shared/theme';
 
 export const SettingsView: React.FC = () => {
@@ -15,6 +16,8 @@ export const SettingsView: React.FC = () => {
   const user = useAuthStore((state) => state.user);
   const profile = useAuthStore((state) => state.profile);
   const signOut = useAuthStore((state) => state.signOut);
+  const { data: coupleData } = useActiveCouple();
+  const [isBackingUp, setIsBackingUp] = useState(false);
 
   const detectedZone = useMemo(() => {
     try {
@@ -41,6 +44,24 @@ export const SettingsView: React.FC = () => {
       displayName: displayName.trim(),
       timeZone: timeZone.trim(),
     });
+  };
+
+  const handleCreateBackup = async () => {
+    if (!coupleData?.couple?.id) return;
+    try {
+      setIsBackingUp(true);
+      triggerHaptic('medium');
+      const { archive } = await createBackupArchive(coupleData.couple.id);
+      setIsBackingUp(false);
+      triggerHaptic('success');
+      Alert.alert(
+        'Backup Created! ☁️',
+        `Successfully archived:\n• ${archive.stats.lettersCount} Letters\n• ${archive.stats.memoriesCount} Memories\n• ${archive.stats.vaultItemsCount} Vault Items\n\nYour couple archive is safely saved locally and ready for Google Drive backup.`
+      );
+    } catch {
+      setIsBackingUp(false);
+      Alert.alert('Backup Error', 'Could not create couple data archive.');
+    }
   };
 
   const currentOffset = useMemo(() => getUtcOffsetString(timeZone), [timeZone]);
@@ -102,6 +123,23 @@ export const SettingsView: React.FC = () => {
           size="md"
           onPress={() => setShowUnlinkModal(true)}
           style={styles.unlinkBtn}
+        />
+      </Card>
+
+      <Text style={styles.sectionHeading}>Data & Cloud Backup</Text>
+      <Card style={styles.card}>
+        <Text style={styles.backupSubtext}>
+          Export a complete, encrypted archive of all your letters, memories, and vault secrets.
+          Synchronizes with Google Drive appdata without polluting your main Drive files.
+        </Text>
+        <Button
+          title="Backup Couple Data ☁️"
+          variant="primary"
+          size="md"
+          loading={isBackingUp}
+          disabled={!coupleData?.couple?.id}
+          onPress={handleCreateBackup}
+          style={styles.backupBtn}
         />
       </Card>
 
@@ -204,6 +242,15 @@ const styles = StyleSheet.create({
   },
   vaultBtn: {
     marginBottom: 12,
+  },
+  backupSubtext: {
+    fontSize: 13,
+    color: '#5C4A3A',
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+  backupBtn: {
+    backgroundColor: '#2EC4B6',
   },
   unlinkBtn: {
     borderColor: theme.colors.danger,

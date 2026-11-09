@@ -30,6 +30,8 @@ export default defineConfig({
       '@expo-google-fonts/figtree': path.resolve(__dirname, './tests/mocks/expo-google-fonts.ts'),
       '@expo-google-fonts/caveat': path.resolve(__dirname, './tests/mocks/expo-google-fonts.ts'),
       '@react-native-google-signin/google-signin': path.resolve(__dirname, './tests/mocks/google-signin.ts'),
+      'react-native-url-polyfill/auto': path.resolve(__dirname, './tests/mocks/empty.ts'),
+      'react-native-url-polyfill': path.resolve(__dirname, './tests/mocks/empty.ts'),
     },
   },
   test: {
