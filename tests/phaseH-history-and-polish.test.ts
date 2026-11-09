@@ -42,7 +42,10 @@ describe('Phase H: Polish & History Tests', () => {
       expect(freq).toBe('weekly');
     });
 
-    it('persists and retrieves monthly and manual frequency', async () => {
+    it('persists and retrieves daily, monthly, and manual frequency', async () => {
+      await setBackupFrequency('daily');
+      expect(await getBackupFrequency()).toBe('daily');
+
       await setBackupFrequency('monthly');
       expect(await getBackupFrequency()).toBe('monthly');
 

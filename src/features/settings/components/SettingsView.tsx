@@ -156,6 +156,7 @@ export const SettingsView: React.FC = () => {
         <View style={styles.freqRow}>
           {(
             [
+              { id: 'daily', label: 'Daily ⏱️' },
               { id: 'weekly', label: 'Weekly 🌟' },
               { id: 'monthly', label: 'Monthly 📅' },
               { id: 'manual', label: 'Manual ⚙️' },

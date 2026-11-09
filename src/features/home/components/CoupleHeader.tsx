@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { useTranslation } from 'react-i18next';
 import { Button, DatePickerField } from '@/shared/ui';
 import type { Profile } from '@/shared/types';
@@ -10,6 +11,8 @@ import {
 } from '@/shared/utils';
 import { useUpdateStartDate } from '@/features/couple';
 import { theme, scale, triggerHaptic } from '@/shared/theme';
+
+const DURATION_FORMAT_KEY = 'together_duration_format';
 
 // Together couple header: clean layout with partner names and relationship duration
 export interface CoupleHeaderProps {
@@ -32,6 +35,14 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [durationFormat, setDurationFormat] = useState<DurationDisplayFormat>('total_days');
 
+  useEffect(() => {
+    SecureStore.getItemAsync(DURATION_FORMAT_KEY).then((saved) => {
+      if (saved === 'total_days' || saved === 'years_months_days' || saved === 'both') {
+        setDurationFormat(saved as DurationDisplayFormat);
+      }
+    }).catch(() => {});
+  }, []);
+
   const { mutate: updateDate, isPending } = useUpdateStartDate();
 
   const myDisplayName = me?.display_name || 'You';
@@ -45,9 +56,13 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
   const cycleDurationFormat = () => {
     triggerHaptic('light');
     setDurationFormat((prev) => {
-      if (prev === 'total_days') return 'years_months_days';
-      if (prev === 'years_months_days') return 'both';
-      return 'total_days';
+      let next: DurationDisplayFormat = 'total_days';
+      if (prev === 'total_days') next = 'years_months_days';
+      else if (prev === 'years_months_days') next = 'both';
+      else next = 'total_days';
+
+      SecureStore.setItemAsync(DURATION_FORMAT_KEY, next).catch(() => {});
+      return next;
     });
   };
 

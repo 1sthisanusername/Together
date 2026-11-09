@@ -5,7 +5,7 @@ import { queryClient } from '@/services/queryClient';
 
 export const GOOGLE_DRIVE_APPDATA_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 
-export type BackupFrequency = 'weekly' | 'monthly' | 'manual';
+export type BackupFrequency = 'daily' | 'weekly' | 'monthly' | 'manual';
 const BACKUP_FREQ_STORAGE_KEY = 'together_backup_frequency';
 
 // Simple content digest checksum (DJB2 hash formatted as hex)
@@ -73,7 +73,7 @@ export type CoupleBackupArchive = CoupleSharedBackupArchive;
 export async function getBackupFrequency(): Promise<BackupFrequency> {
   try {
     const val = await SecureStore.getItemAsync(BACKUP_FREQ_STORAGE_KEY);
-    if (val === 'weekly' || val === 'monthly' || val === 'manual') {
+    if (val === 'daily' || val === 'weekly' || val === 'monthly' || val === 'manual') {
       return val;
     }
   } catch {
