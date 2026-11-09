@@ -50,3 +50,4 @@ describe('Phase E: Activities & This or That Modes Architecture', () => {
     expect(content).toContain('Your Choices:');
   });
 });
+

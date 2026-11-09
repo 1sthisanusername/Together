@@ -66,3 +66,4 @@ describe('Phase F: Love Letters Attachments & Scheduled Opening Architecture', (
     expect(content).toContain('removePhotoBtn');
   });
 });
+

@@ -174,3 +174,66 @@ export function useDailyQuestion() {
     isSubmitting: submitMutation.isPending,
   };
 }
+
+export interface DailyQuestionHistoryEntry {
+  questionDate: string;
+  questionText: string;
+  myAnswer: string | null;
+  partnerAnswer: string | null;
+  hasBothAnswered: boolean;
+}
+
+export function useDailyQuestionHistory() {
+  const user = useAuthStore((state) => state.user);
+  const { data: coupleData } = useActiveCouple();
+  const coupleId = coupleData?.couple?.id;
+  const partnerId = coupleData?.partner?.id;
+
+  return useQuery<DailyQuestionHistoryEntry[]>({
+    queryKey: ['daily_question_history', coupleId],
+    enabled: !!coupleId && !!user?.id,
+    queryFn: async () => {
+      if (!coupleId || !user?.id) return [];
+      const { data, error } = await (supabase.from as any)('daily_question_answers')
+        .select('*')
+        .eq('couple_id', coupleId)
+        .order('question_date', { ascending: false });
+
+      if (error || !data) return [];
+
+      const map = new Map<
+        string,
+        {
+          date: string;
+          question: string;
+          myAns: string | null;
+          partnerAns: string | null;
+        }
+      >();
+
+      for (const row of data as any[]) {
+        const existing = map.get(row.question_date) || {
+          date: row.question_date,
+          question: row.question_text || 'Daily Prompt',
+          myAns: null,
+          partnerAns: null,
+        };
+        if (row.user_id === user.id) {
+          existing.myAns = row.answer;
+        } else if (row.user_id === partnerId) {
+          existing.partnerAns = row.answer;
+        }
+        if (row.question_text) existing.question = row.question_text;
+        map.set(row.question_date, existing);
+      }
+
+      return Array.from(map.values()).map((item) => ({
+        questionDate: item.date,
+        questionText: item.question,
+        myAnswer: item.myAns,
+        partnerAnswer: item.partnerAns,
+        hasBothAnswered: !!item.myAns && !!item.partnerAns,
+      }));
+    },
+  });
+}

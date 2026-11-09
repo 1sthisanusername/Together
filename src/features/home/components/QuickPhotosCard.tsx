@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -13,7 +14,13 @@ import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export const QuickPhotosCard: React.FC = () => {
   const router = useRouter();
-  const { data: memories = [], isLoading } = useMemories();
+  const { data: memories = [] } = useMemories();
+  const [selectedPhoto, setSelectedPhoto] = useState<{
+    id: string;
+    url: string;
+    title: string;
+  } | null>(null);
+  const [activeReaction, setActiveReaction] = useState<string | null>(null);
 
   // Extract recent photo URLs from memories
   const recentPhotos: { id: string; url: string; title: string }[] = [];
@@ -34,6 +41,17 @@ export const QuickPhotosCard: React.FC = () => {
   const handleOpenMemories = () => {
     triggerHaptic('light');
     router.push('/(tabs)/memories');
+  };
+
+  const handleSelectPhoto = (photo: { id: string; url: string; title: string }) => {
+    triggerHaptic('light');
+    setActiveReaction(null);
+    setSelectedPhoto(photo);
+  };
+
+  const handleReaction = (emoji: string) => {
+    triggerHaptic('medium');
+    setActiveReaction(emoji);
   };
 
   return (
@@ -71,7 +89,7 @@ export const QuickPhotosCard: React.FC = () => {
                     styles.polaroidFrame,
                     { transform: [{ rotate: rotation }] },
                   ]}
-                  onPress={handleOpenMemories}
+                  onPress={() => handleSelectPhoto(item)}
                   activeOpacity={0.85}
                 >
                   <Image
@@ -111,6 +129,76 @@ export const QuickPhotosCard: React.FC = () => {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Full-Screen Photo Viewer & Reactions Modal */}
+      <Modal
+        visible={!!selectedPhoto}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedPhoto(null)}
+      >
+        <View style={styles.viewerOverlay}>
+          <View style={styles.viewerHeader}>
+            <Text style={styles.viewerTitle} numberOfLines={1}>
+              {selectedPhoto?.title}
+            </Text>
+            <TouchableOpacity
+              style={styles.viewerCloseBtn}
+              onPress={() => setSelectedPhoto(null)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.viewerCloseText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.viewerImageContainer}>
+            {selectedPhoto?.url ? (
+              <Image
+                source={{ uri: selectedPhoto.url }}
+                style={styles.viewerImage}
+                contentFit="contain"
+              />
+            ) : null}
+
+            {activeReaction && (
+              <View style={styles.activeReactionBadge}>
+                <Text style={styles.activeReactionText}>
+                  {activeReaction} Reacted!
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Quick Reaction Stickers */}
+          <View style={styles.reactionsBar}>
+            {['❤️', '🔥', '🥰', '✨', '💌'].map((emoji) => (
+              <TouchableOpacity
+                key={emoji}
+                style={[
+                  styles.reactionBtn,
+                  activeReaction === emoji && styles.reactionBtnActive,
+                ]}
+                onPress={() => handleReaction(emoji)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.reactionEmoji}>{emoji}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* View in Memories Button */}
+          <TouchableOpacity
+            style={styles.openMemoriesBtn}
+            onPress={() => {
+              setSelectedPhoto(null);
+              handleOpenMemories();
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.openMemoriesText}>Open in Memories Story →</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -229,6 +317,104 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: scale(260),
     lineHeight: scale(16),
+  },
+  viewerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(20, 16, 12, 0.94)',
+    justifyContent: 'space-between',
+    paddingVertical: scale(48),
+    paddingHorizontal: scale(20),
+  },
+  viewerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: scale(12),
+  },
+  viewerTitle: {
+    fontFamily: theme.typography.families.bold,
+    fontSize: scale(16),
+    color: '#FFF4E3',
+    flex: 1,
+    marginRight: 12,
+  },
+  viewerCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewerCloseText: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  viewerImageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  viewerImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 14,
+  },
+  activeReactionBadge: {
+    position: 'absolute',
+    bottom: scale(20),
+    backgroundColor: theme.colors.stickers.sunshine,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    ...theme.shadows.hardSm,
+  },
+  activeReactionText: {
+    fontFamily: theme.typography.families.bold,
+    fontSize: 14,
+    color: theme.colors.text,
+  },
+  reactionsBar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: scale(14),
+    marginVertical: scale(16),
+  },
+  reactionBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reactionBtnActive: {
+    backgroundColor: '#FFC93C',
+    borderColor: '#FFFFFF',
+    transform: [{ scale: 1.15 }],
+  },
+  reactionEmoji: {
+    fontSize: 22,
+  },
+  openMemoriesBtn: {
+    backgroundColor: theme.colors.primary,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    borderRadius: 14,
+    paddingVertical: scale(12),
+    alignItems: 'center',
+    ...theme.shadows.hardSm,
+  },
+  openMemoriesText: {
+    fontFamily: theme.typography.families.bold,
+    fontSize: scale(14),
+    color: '#FFFFFF',
   },
 });
 

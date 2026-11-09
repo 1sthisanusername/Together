@@ -81,3 +81,4 @@ describe('Phase D: Onboarding & Independent Nicknames Architecture', () => {
     expect(content).toContain('Skip for now');
   });
 });
+

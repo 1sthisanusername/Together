@@ -7,7 +7,12 @@ import { useAuthStore } from '@/features/auth';
 import { useUnlinkCouple, UnlinkCoupleDialog, useActiveCouple } from '@/features/couple';
 import { useUpdateProfile } from '../hooks/useSettings';
 import { TimeZonePickerModal, getUtcOffsetString } from './TimeZonePickerModal';
-import { createBackupArchive } from '../services/googleDriveBackup';
+import {
+  createDualBackup,
+  getBackupFrequency,
+  setBackupFrequency,
+  type BackupFrequency,
+} from '../services/googleDriveBackup';
 import { theme, triggerHaptic } from '@/shared/theme';
 
 export const SettingsView: React.FC = () => {
@@ -18,6 +23,17 @@ export const SettingsView: React.FC = () => {
   const signOut = useAuthStore((state) => state.signOut);
   const { data: coupleData } = useActiveCouple();
   const [isBackingUp, setIsBackingUp] = useState(false);
+  const [backupFrequency, setBackupFrequencyState] = useState<BackupFrequency>('weekly');
+
+  useEffect(() => {
+    getBackupFrequency().then((freq) => setBackupFrequencyState(freq));
+  }, []);
+
+  const handleSelectFrequency = async (freq: BackupFrequency) => {
+    triggerHaptic('light');
+    setBackupFrequencyState(freq);
+    await setBackupFrequency(freq);
+  };
 
   const detectedZone = useMemo(() => {
     try {
@@ -47,16 +63,16 @@ export const SettingsView: React.FC = () => {
   };
 
   const handleCreateBackup = async () => {
-    if (!coupleData?.couple?.id) return;
+    if (!coupleData?.couple?.id || !user?.id) return;
     try {
       setIsBackingUp(true);
       triggerHaptic('medium');
-      const { archive } = await createBackupArchive(coupleData.couple.id);
+      const { individual, couple } = await createDualBackup(coupleData.couple.id, user.id);
       setIsBackingUp(false);
       triggerHaptic('success');
       Alert.alert(
-        'Backup Created! ☁️',
-        `Successfully archived:\n• ${archive.stats.lettersCount} Letters\n• ${archive.stats.memoriesCount} Memories\n• ${archive.stats.vaultItemsCount} Vault Items\n\nYour couple archive is safely saved locally and ready for Google Drive backup.`
+        'Dual Backup Created! ☁️',
+        `Successfully backed up:\n• Personal device preferences (${individual.archive.checksum})\n• Shared couple archive:\n  - ${couple.archive.stats.lettersCount} Letters\n  - ${couple.archive.stats.memoriesCount} Memories\n  - ${couple.archive.stats.vaultItemsCount} Vault Items\n  - ${couple.archive.stats.bucketItemsCount || 0} Bucket List Items\n\nChecksum: ${couple.archive.checksum}\nIsolated in Google Drive appdata.`
       );
     } catch {
       setIsBackingUp(false);
@@ -132,11 +148,42 @@ export const SettingsView: React.FC = () => {
       <Text style={styles.sectionHeading}>Data & Cloud Backup</Text>
       <Card style={styles.card}>
         <Text style={styles.backupSubtext}>
-          Export a complete, encrypted archive of all your letters, memories, and vault secrets.
+          Export a complete, encrypted dual archive: your isolated personal settings and your shared couple data (letters, memories, bucket list, dates).
           Synchronizes with Google Drive appdata without polluting your main Drive files.
         </Text>
+
+        <Text style={styles.backupFieldLabel}>Automatic Sync Frequency</Text>
+        <View style={styles.freqRow}>
+          {(
+            [
+              { id: 'weekly', label: 'Weekly 🌟' },
+              { id: 'monthly', label: 'Monthly 📅' },
+              { id: 'manual', label: 'Manual ⚙️' },
+            ] as const
+          ).map((item) => {
+            const isSelected = backupFrequency === item.id;
+            return (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.freqChip, isSelected && styles.freqChipActive]}
+                onPress={() => handleSelectFrequency(item.id)}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.freqChipText,
+                    isSelected && styles.freqChipTextActive,
+                  ]}
+                >
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
         <Button
-          title="Backup Couple Data ☁️"
+          title="Backup Now ☁️"
           variant="primary"
           size="md"
           loading={isBackingUp}
@@ -257,7 +304,43 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#5C4A3A',
     lineHeight: 18,
-    marginBottom: 14,
+    marginBottom: 12,
+  },
+  backupFieldLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: 8,
+  },
+  freqRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  freqChip: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceSubtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  freqChipActive: {
+    backgroundColor: '#FFC93C', // Sunshine accent
+    borderColor: theme.colors.border,
+    ...theme.shadows.hardSm,
+  },
+  freqChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.textSecondary,
+  },
+  freqChipTextActive: {
+    color: theme.colors.text,
+    fontWeight: '800',
   },
   backupBtn: {
     backgroundColor: '#2EC4B6',

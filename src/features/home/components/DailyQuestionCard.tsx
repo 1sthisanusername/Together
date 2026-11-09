@@ -6,8 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Modal,
+  ScrollView,
 } from 'react-native';
-import { useDailyQuestion } from '../hooks/useDailyQuestion';
+import { useDailyQuestion, useDailyQuestionHistory } from '../hooks/useDailyQuestion';
 import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export interface DailyQuestionCardProps {
@@ -24,8 +26,11 @@ export const DailyQuestionCard: React.FC<DailyQuestionCardProps> = ({
     isSubmitting,
   } = useDailyQuestion();
 
+  const { data: history = [], isLoading: isLoadingHistory } = useDailyQuestionHistory();
+
   const [inputAnswer, setInputAnswer] = useState('');
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
   if (isLoading || !qData) {
     return (
@@ -61,19 +66,32 @@ export const DailyQuestionCard: React.FC<DailyQuestionCardProps> = ({
 
       {/* Paper Surface */}
       <View style={styles.cardSurface}>
-        {/* Header Row: Category sticker & Streak */}
+        {/* Header Row: Category sticker, Streak & History */}
         <View style={styles.headerRow}>
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryText}>
-              {question.emoji} Daily Question
-            </Text>
+          <View style={styles.headerBadges}>
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryText}>
+                {question.emoji} Daily Question
+              </Text>
+            </View>
+
+            {streak > 0 && (
+              <View style={styles.streakBadge}>
+                <Text style={styles.streakText}>🔥 {streak} streak</Text>
+              </View>
+            )}
           </View>
 
-          {streak > 0 && (
-            <View style={styles.streakBadge}>
-              <Text style={styles.streakText}>🔥 {streak} streak</Text>
-            </View>
-          )}
+          <TouchableOpacity
+            style={styles.historyBtn}
+            onPress={() => {
+              triggerHaptic('light');
+              setShowHistoryModal(true);
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.historyBtnText}>History 📖</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Question Title */}
@@ -158,6 +176,89 @@ export const DailyQuestionCard: React.FC<DailyQuestionCardProps> = ({
           </View>
         )}
       </View>
+
+      {/* Past Answers History Modal */}
+      <Modal
+        visible={showHistoryModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowHistoryModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Past Prompts 📖</Text>
+              <TouchableOpacity
+                style={styles.modalCloseBtn}
+                onPress={() => {
+                  triggerHaptic('light');
+                  setShowHistoryModal(false);
+                }}
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {isLoadingHistory ? (
+              <View style={styles.historyLoading}>
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+                <Text style={styles.historyLoadingText}>Loading past memories…</Text>
+              </View>
+            ) : history.length === 0 ? (
+              <View style={styles.historyEmpty}>
+                <Text style={styles.historyEmptyEmoji}>💌</Text>
+                <Text style={styles.historyEmptyTitle}>No Past Answers Yet</Text>
+                <Text style={styles.historyEmptySubtitle}>
+                  Answer daily questions with your partner to build your story archive here!
+                </Text>
+              </View>
+            ) : (
+              <ScrollView
+                style={styles.historyScroll}
+                contentContainerStyle={styles.historyScrollContent}
+                showsVerticalScrollIndicator={false}
+              >
+                {history.map((item, idx) => (
+                  <View key={`${item.questionDate}_${idx}`} style={styles.historyCard}>
+                    <View style={styles.historyDateBadge}>
+                      <Text style={styles.historyDateText}>📅 {item.questionDate}</Text>
+                    </View>
+                    <Text style={styles.historyQuestionText}>{item.questionText}</Text>
+
+                    {item.hasBothAnswered ? (
+                      <View style={styles.historyAnswersContainer}>
+                        <View style={styles.historyAnswerRow}>
+                          <Text style={styles.historyAuthorLabel}>You:</Text>
+                          <Text style={styles.historyAnswerBody}>{item.myAnswer}</Text>
+                        </View>
+                        <View style={styles.historyAnswerRow}>
+                          <Text style={styles.historyAuthorLabel}>{partnerName}:</Text>
+                          <Text style={styles.historyAnswerBody}>{item.partnerAnswer}</Text>
+                        </View>
+                      </View>
+                    ) : item.myAnswer ? (
+                      <View style={styles.historyAnswersContainer}>
+                        <View style={styles.historyAnswerRow}>
+                          <Text style={styles.historyAuthorLabel}>You:</Text>
+                          <Text style={styles.historyAnswerBody}>{item.myAnswer}</Text>
+                        </View>
+                        <Text style={styles.historyWaitingNote}>
+                          🔒 Waiting for {partnerName}&apos;s answer
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.historyLockedNote}>
+                        🔒 Hidden until answered
+                      </Text>
+                    )}
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -199,6 +300,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: scale(10),
+  },
+  headerBadges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  historyBtn: {
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: theme.colors.surfaceSubtle,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+  },
+  historyBtnText: {
+    fontFamily: theme.typography.families.bold,
+    fontSize: scale(11),
+    color: theme.colors.textSecondary,
   },
   categoryBadge: {
     backgroundColor: theme.colors.stickers.sunshine, // Warm Buttercup
@@ -345,6 +464,150 @@ const styles = StyleSheet.create({
     fontSize: scale(14),
     lineHeight: scale(20),
     color: theme.colors.text,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(43, 33, 24, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: scale(16),
+  },
+  modalContent: {
+    width: '100%',
+    maxHeight: '80%',
+    backgroundColor: theme.colors.background, // Paper #FFF4E3
+    borderRadius: 24,
+    borderWidth: 2.5,
+    borderColor: theme.colors.border,
+    padding: scale(20),
+    ...theme.shadows.hardLg,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: scale(16),
+  },
+  modalTitle: {
+    fontFamily: theme.typography.families.bold,
+    fontSize: scale(18),
+    color: theme.colors.text,
+  },
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCloseText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.text,
+  },
+  historyLoading: {
+    paddingVertical: scale(32),
+    alignItems: 'center',
+    gap: 8,
+  },
+  historyLoadingText: {
+    fontFamily: theme.typography.families.body,
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+  },
+  historyEmpty: {
+    paddingVertical: scale(32),
+    alignItems: 'center',
+    gap: 8,
+  },
+  historyEmptyEmoji: {
+    fontSize: 36,
+  },
+  historyEmptyTitle: {
+    fontFamily: theme.typography.families.bold,
+    fontSize: scale(15),
+    color: theme.colors.text,
+  },
+  historyEmptySubtitle: {
+    fontFamily: theme.typography.families.body,
+    fontSize: scale(12),
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: scale(16),
+  },
+  historyScroll: {
+    width: '100%',
+  },
+  historyScrollContent: {
+    gap: scale(12),
+    paddingBottom: scale(12),
+  },
+  historyCard: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    borderRadius: 16,
+    padding: scale(14),
+    ...theme.shadows.hardSm,
+  },
+  historyDateBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: theme.colors.stickers.sunshine,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginBottom: 6,
+  },
+  historyDateText: {
+    fontFamily: theme.typography.families.bold,
+    fontSize: 11,
+    color: theme.colors.text,
+  },
+  historyQuestionText: {
+    fontFamily: theme.typography.families.bold,
+    fontSize: scale(13),
+    color: theme.colors.text,
+    lineHeight: scale(18),
+    marginBottom: 10,
+  },
+  historyAnswersContainer: {
+    gap: 6,
+    borderTopWidth: 1,
+    borderColor: theme.colors.borderLight,
+    paddingTop: 8,
+  },
+  historyAnswerRow: {
+    gap: 2,
+  },
+  historyAuthorLabel: {
+    fontFamily: theme.typography.families.bold,
+    fontSize: 11,
+    color: theme.colors.textSecondary,
+  },
+  historyAnswerBody: {
+    fontFamily: theme.typography.families.body,
+    fontSize: 13,
+    color: theme.colors.text,
+    lineHeight: 18,
+  },
+  historyWaitingNote: {
+    fontFamily: theme.typography.families.body,
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  historyLockedNote: {
+    fontFamily: theme.typography.families.body,
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    fontStyle: 'italic',
+    marginTop: 4,
   },
 });
 

@@ -6,3 +6,4 @@
  * gracefully hidden from the catalogue to avoid presenting broken or unplayable games.
  */
 export const ENABLE_SIMULTANEOUS_ACTIVITIES = false;
+
