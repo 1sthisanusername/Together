@@ -20,7 +20,8 @@ web-build/
 .env.local
 .env*.local
 
-# Firebase credentials
+# Credentials and keys
+credentials/
 credentials.json
 *serviceaccount*.json
 *serviceaccoun*.json

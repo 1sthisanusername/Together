@@ -12,6 +12,7 @@ npm-debug.*
 *.orig.*
 web-build/
 .DS_Store
+credentials/
 credentials.json
 *serviceaccount*.json
 *serviceaccoun*.json
