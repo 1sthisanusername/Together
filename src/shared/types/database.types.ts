@@ -50,6 +50,9 @@ export type Database = {
           status: 'active' | 'unlinked';
           created_at: string;
           updated_at: string;
+          home_photo_url?: string | null;
+          home_photo_updated_at?: string | null;
+          home_photo_updated_by?: string | null;
         };
         Insert: {
           id?: string;
@@ -58,6 +61,9 @@ export type Database = {
           status?: 'active' | 'unlinked';
           created_at?: string;
           updated_at?: string;
+          home_photo_url?: string | null;
+          home_photo_updated_at?: string | null;
+          home_photo_updated_by?: string | null;
         };
         Update: {
           id?: string;
@@ -66,6 +72,9 @@ export type Database = {
           status?: 'active' | 'unlinked';
           created_at?: string;
           updated_at?: string;
+          home_photo_url?: string | null;
+          home_photo_updated_at?: string | null;
+          home_photo_updated_by?: string | null;
         };
         Relationships: [];
       };

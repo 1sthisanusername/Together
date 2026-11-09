@@ -75,6 +75,21 @@ export const UsIcon: React.FC<TabIconProps> = ({ color, size = 24 }) => (
   </View>
 );
 
+// Camera: Playful chunky camera with lens circle and flash bump
+export const CameraIcon: React.FC<TabIconProps> = ({ color, size = 24 }) => (
+  <View style={[styles.container, { width: size, height: size }]}>
+    {/* Top flash bump */}
+    <View style={[styles.cameraFlashBump, { backgroundColor: color }]} />
+    {/* Camera Body */}
+    <View style={[styles.cameraBody, { borderColor: color, width: size * 0.88, height: size * 0.65 }]}>
+      {/* Lens Circle */}
+      <View style={[styles.cameraLens, { borderColor: color, width: size * 0.38, height: size * 0.38 }]}>
+        <View style={[styles.cameraLensDot, { backgroundColor: color }]} />
+      </View>
+    </View>
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
@@ -202,5 +217,31 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 7,
     position: 'absolute',
     bottom: 3,
+  },
+
+  // Camera
+  cameraFlashBump: {
+    width: 6,
+    height: 3,
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
+    marginBottom: -1,
+  },
+  cameraBody: {
+    borderWidth: 2,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cameraLens: {
+    borderRadius: 10,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cameraLensDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
   },
 });

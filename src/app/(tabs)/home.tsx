@@ -6,6 +6,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import {
   CoupleHeader,
+  HomePagePhotoCard,
   TimeZoneClockCard,
   ActiveSessionBanner,
   QuickActions,
@@ -145,7 +146,7 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={false} onRefresh={() => { refetch(); }} />}
         >
-          {/* 1. Header (Together ❤️ + Both Names + Duration) & Live Telephone String */}
+          {/* 1. Header (Both Names + Duration) */}
           <CoupleHeader
             coupleName={homeData.coupleName}
             me={profile}
@@ -155,7 +156,10 @@ export default function HomeScreen() {
             isPartnerOnline={isPartnerOnline}
           />
 
-          {/* 2. Activity Indicator: only when partner is actively online and session is fresh */}
+          {/* 2. Shared Couple Home Page Cover Photo */}
+          <HomePagePhotoCard partnerName={partnerName} />
+
+          {/* 3. Activity Indicator: only when partner is actively online and session is fresh */}
           {shouldShowActiveSession ? (
             <ActiveSessionBanner
               onJoin={() => router.push(`/session/${homeData.activeSession!.id}`)}

@@ -2,7 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { theme, scale } from '@/shared/theme';
-import { HomeIcon, PlayIcon, DatesIcon, MemoriesIcon, UsIcon } from '@/shared/ui';
+import { HomeIcon, PlayIcon, CameraIcon, MemoriesIcon, UsIcon } from '@/shared/ui';
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -45,10 +45,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="dates"
+        name="camera"
         options={{
-          title: t('nav.dates'),
-          tabBarIcon: ({ color }) => <DatesIcon color={color} size={scale(20)} />,
+          title: t('nav.camera', 'Camera'),
+          tabBarIcon: ({ color }) => <CameraIcon color={color} size={scale(20)} />,
         }}
       />
       <Tabs.Screen
@@ -63,6 +63,12 @@ export default function TabLayout() {
         options={{
           title: t('nav.us'),
           tabBarIcon: ({ color }) => <UsIcon color={color} size={scale(20)} />,
+        }}
+      />
+      <Tabs.Screen
+        name="dates"
+        options={{
+          href: null,
         }}
       />
     </Tabs>
