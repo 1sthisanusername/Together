@@ -42,12 +42,11 @@ export default function WelcomeScreen() {
 
           <Button
             title="Continue with Google"
-            variant="primary"
+            variant="outline"
             size="lg"
             loading={isLoading}
             onPress={handleGoogleSignIn}
             style={styles.googleButton}
-            textStyle={styles.googleButtonText}
           />
 
           <Text style={styles.privacyNotice}>
@@ -85,19 +84,6 @@ const styles = StyleSheet.create({
   },
   googleButton: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E6D9D0',
-    shadowColor: '#42362E',
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  googleButtonText: {
-    color: '#42362E',
-    fontWeight: '700',
-    fontSize: 16,
   },
   privacyNotice: {
     marginTop: 18,
