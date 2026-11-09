@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Sheet, Button, Card } from '@/shared/ui';
 import type { EnhancedLetter, StationeryTheme } from '../hooks/useLetters';
 import { useOpenLetter } from '../hooks/useLetters';
-import { theme } from '@/shared/theme';
+import { VoiceNotePlayer } from '@/features/messages';
+import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export interface ReadLetterModalProps {
   letter: EnhancedLetter | null;
@@ -104,14 +105,27 @@ export const ReadLetterModal: React.FC<ReadLetterModalProps> = ({
             <Text style={styles.readyTitle}>A letter from {partnerName}</Text>
             <Text style={styles.readySubtitle}>Ready for you to break the seal and read!</Text>
 
-            <Button
-              title="Break Wax Seal & Read 💌"
-              variant="primary"
-              size="lg"
-              loading={isPending}
-              onPress={handleTearOpen}
-              style={styles.openBtn}
-            />
+            <View style={styles.openActionsCol}>
+              <Button
+                title="Break Wax Seal & Read 💌"
+                variant="primary"
+                size="lg"
+                loading={isPending}
+                onPress={handleTearOpen}
+                style={styles.openBtn}
+              />
+
+              <Button
+                title="Open Later ⏳"
+                variant="ghost"
+                size="md"
+                onPress={() => {
+                  triggerHaptic('light');
+                  onClose();
+                }}
+                style={styles.saveLaterBtn}
+              />
+            </View>
           </View>
         ) : (
           <View style={styles.letterBody}>
@@ -140,6 +154,29 @@ export const ReadLetterModal: React.FC<ReadLetterModalProps> = ({
               >
                 {letter.content}
               </Text>
+
+              {/* Attached Photo */}
+              {letter.photo_url ? (
+                <View style={styles.attachedPhotoContainer}>
+                  <Image
+                    source={{ uri: letter.photo_url }}
+                    style={styles.attachedPhotoImage}
+                    resizeMode="cover"
+                  />
+                </View>
+              ) : null}
+
+              {/* Attached Voice Note */}
+              {letter.voice_url ? (
+                <View style={styles.attachedVoiceContainer}>
+                  <Text style={styles.attachedVoiceLabel}>🎙️ Voice Note from {partnerName}</Text>
+                  <VoiceNotePlayer
+                    mediaSignedUrl={letter.voice_url}
+                    durationSeconds={letter.voice_duration_seconds || 0}
+                    isMyMessage={false}
+                  />
+                </View>
+              ) : null}
 
               <View style={styles.signatureBlock}>
                 <Text style={[styles.signature, { color: palette.subText }]}>
@@ -270,11 +307,45 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
+  openActionsCol: {
+    width: '100%',
+    gap: 8,
+    alignItems: 'center',
+  },
   openBtn: {
+    width: '100%',
+  },
+  saveLaterBtn: {
     width: '100%',
   },
   letterBody: {
     width: '100%',
+  },
+  attachedPhotoContainer: {
+    marginVertical: 14,
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#2B2118',
+  },
+  attachedPhotoImage: {
+    width: '100%',
+    height: 200,
+    backgroundColor: '#FAF5EE',
+  },
+  attachedVoiceContainer: {
+    marginVertical: 12,
+    padding: 12,
+    backgroundColor: '#FAF5EE',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#2B2118',
+  },
+  attachedVoiceLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#2B2118',
+    marginBottom: 8,
   },
   parchmentCard: {
     padding: 24,

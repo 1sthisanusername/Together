@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
+import * as ImagePicker from 'expo-image-picker';
 import { Sheet, Input, Button, ErrorState, DatePickerField } from '@/shared/ui';
 import { useSendLetter, StationeryTheme, SealSticker } from '../hooks/useLetters';
-import { theme } from '@/shared/theme';
+import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export interface WriteLetterModalProps {
   visible: boolean;
@@ -33,8 +34,25 @@ export const WriteLetterModal: React.FC<WriteLetterModalProps> = ({
   const [selectedTheme, setSelectedTheme] = useState<StationeryTheme>('parchment_cream');
   const [selectedSeal, setSelectedSeal] = useState<SealSticker>('❤️');
   const [isVault, setIsVault] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   const { mutateAsync: sendLetter, isPending, error, reset } = useSendLetter();
+
+  const handlePickPhoto = async () => {
+    try {
+      triggerHaptic('light');
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.8,
+      });
+      if (!res.canceled && res.assets?.[0]?.uri) {
+        setPhotoUrl(res.assets[0].uri);
+      }
+    } catch (e) {
+      console.warn('Could not pick photo for letter', e);
+    }
+  };
 
   const handleSend = async () => {
     if (!title.trim() || !content.trim()) return;
@@ -46,6 +64,7 @@ export const WriteLetterModal: React.FC<WriteLetterModalProps> = ({
         stationeryTheme: selectedTheme,
         sealSticker: selectedSeal,
         isVault,
+        photoUrl,
       });
       setTitle('');
       setContent('');
@@ -53,6 +72,7 @@ export const WriteLetterModal: React.FC<WriteLetterModalProps> = ({
       setSelectedTheme('parchment_cream');
       setSelectedSeal('❤️');
       setIsVault(false);
+      setPhotoUrl(null);
       onClose();
     } catch {
       // Handled by error state
@@ -141,6 +161,31 @@ export const WriteLetterModal: React.FC<WriteLetterModalProps> = ({
           numberOfLines={6}
           style={styles.contentInput}
         />
+
+        {/* Media Attachments */}
+        <View style={styles.attachmentSection}>
+          <Text style={styles.sectionLabel}>Add Memory / Photo</Text>
+          {photoUrl ? (
+            <View style={styles.previewContainer}>
+              <Image source={{ uri: photoUrl }} style={styles.previewThumb} />
+              <TouchableOpacity
+                style={styles.removePhotoBtn}
+                onPress={() => setPhotoUrl(null)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Text style={styles.removePhotoText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.addMediaBtn}
+              onPress={handlePickPhoto}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.addMediaText}>📷 Attach a Photo to Letter</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         <DatePickerField
           label="Optional Lock Date"
@@ -251,6 +296,56 @@ const styles = StyleSheet.create({
   contentInput: {
     height: 130,
     textAlignVertical: 'top',
+  },
+  attachmentSection: {
+    marginVertical: 10,
+  },
+  addMediaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: '#F8F4EE',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#2B2118',
+    borderStyle: 'dashed',
+  },
+  addMediaText: {
+    fontFamily: theme.typography.fontFamilies.sans,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#2B2118',
+  },
+  previewContainer: {
+    position: 'relative',
+    width: 90,
+    height: 90,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#2B2118',
+  },
+  previewThumb: {
+    width: '100%',
+    height: '100%',
+  },
+  removePhotoBtn: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#FF5A3C',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removePhotoText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
   },
   vaultToggle: {
     flexDirection: 'row',

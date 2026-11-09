@@ -16,6 +16,9 @@ export interface EnhancedLetter extends Letter {
   stationery_theme?: StationeryTheme;
   seal_sticker?: SealSticker;
   is_vault?: boolean;
+  photo_url?: string | null;
+  voice_url?: string | null;
+  voice_duration_seconds?: number | null;
 }
 
 export function useLetters(options?: { includeVaultOnly?: boolean }) {
@@ -58,6 +61,9 @@ export function useSendLetter() {
       stationeryTheme = 'parchment_cream',
       sealSticker = '❤️',
       isVault = false,
+      photoUrl,
+      voiceUrl,
+      voiceDurationSeconds,
     }: {
       title: string;
       content: string;
@@ -65,23 +71,34 @@ export function useSendLetter() {
       stationeryTheme?: StationeryTheme;
       sealSticker?: SealSticker;
       isVault?: boolean;
+      photoUrl?: string | null;
+      voiceUrl?: string | null;
+      voiceDurationSeconds?: number | null;
     }) => {
       if (!user?.id || !coupleData?.couple?.id || !coupleData.partner?.id) {
         throw new Error('Not ready to send letter');
       }
 
+      const insertPayload: any = {
+        couple_id: coupleData.couple.id,
+        sender_id: user.id,
+        recipient_id: coupleData.partner.id,
+        title,
+        content,
+        unlock_at: unlockAt || null,
+        stationery_theme: stationeryTheme,
+        seal_sticker: sealSticker,
+        is_vault: isVault,
+      };
+
+      if (photoUrl) insertPayload.photo_url = photoUrl;
+      if (voiceUrl) {
+        insertPayload.voice_url = voiceUrl;
+        insertPayload.voice_duration_seconds = voiceDurationSeconds || 0;
+      }
+
       const { data, error } = await (supabase.from('letters') as any)
-        .insert({
-          couple_id: coupleData.couple.id,
-          sender_id: user.id,
-          recipient_id: coupleData.partner.id,
-          title,
-          content,
-          unlock_at: unlockAt || null,
-          stationery_theme: stationeryTheme,
-          seal_sticker: sealSticker,
-          is_vault: isVault,
-        })
+        .insert(insertPayload)
         .select('*')
         .single();
 

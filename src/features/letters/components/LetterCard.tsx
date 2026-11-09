@@ -27,10 +27,34 @@ export const LetterCard: React.FC<LetterCardProps> = ({
   const seal = letter.seal_sticker || '❤️';
 
   const getStatusBadge = () => {
+    if (isFromMe) {
+      if (isOpened) {
+        return (
+          <View style={[styles.badge, styles.badgeOpened]}>
+            <Text style={styles.badgeOpenedText}>📖 Opened</Text>
+          </View>
+        );
+      }
+      if (isLocked) {
+        return (
+          <View style={[styles.badge, styles.badgeLocked]}>
+            <Text style={styles.badgeLockedText}>
+              🔒 Scheduled ({new Date(letter.unlock_at!).toLocaleDateString()})
+            </Text>
+          </View>
+        );
+      }
+      return (
+        <View style={[styles.badge, styles.badgeDelivered]}>
+          <Text style={styles.badgeDeliveredText}>✉️ Delivered</Text>
+        </View>
+      );
+    }
+
     if (isOpened) {
       return (
         <View style={[styles.badge, styles.badgeOpened]}>
-          <Text style={styles.badgeOpenedText}>✓ Opened</Text>
+          <Text style={styles.badgeOpenedText}>📖 Opened</Text>
         </View>
       );
     }
@@ -38,7 +62,7 @@ export const LetterCard: React.FC<LetterCardProps> = ({
       return (
         <View style={[styles.badge, styles.badgeLocked]}>
           <Text style={styles.badgeLockedText}>
-            🔒 {new Date(letter.unlock_at!).toLocaleDateString()}
+            🔒 Sealed Until {new Date(letter.unlock_at!).toLocaleDateString()}
           </Text>
         </View>
       );
@@ -181,6 +205,14 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     color: '#2B2118',
+  },
+  badgeDelivered: {
+    backgroundColor: '#E8F8F5',
+  },
+  badgeDeliveredText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#0E3B33',
   },
   title: {
     fontSize: 17,
