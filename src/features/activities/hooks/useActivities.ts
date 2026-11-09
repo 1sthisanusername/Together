@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase, analytics } from '@/services';
+import { supabase, analytics, push } from '@/services';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
 import type { Activity, ActivitySession } from '@/shared/types';
@@ -39,6 +39,7 @@ function filterFallback(category?: string): Activity[] {
 export function useStartActivity() {
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
+  const profile = useAuthStore((state) => state.profile);
   const { data: coupleData } = useActiveCouple();
 
   return useMutation({
@@ -59,6 +60,21 @@ export function useStartActivity() {
         .single();
 
       if (error) throw new Error(error.message);
+
+      // Notify partner with game invitation push notification
+      if (coupleData.partner?.id) {
+        push.queueNotification({
+          recipientId: coupleData.partner.id,
+          coupleId: coupleData.couple.id,
+          type: 'game_invite',
+          payload: {
+            title: `${profile?.display_name || 'Your partner'} started an activity! 🎮`,
+            body: 'Tap to join and play together now.',
+            sessionId: data.id,
+          },
+          deepLink: `together://session/${data.id}`,
+        }).catch(() => {});
+      }
 
       analytics.track('activity_started', { activity_id: activityId });
       return data;

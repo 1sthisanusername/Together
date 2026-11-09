@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Input, DatePickerField } from '@/shared/ui';
+import { Button, DatePickerField } from '@/shared/ui';
 import type { ImportantDate } from '@/shared/types';
 import { useAddImportantDate } from '../hooks/useUsData';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface NextReunionCountdownCardProps {
   nextMeeting: ImportantDate | null;
@@ -32,108 +32,188 @@ export const NextReunionCountdownCard: React.FC<NextReunionCountdownCardProps> =
   };
 
   return (
-    <Card style={styles.card}>
-      <Text style={styles.label}>✈️ {t('us.nextMeetingTitle')}</Text>
+    <View style={styles.cardWrapper}>
+      {/* Hard Ink Shadow */}
+      <View style={styles.cardShadow} />
 
-      {nextMeeting && daysRemaining !== null ? (
-        <View style={styles.countdownContainer}>
-          <Text style={styles.daysNumber}>{daysRemaining}</Text>
-          <Text style={styles.daysSub}>{t('us.daysToGo')}</Text>
-          <Text style={styles.dateDetail}>
-            Target: {new Date(nextMeeting.event_date).toLocaleDateString()}
-          </Text>
+      {/* Paper Surface */}
+      <View style={styles.cardSurface}>
+        <View style={styles.headerRow}>
+          <View style={styles.labelBadge}>
+            <Text style={styles.labelText}>✈️ Next Reunion</Text>
+          </View>
         </View>
-      ) : (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>{t('home.noMeetingSet')}</Text>
-          {!showDatePicker ? (
-            <Button
-              title={t('us.setNextMeeting')}
-              variant="outline"
-              size="sm"
-              onPress={() => setShowDatePicker(true)}
-              style={styles.setBtn}
-            />
-          ) : (
-            <View style={styles.inputContainer}>
-              <DatePickerField
-                placeholder="Select next reunion date"
-                value={targetDateStr}
-                minDate={new Date()}
-                onChange={setTargetDateStr}
-              />
-              <Button
-                title={t('common.save')}
-                variant="primary"
-                size="sm"
-                loading={isPending}
-                disabled={!targetDateStr.trim()}
-                onPress={handleSetDate}
-              />
+
+        {nextMeeting && daysRemaining !== null ? (
+          <View style={styles.countdownContainer}>
+            <View style={styles.numberRow}>
+              <Text style={styles.daysNumber}>{daysRemaining}</Text>
+              <Text style={styles.daysUnit}>
+                {daysRemaining === 1 ? 'day' : 'days'}
+              </Text>
             </View>
-          )}
-        </View>
-      )}
-    </Card>
+            <Text style={styles.daysSub}>until we are together again 💕</Text>
+            <Text style={styles.dateDetail}>
+              Target: {new Date(nextMeeting.event_date).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No upcoming reunion date set yet</Text>
+            {!showDatePicker ? (
+              <TouchableOpacity
+                style={styles.setBtn}
+                onPress={() => setShowDatePicker(true)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.setBtnText}>＋ Set Reunion Countdown</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.inputContainer}>
+                <DatePickerField
+                  placeholder="Select next reunion date"
+                  value={targetDateStr}
+                  minDate={new Date()}
+                  onChange={setTargetDateStr}
+                />
+                <View style={styles.btnRow}>
+                  <Button
+                    title="Cancel"
+                    variant="ghost"
+                    size="sm"
+                    onPress={() => setShowDatePicker(false)}
+                    style={{ flex: 1 }}
+                  />
+                  <Button
+                    title="Save Countdown"
+                    variant="primary"
+                    size="sm"
+                    loading={isPending}
+                    disabled={!targetDateStr.trim()}
+                    onPress={handleSetDate}
+                    style={{ flex: 1 }}
+                  />
+                </View>
+              </View>
+            )}
+          </View>
+        )}
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    padding: 22,
-    marginVertical: 8,
-    width: '100%',
-    backgroundColor: theme.colors.surface,
-    borderColor: theme.colors.borderLight,
-    alignItems: 'center',
-    borderRadius: 22,
+  cardWrapper: {
+    marginHorizontal: scale(18),
+    marginVertical: scale(8),
+    position: 'relative',
   },
-  label: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: theme.colors.primary, // #b69788
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    marginBottom: 8,
+  cardShadow: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    right: -4,
+    bottom: -4,
+    backgroundColor: theme.colors.border,
+    borderRadius: 20,
+  },
+  cardSurface: {
+    backgroundColor: theme.colors.background, // Paper #FFF4E3
+    borderRadius: 20,
+    borderWidth: 2.5,
+    borderColor: theme.colors.border,
+    padding: scale(18),
+    alignItems: 'center',
+  },
+  headerRow: {
+    width: '100%',
+    alignItems: 'flex-start',
+    marginBottom: scale(8),
+  },
+  labelBadge: {
+    backgroundColor: theme.colors.stickers.sunshine, // Sunshine Yellow
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    borderRadius: 8,
+    paddingHorizontal: scale(8),
+    paddingVertical: scale(3),
+  },
+  labelText: {
+    fontFamily: theme.typography.families.bold,
+    fontSize: scale(11),
+    color: theme.colors.text,
   },
   countdownContainer: {
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: scale(6),
+  },
+  numberRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: scale(6),
   },
   daysNumber: {
-    fontSize: 56,
+    fontFamily: theme.typography.families.display,
+    fontSize: scale(52),
     fontWeight: '900',
-    color: theme.colors.text, // #42362e
-    lineHeight: 62,
-    letterSpacing: -1,
+    color: theme.colors.text,
+    lineHeight: scale(58),
+  },
+  daysUnit: {
+    fontFamily: theme.typography.families.bold,
+    fontSize: scale(20),
+    color: theme.colors.primary,
   },
   daysSub: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: theme.colors.textSecondary, // #a8917f
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    fontFamily: theme.typography.families.bold,
+    fontSize: scale(13),
+    color: theme.colors.textSecondary,
+    marginTop: scale(2),
   },
   dateDetail: {
-    fontSize: 12,
+    fontFamily: theme.typography.families.body,
+    fontSize: scale(12),
     color: theme.colors.textMuted,
-    marginTop: 8,
+    marginTop: scale(6),
   },
   emptyContainer: {
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: scale(8),
+    width: '100%',
   },
   emptyText: {
-    fontSize: 14,
+    fontFamily: theme.typography.families.body,
+    fontSize: scale(13),
     color: theme.colors.textSecondary,
-    marginBottom: 12,
+    marginBottom: scale(10),
     textAlign: 'center',
   },
   setBtn: {
-    marginTop: 4,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    borderRadius: 12,
+    paddingHorizontal: scale(14),
+    paddingVertical: scale(8),
+    ...theme.shadows.hardSm,
+  },
+  setBtnText: {
+    fontFamily: theme.typography.families.bold,
+    fontSize: scale(13),
+    color: theme.colors.text,
   },
   inputContainer: {
     width: '100%',
-    marginTop: 8,
+    marginTop: scale(4),
+    gap: scale(8),
+  },
+  btnRow: {
+    flexDirection: 'row',
+    gap: scale(8),
   },
 });
