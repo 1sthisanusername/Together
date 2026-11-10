@@ -81,4 +81,14 @@ describe('Phase G: Dual Google Drive Backup Architecture', () => {
       'Backup archive checksum mismatch'
     );
   });
+
+  it('5. safeSecureStore handles web localStorage and native storage transparently', async () => {
+    const { safeSecureStore } = await import('../src/shared/utils/secureStore');
+    await safeSecureStore.setItemAsync('test_key', 'test_val');
+    const val = await safeSecureStore.getItemAsync('test_key');
+    expect(val).toBe('test_val');
+    await safeSecureStore.deleteItemAsync('test_key');
+    const deleted = await safeSecureStore.getItemAsync('test_key');
+    expect(deleted).toBeNull();
+  });
 });

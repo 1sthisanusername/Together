@@ -1,6 +1,6 @@
 import { QueryClient, dehydrate, hydrate } from '@tanstack/react-query';
 import * as FileSystem from 'expo-file-system/legacy';
-import * as SecureStore from 'expo-secure-store';
+import { safeSecureStore as SecureStore } from '@/shared/utils';
 
 const CACHE_STORAGE_KEY = 'together_query_cache_v2';
 const CACHE_FILE_PATH = `${FileSystem.documentDirectory || ''}together_query_cache.json`;

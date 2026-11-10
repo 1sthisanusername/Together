@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
+import { safeSecureStore as SecureStore } from '@/shared/utils';
 import { triggerHaptic } from '@/shared/theme';
 
 const VAULT_PIN_KEY = 'together_vault_pin';

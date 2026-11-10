@@ -1,5 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import * as SecureStore from 'expo-secure-store';
+import { safeSecureStore as SecureStore } from '@/shared/utils';
 import { supabase } from '@/services/supabase';
 import { queryClient } from '@/services/queryClient';
 

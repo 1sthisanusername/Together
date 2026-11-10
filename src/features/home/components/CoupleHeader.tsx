@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
 import { useTranslation } from 'react-i18next';
 import { Button, DatePickerField } from '@/shared/ui';
 import type { Profile } from '@/shared/types';
@@ -8,6 +7,7 @@ import {
   calculateDaysTogether,
   formatRelationshipDuration,
   type DurationDisplayFormat,
+  safeSecureStore as SecureStore,
 } from '@/shared/utils';
 import { useUpdateStartDate } from '@/features/couple';
 import { theme, scale, triggerHaptic } from '@/shared/theme';
