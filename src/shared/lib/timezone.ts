@@ -71,14 +71,36 @@ export function getTimeInZone(timeZone: string, date: Date = new Date()): TimeZo
  */
 export function getTimeDifference(baseZone: string, targetZone: string, date: Date = new Date()): number {
   try {
-    const getOffsetMinutes = (tz: string) => {
-      const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
-      const tzDate = new Date(date.toLocaleString('en-US', { timeZone: tz }));
-      return (tzDate.getTime() - utcDate.getTime()) / 60000;
+    const getOffsetMinutes = (tz: string): number => {
+      try {
+        const formatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: tz,
+          hour12: false,
+          year: 'numeric',
+          month: 'numeric',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+        });
+        const parts = formatter.formatToParts(date);
+        const getVal = (type: string) => parseInt(parts.find((p) => p.type === type)?.value || '0', 10);
+        const asUtc = Date.UTC(
+          getVal('year'),
+          getVal('month') - 1,
+          getVal('day'),
+          getVal('hour'),
+          getVal('minute')
+        );
+        const offset = (asUtc - date.getTime()) / 60000;
+        return isNaN(offset) ? 0 : offset;
+      } catch {
+        return 0;
+      }
     };
 
     const diffMinutes = getOffsetMinutes(targetZone) - getOffsetMinutes(baseZone);
-    return Math.round(diffMinutes / 60);
+    const result = Math.round(diffMinutes / 60);
+    return isNaN(result) ? 0 : result;
   } catch {
     return 0;
   }
