@@ -1,8 +1,12 @@
 import { create } from 'zustand';
 import { TurboModuleRegistry, NativeModules, Platform } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase, analytics, clearAppCache, push } from '@/services';
 import type { Profile } from '@/shared/types';
+
+WebBrowser.maybeCompleteAuthSession();
 
 /**
  * Check if RNGoogleSignin native module is registered in the native binary.
@@ -142,14 +146,100 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     }
 
-    // Native Android/iOS: Guard against missing native module BEFORE importing the package
-    // @react-native-google-signin/google-signin executes TurboModuleRegistry.getEnforcing('RNGoogleSignin')
-    // at module evaluation time, which throws an Invariant Violation if not present in the native binary.
+    // Native Android/iOS: In Expo Go or any environment without custom native RNGoogleSignin binary,
+    // seamlessly fall back to WebBrowser OAuth so developers and users can sign in and test immediately!
     if (!isGoogleSigninNativeAvailable()) {
-      console.warn('[GoogleSignin] RNGoogleSignin native module is not registered in this binary.');
-      const error = new Error('Google sign-in needs the latest app build');
-      set({ isLoading: false, error: error.message });
-      return { error };
+      console.log('[GoogleSignin] Native module missing (Expo Go detected). Using WebBrowser OAuth fallback...');
+      try {
+        const redirectUrl = Linking.createURL('auth/callback');
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: redirectUrl,
+            skipBrowserRedirect: true,
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'consent',
+            },
+          },
+        });
+
+        if (error) {
+          set({ isLoading: false, error: error.message });
+          return { error };
+        }
+
+        if (data?.url) {
+          const authResult = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+          if (authResult.type === 'success' && authResult.url) {
+            const parsed = Linking.parse(authResult.url);
+            const code = parsed.queryParams?.code;
+            if (code) {
+              const { data: sessionData, error: sessionErr } =
+                await supabase.auth.exchangeCodeForSession(String(code));
+              if (sessionErr) throw sessionErr;
+              if (sessionData.session) {
+                set({
+                  session: sessionData.session,
+                  user: sessionData.user,
+                  isLoading: false,
+                });
+                if (sessionData.user) {
+                  await get().fetchProfile(sessionData.user.id);
+                  push.registerForPushNotifications(sessionData.user.id).catch(() => {});
+                }
+                return { error: null };
+              }
+            } else if (authResult.url.includes('#')) {
+              const hash = authResult.url.split('#')[1];
+              const params = new URLSearchParams(hash);
+              const accessToken = params.get('access_token');
+              const refreshToken = params.get('refresh_token');
+              if (accessToken && refreshToken) {
+                const { data: sessionData, error: sessionErr } =
+                  await supabase.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: refreshToken,
+                  });
+                if (sessionErr) throw sessionErr;
+                if (sessionData.session) {
+                  set({
+                    session: sessionData.session,
+                    user: sessionData.user,
+                    isLoading: false,
+                  });
+                  if (sessionData.user) {
+                    await get().fetchProfile(sessionData.user.id);
+                    push.registerForPushNotifications(sessionData.user.id).catch(() => {});
+                  }
+                  return { error: null };
+                }
+              }
+            }
+          }
+
+          // Fallback: Check if session was updated in background
+          const { data: curSession } = await supabase.auth.getSession();
+          if (curSession?.session) {
+            set({
+              session: curSession.session,
+              user: curSession.session.user,
+              isLoading: false,
+            });
+            if (curSession.session.user) {
+              await get().fetchProfile(curSession.session.user.id);
+            }
+            return { error: null };
+          }
+        }
+        set({ isLoading: false, error: null });
+        return { error: null };
+      } catch (err: any) {
+        console.warn('[GoogleSignin] Expo Go browser OAuth error:', err);
+        const error = new Error(err?.message || 'Expo Go Google Sign-In failed');
+        set({ isLoading: false, error: error.message });
+        return { error };
+      }
     }
 
     try {
