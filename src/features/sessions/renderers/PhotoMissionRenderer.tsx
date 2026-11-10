@@ -3,12 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   Platform,
   ActivityIndicator,
   Alert,
+  Modal,
 } from 'react-native';
+import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useTranslation } from 'react-i18next';
@@ -50,6 +51,8 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [mySignedUrl, setMySignedUrl] = useState<string | null>(null);
   const [partnerSignedUrl, setPartnerSignedUrl] = useState<string | null>(null);
+  const [isResolvingPartnerUrl, setIsResolvingPartnerUrl] = useState(false);
+  const [fullScreenImage, setFullScreenImage] = useState<{ uri: string; caption: string } | null>(null);
 
   const { mutateAsync: submitEventAsync, isPending: isSubmitting } = useSubmitEvent(session.id);
   const { mutate: completeSession, isPending: isCompleting } = useCompleteSession(session.id);
@@ -135,7 +138,7 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
     }
   };
 
-  // Resolve signed URLs when submissions exist
+  // Resolve signed URLs when submissions exist and unmasked
   useEffect(() => {
     let isMounted = true;
 
@@ -150,11 +153,15 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
         }
       }
 
-      if (partnerSubmission?.payload) {
+      if (partnerSubmission?.payload && !isPartnerMasked) {
         const payload = partnerSubmission.payload as Record<string, any>;
         if (payload.bucket_path) {
+          setIsResolvingPartnerUrl(true);
           const url = await storage.getSignedUrl(payload.bucket_path);
-          if (isMounted) setPartnerSignedUrl(url);
+          if (isMounted) {
+            setPartnerSignedUrl(url);
+            setIsResolvingPartnerUrl(false);
+          }
         } else if (payload.photoUrl) {
           if (isMounted) setPartnerSignedUrl(payload.photoUrl);
         }
@@ -165,7 +172,7 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [mySubmission, partnerSubmission]);
+  }, [mySubmission, partnerSubmission, isPartnerMasked]);
 
   const handleSubmit = async () => {
     if (isSubmitting || isUploading) return;
@@ -218,6 +225,9 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
     }
   };
 
+  const myFinalPhotoUri = mySignedUrl || selectedPhotoUrl;
+  const partnerFinalPhotoUri = partnerSignedUrl || (partnerSubmission?.payload as any)?.photoUrl;
+
   if (isCompleted) {
     return (
       <View style={styles.completedContainer}>
@@ -227,29 +237,69 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
 
         {/* Display both revealed photos in completion state */}
         <View style={styles.revealedRow}>
-          <View style={styles.polaroidFrame}>
-            <Image
-              source={{ uri: mySignedUrl || selectedPhotoUrl }}
-              style={styles.polaroidImage}
-              resizeMode="cover"
-            />
-            <Text style={styles.polaroidCaption}>
+          <TouchableOpacity
+            style={styles.polaroidFrame}
+            activeOpacity={0.85}
+            onPress={() =>
+              myFinalPhotoUri &&
+              setFullScreenImage({
+                uri: myFinalPhotoUri,
+                caption: `You: ${(mySubmission?.payload as any)?.caption || 'Our moment'}`,
+              })
+            }
+          >
+            {myFinalPhotoUri ? (
+              <Image
+                source={{ uri: myFinalPhotoUri }}
+                style={styles.polaroidImage}
+                contentFit="cover"
+                transition={200}
+              />
+            ) : (
+              <View style={[styles.polaroidImage, styles.imageLoadingBox]}>
+                <ActivityIndicator color={theme.colors.primary} />
+              </View>
+            )}
+            <Text style={styles.polaroidCaption} numberOfLines={2}>
               You: "{(mySubmission?.payload as any)?.caption || 'Our moment'}"
             </Text>
-          </View>
+            <Text style={styles.tapToZoomHint}>🔍 Tap to zoom</Text>
+          </TouchableOpacity>
 
-          <View style={styles.polaroidFrame}>
-            <Image
-              source={{
-                uri: partnerSignedUrl || SAMPLE_PHOTOS[1].url,
-              }}
-              style={styles.polaroidImage}
-              resizeMode="cover"
-            />
-            <Text style={styles.polaroidCaption}>
+          <TouchableOpacity
+            style={styles.polaroidFrame}
+            activeOpacity={0.85}
+            onPress={() =>
+              partnerFinalPhotoUri &&
+              setFullScreenImage({
+                uri: partnerFinalPhotoUri,
+                caption: `${partnerName}: ${(partnerSubmission?.payload as any)?.caption || 'So sweet!'}`,
+              })
+            }
+          >
+            {isResolvingPartnerUrl ? (
+              <View style={[styles.polaroidImage, styles.imageLoadingBox]}>
+                <ActivityIndicator color={theme.colors.primary} />
+              </View>
+            ) : partnerFinalPhotoUri ? (
+              <Image
+                source={{ uri: partnerFinalPhotoUri }}
+                style={styles.polaroidImage}
+                contentFit="cover"
+                transition={200}
+              />
+            ) : (
+              <Image
+                source={{ uri: SAMPLE_PHOTOS[1].url }}
+                style={styles.polaroidImage}
+                contentFit="cover"
+              />
+            )}
+            <Text style={styles.polaroidCaption} numberOfLines={2}>
               {partnerName}: "{(partnerSubmission?.payload as any)?.caption || 'So sweet!'}"
             </Text>
-          </View>
+            <Text style={styles.tapToZoomHint}>🔍 Tap to zoom</Text>
+          </TouchableOpacity>
         </View>
 
         <Button
@@ -274,6 +324,28 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
           onPress={onFinish}
           style={styles.homeButton}
         />
+
+        {/* Fullscreen Photo Modal */}
+        <Modal visible={!!fullScreenImage} transparent animationType="fade">
+          <View style={styles.modalBackdrop}>
+            <TouchableOpacity
+              style={styles.modalCloseBtn}
+              onPress={() => setFullScreenImage(null)}
+            >
+              <Text style={styles.modalCloseText}>✕ Close</Text>
+            </TouchableOpacity>
+            {fullScreenImage && (
+              <View style={styles.modalContent}>
+                <Image
+                  source={{ uri: fullScreenImage.uri }}
+                  style={styles.modalImage}
+                  contentFit="contain"
+                />
+                <Text style={styles.modalCaption}>{fullScreenImage.caption}</Text>
+              </View>
+            )}
+          </View>
+        </Modal>
       </View>
     );
   }
@@ -286,6 +358,38 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
       <Card style={styles.instructionCard}>
         <Text style={styles.instructionText}>{config.instructions}</Text>
       </Card>
+
+      {/* TOP NOTIFICATION: Partner has already submitted (Mutual Blind Reveal) */}
+      {partnerSubmission && !mySubmission ? (
+        <Card style={styles.partnerReadyTopCard}>
+          <View style={styles.partnerReadyHeader}>
+            <Text style={styles.partnerReadyIcon}>💌</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.partnerReadyTitle}>
+                {partnerName} has already snapped her view!
+              </Text>
+              <Text style={styles.partnerReadySubtitle}>
+                Her photo is locked for a mutual surprise (like BeReal). Take or select your photo below to unlock both photos together!
+              </Text>
+            </View>
+          </View>
+
+          {/* Locked Polaroid Teaser */}
+          <View style={styles.lockedPolaroidTeaser}>
+            <View style={styles.lockedPolaroidInner}>
+              <Text style={styles.lockedIcon}>🔒</Text>
+              <Text style={styles.lockedTeaserText}>{partnerName}'s photo is hidden</Text>
+              <Text style={styles.lockedTeaserSub}>Unlocks the moment you submit yours</Text>
+            </View>
+          </View>
+        </Card>
+      ) : !mySubmission && !partnerSubmission ? (
+        <View style={styles.mutualNoticePill}>
+          <Text style={styles.mutualNoticeText}>
+            🔒 <Text style={{ fontWeight: '700' }}>Mutual Reveal:</Text> Neither of you can see the other's photo until BOTH have submitted!
+          </Text>
+        </View>
+      ) : null}
 
       {!mySubmission ? (
         <View style={styles.uploadSection}>
@@ -327,7 +431,7 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
             <Image
               source={{ uri: selectedPhotoUrl }}
               style={styles.previewImage}
-              resizeMode="cover"
+              contentFit="cover"
             />
           </View>
 
@@ -338,7 +442,7 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
           />
 
           <Button
-            title="Snap & Share Photo"
+            title={partnerSubmission ? "Snap & Reveal Both Photos!" : "Snap & Share Photo"}
             variant="primary"
             size="lg"
             loading={isSubmitting || isUploading}
@@ -365,59 +469,112 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
           </View>
 
           <View style={styles.revealedRow}>
-            <View style={styles.polaroidFrame}>
-              <Image
-                source={{ uri: mySignedUrl || selectedPhotoUrl }}
-                style={styles.polaroidImage}
-                resizeMode="cover"
-              />
-              <Text style={styles.polaroidCaption}>
+            <TouchableOpacity
+              style={styles.polaroidFrame}
+              activeOpacity={0.85}
+              onPress={() =>
+                myFinalPhotoUri &&
+                setFullScreenImage({
+                  uri: myFinalPhotoUri,
+                  caption: `You: ${(mySubmission?.payload as any)?.caption || 'Our moment'}`,
+                })
+              }
+            >
+              {myFinalPhotoUri ? (
+                <Image
+                  source={{ uri: myFinalPhotoUri }}
+                  style={styles.polaroidImage}
+                  contentFit="cover"
+                  transition={200}
+                />
+              ) : (
+                <View style={[styles.polaroidImage, styles.imageLoadingBox]}>
+                  <ActivityIndicator color={theme.colors.primary} />
+                </View>
+              )}
+              <Text style={styles.polaroidCaption} numberOfLines={2}>
                 You: "{(mySubmission?.payload as any)?.caption}"
               </Text>
-            </View>
+              <Text style={styles.tapToZoomHint}>🔍 Tap to zoom</Text>
+            </TouchableOpacity>
 
-            <View style={styles.polaroidFrame}>
-              <Image
-                source={{ uri: partnerSignedUrl || (partnerSubmission.payload as any)?.photoUrl || SAMPLE_PHOTOS[1].url }}
-                style={styles.polaroidImage}
-                resizeMode="cover"
-              />
-              <Text style={styles.polaroidCaption}>
-                {partnerName}: "{(partnerSubmission.payload as any)?.caption}"
+            <TouchableOpacity
+              style={styles.polaroidFrame}
+              activeOpacity={0.85}
+              onPress={() =>
+                partnerFinalPhotoUri &&
+                setFullScreenImage({
+                  uri: partnerFinalPhotoUri,
+                  caption: `${partnerName}: ${(partnerSubmission?.payload as any)?.caption || 'So sweet!'}`,
+                })
+              }
+            >
+              {isResolvingPartnerUrl ? (
+                <View style={[styles.polaroidImage, styles.imageLoadingBox]}>
+                  <ActivityIndicator color={theme.colors.primary} />
+                </View>
+              ) : partnerFinalPhotoUri ? (
+                <Image
+                  source={{ uri: partnerFinalPhotoUri }}
+                  style={styles.polaroidImage}
+                  contentFit="cover"
+                  transition={200}
+                />
+              ) : (
+                <Image
+                  source={{ uri: SAMPLE_PHOTOS[1].url }}
+                  style={styles.polaroidImage}
+                  contentFit="cover"
+                />
+              )}
+              <Text style={styles.polaroidCaption} numberOfLines={2}>
+                {partnerName}: "{(partnerSubmission?.payload as any)?.caption}"
               </Text>
-            </View>
+              <Text style={styles.tapToZoomHint}>🔍 Tap to zoom</Text>
+            </TouchableOpacity>
           </View>
+
+          <Button
+            title={t('sessions.completeSession')}
+            variant="primary"
+            size="lg"
+            loading={isCompleting}
+            onPress={() => completeSession(activity.id)}
+            style={styles.completeButton}
+          />
         </View>
       ) : mySubmission && !partnerSubmission ? (
         <Card style={styles.waitingCard}>
           <Text style={styles.waitingLock}>🔒</Text>
           <Text style={styles.waitingTitle}>Photo Locked</Text>
           <Text style={styles.waitingText}>
-            Waiting for {partnerName} to submit their photo. Both photos will reveal simultaneously!
+            Waiting for {partnerName} to submit their photo. Both photos will reveal simultaneously the instant she submits!
           </Text>
           <ActivityIndicator color={theme.colors.primary} style={{ marginTop: 12 }} />
         </Card>
-      ) : partnerSubmission && !mySubmission ? (
-        <Card style={styles.partnerReadyCard}>
-          <Text style={styles.partnerReadyTitle}>
-            ♥ {partnerName} has already submitted their photo!
-          </Text>
-          <Text style={styles.partnerReadyText}>
-            Snap your photo above to unlock the simultaneous reveal!
-          </Text>
-        </Card>
       ) : null}
 
-      {bothSubmitted ? (
-        <Button
-          title={t('sessions.completeSession')}
-          variant="primary"
-          size="lg"
-          loading={isCompleting}
-          onPress={() => completeSession(activity.id)}
-          style={styles.completeButton}
-        />
-      ) : null}
+      {/* Fullscreen Photo Modal */}
+      <Modal visible={!!fullScreenImage} transparent animationType="fade">
+        <View style={styles.modalBackdrop}>
+          <TouchableOpacity
+            style={styles.modalCloseBtn}
+            onPress={() => setFullScreenImage(null)}
+          >
+            <Text style={styles.modalCloseText}>✕ Close</Text>
+          </TouchableOpacity>
+          {fullScreenImage && (
+            <View style={styles.modalContent}>
+              <Image
+                source={{ uri: fullScreenImage.uri }}
+                style={styles.modalImage}
+                contentFit="contain"
+              />
+              <Text style={styles.modalCaption}>{fullScreenImage.caption}</Text>
+            </View>
+          )}
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -448,12 +605,82 @@ const styles = StyleSheet.create({
     padding: 18,
     backgroundColor: '#F0F9FF',
     borderColor: '#BAE6FD',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   instructionText: {
     fontSize: 15,
     color: '#0369A1',
     lineHeight: 22,
+    textAlign: 'center',
+  },
+  partnerReadyTopCard: {
+    backgroundColor: '#FFF0F5',
+    borderColor: '#FFB6C1',
+    borderWidth: 2,
+    padding: 16,
+    marginBottom: 18,
+  },
+  partnerReadyHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 12,
+  },
+  partnerReadyIcon: {
+    fontSize: 28,
+  },
+  partnerReadyTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#DB2777',
+    marginBottom: 4,
+  },
+  partnerReadySubtitle: {
+    fontSize: 13,
+    color: '#831843',
+    lineHeight: 18,
+  },
+  lockedPolaroidTeaser: {
+    backgroundColor: '#FFE4E6',
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#FDA4AF',
+    borderStyle: 'dashed',
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lockedPolaroidInner: {
+    alignItems: 'center',
+  },
+  lockedIcon: {
+    fontSize: 28,
+    marginBottom: 6,
+  },
+  lockedTeaserText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#9F1239',
+    marginBottom: 2,
+  },
+  lockedTeaserSub: {
+    fontSize: 12,
+    color: '#BE123C',
+    fontStyle: 'italic',
+  },
+  mutualNoticePill: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FDE68A',
+    borderWidth: 1.5,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  mutualNoticeText: {
+    fontSize: 12,
+    color: '#92400E',
     textAlign: 'center',
   },
   uploadSection: {
@@ -606,11 +833,22 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 8,
   },
+  imageLoadingBox: {
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   polaroidCaption: {
     fontSize: 12,
     color: '#334155',
     fontStyle: 'italic',
     textAlign: 'center',
+  },
+  tapToZoomHint: {
+    fontSize: 10,
+    color: theme.colors.textMuted || '#94A3B8',
+    textAlign: 'center',
+    marginTop: 4,
   },
   waitingCard: {
     backgroundColor: '#FFFBEB',
@@ -634,24 +872,6 @@ const styles = StyleSheet.create({
     color: '#92400E',
     textAlign: 'center',
     lineHeight: 20,
-  },
-  partnerReadyCard: {
-    backgroundColor: '#FDF2F8',
-    borderColor: '#FCE7F3',
-    padding: 16,
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  partnerReadyTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#DB2777',
-    marginBottom: 4,
-  },
-  partnerReadyText: {
-    fontSize: 13,
-    color: '#9D174D',
-    textAlign: 'center',
   },
   completeButton: {
     marginTop: 12,
@@ -682,5 +902,44 @@ const styles = StyleSheet.create({
   },
   homeButton: {
     width: '100%',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalCloseBtn: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 10,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  modalCloseText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  modalContent: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  modalImage: {
+    width: '100%',
+    height: 400,
+    borderRadius: 12,
+  },
+  modalCaption: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 16,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
 });
