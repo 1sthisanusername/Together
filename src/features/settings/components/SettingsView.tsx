@@ -136,13 +136,6 @@ export const SettingsView: React.FC = () => {
           }}
           style={styles.vaultBtn}
         />
-        <Button
-          title={t('settings.unlinkCouple')}
-          variant="outline"
-          size="md"
-          onPress={() => setShowUnlinkModal(true)}
-          style={styles.unlinkBtn}
-        />
       </Card>
 
       <Text style={styles.sectionHeading}>Data & Cloud Backup</Text>
@@ -191,6 +184,32 @@ export const SettingsView: React.FC = () => {
           disabled={!coupleData?.couple?.id}
           onPress={handleCreateBackup}
           style={styles.backupBtn}
+        />
+      </Card>
+
+      {/* Danger Zone: Protected area placed at bottom to prevent accidental taps */}
+      <Text style={styles.dangerHeading}>Danger Zone</Text>
+      <Card style={styles.dangerCard}>
+        <View style={styles.dangerRow}>
+          <Text style={styles.dangerIcon}>⚠️</Text>
+          <View style={styles.dangerTextCol}>
+            <Text style={styles.dangerTitle}>Disconnect Couple Space</Text>
+            <Text style={styles.dangerSub}>
+              Permanently sever connection with your partner. Requires a 3-step verification process to prevent accidental unlinking.
+            </Text>
+          </View>
+        </View>
+
+        <Button
+          title="Unlink Couple Space..."
+          variant="outline"
+          size="md"
+          onPress={() => {
+            triggerHaptic('warning');
+            setShowUnlinkModal(true);
+          }}
+          style={styles.dangerBtn}
+          textStyle={styles.dangerBtnText}
         />
       </Card>
 
@@ -346,8 +365,53 @@ const styles = StyleSheet.create({
   backupBtn: {
     backgroundColor: '#2EC4B6',
   },
-  unlinkBtn: {
+  dangerHeading: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: theme.colors.danger,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginTop: 16,
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  dangerCard: {
+    padding: 18,
+    marginBottom: 16,
+    backgroundColor: '#FFF5F5',
+    borderColor: '#FECACA',
+    borderWidth: 2,
+  },
+  dangerRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 14,
+    alignItems: 'flex-start',
+  },
+  dangerIcon: {
+    fontSize: 24,
+  },
+  dangerTextCol: {
+    flex: 1,
+  },
+  dangerTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: theme.colors.danger,
+    marginBottom: 4,
+  },
+  dangerSub: {
+    fontSize: 13,
+    color: '#991B1B',
+    lineHeight: 18,
+  },
+  dangerBtn: {
     borderColor: theme.colors.danger,
+    backgroundColor: '#FFFFFF',
+  },
+  dangerBtnText: {
+    color: theme.colors.danger,
+    fontWeight: '700',
   },
   signOutBtn: {
     marginTop: 16,
