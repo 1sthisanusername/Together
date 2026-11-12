@@ -13,11 +13,13 @@
       "backgroundColor": "#FFFDFB"
     },
     "ios": {
-    "infoPlist": {
-      "NSMicrophoneUsageDescription": "This app uses the microphone to record voice notes."
-    },
       "supportsTablet": false,
-      "bundleIdentifier": "com.together.couplesapp"
+      "bundleIdentifier": "com.together.couplesapp",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "This app uses the microphone to record voice notes.",
+        "UIBackgroundModes": ["remote-notification"]
+      },
+      "usesIcloudStorage": false
     },
     "android": {
       "adaptiveIcon": {
@@ -32,13 +34,22 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
-      ]
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK"
+      ],
+      "notification": {
+        "icon": "./assets/notification-icon.png",
+        "color": "#E53935",
+        "channelId": "default"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "expo-notifications",
       "expo-router",
       [
         "expo-build-properties",

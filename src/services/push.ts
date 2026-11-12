@@ -1,7 +1,10 @@
 import { Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
 import * as Linking from 'expo-linking';
 import Constants from 'expo-constants';
 import { supabase } from './supabase';
+import { useEffect, useRef } from 'react';
 
 /**
  * Feature flag: Remote push notifications are disabled until credentials exist.
@@ -23,6 +26,7 @@ export interface PushService {
   savePushToken: (userId: string, token: string, platform?: string) => Promise<void>;
   queueNotification: (notification: PushNotificationPayload) => Promise<void>;
   setupNotificationResponseListener: (onNavigate: (url: string) => void) => () => void;
+  handleForegroundNotification: () => void;
 }
 
 /**
@@ -67,6 +71,42 @@ export function getRouteForNotification(type: string, data?: Record<string, any>
   return '/(tabs)/home';
 }
 
+/**
+ * Hook to configure push notification behavior and show local notifications when app is open
+ */
+export function usePushNotificationConfig() {
+  const lastNotificationResponse = useRef<Notifications.NotificationResponse | null>(null);
+
+  useEffect(() => {
+    // Set the notification handler to show notifications when the app is in the foreground
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      console.log('[Push] Notification response:', JSON.stringify(response.notification.request.content.data));
+    });
+
+    // Register for remote push notifications on device
+    if (Device.isDevice) {
+      Notifications.getPermissionsAsync().then(async (status) => {
+        if (status.granted) {
+          const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+          if (projectId) {
+            try {
+              await Notifications.getExpoPushTokenAsync({ projectId });
+            } catch (err) {
+              console.warn('[Push] Failed to get Expo push token:', err);
+            }
+          }
+        }
+      });
+    }
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  return lastNotificationResponse;
+}
+
 class AppPushService implements PushService {
   /**
    * Registers or refreshes push token for the current user.
@@ -80,7 +120,7 @@ class AppPushService implements PushService {
   async registerForPushNotifications(userId: string): Promise<string | null> {
     if (!userId) return null;
     if (!PUSH_NOTIFICATIONS_ENABLED) {
-      // Remote push disabled by feature flag until credentials exist.
+      console.log('[Push] Remote push disabled by feature flag');
       return null;
     }
 
@@ -88,11 +128,6 @@ class AppPushService implements PushService {
       let token: string | null = null;
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const Notifications = require('expo-notifications');
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const Device = require('expo-device');
-
         // Configure default Android Notification Channel
         if (Platform.OS === 'android') {
           await Notifications.setNotificationChannelAsync('default', {
@@ -100,16 +135,26 @@ class AppPushService implements PushService {
             importance: Notifications.AndroidImportance.MAX,
             vibrationPattern: [0, 250, 250, 250],
             lightColor: '#E11D48',
+            sound: 'default',
           });
         }
 
         // On physical devices, request permissions and get token
-        if (Device?.isDevice) {
+        if (Device.isDevice) {
           const { status: existingStatus } = await Notifications.getPermissionsAsync();
           let finalStatus = existingStatus;
 
           if (existingStatus !== 'granted') {
-            const { status } = await Notifications.requestPermissionsAsync();
+            const { status } = await Notifications.requestPermissionsAsync({
+              ios: {
+                allowAlert: true,
+                allowBadge: true,
+                allowSound: true,
+              },
+              android: {
+                importance: 'max',
+              },
+            });
             finalStatus = status;
           }
 
@@ -118,18 +163,24 @@ class AppPushService implements PushService {
             return null;
           }
 
-          const projectId =
-            Constants?.expoConfig?.extra?.eas?.projectId ||
-            'c510d504-0c36-482b-b71e-aabb35477de6';
+          const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+
+          if (!projectId) {
+            console.warn('[Push] No EAS project ID found in expo config. Cannot register for push.');
+            return null;
+          }
 
           const expoTokenData = await Notifications.getExpoPushTokenAsync({
             projectId,
           });
           token = expoTokenData?.data || null;
+
+          if (token) {
+            console.log('[Push] Got push token:', token.substring(0, 20) + '...');
+          }
         }
       } catch (nativeErr) {
-        // Handle gracefully if running in simulator, web, or headless test runners
-        console.log('[Push] Notification provider not available in this environment:', nativeErr);
+        console.error('[Push] Error registering for push notifications:', nativeErr);
       }
 
       if (token) {
@@ -160,6 +211,8 @@ class AppPushService implements PushService {
 
       if (error) {
         console.warn('[Push] Error upserting push token:', error.message);
+      } else {
+        console.log('[Push] Token saved for user:', userId);
       }
     } catch (err) {
       console.warn('[Push] Error saving token to database:', err);
@@ -193,43 +246,50 @@ class AppPushService implements PushService {
    * Maps all 7 types: invite, message, letter, photo mission, date, memory, anniversary
    */
   setupNotificationResponseListener(onNavigate: (url: string) => void): () => void {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const Notifications = require('expo-notifications');
-
-      // Check cold-start notification tap
-      Notifications.getLastNotificationResponseAsync?.().then((response: any) => {
-        if (response) {
-          const data = response?.notification?.request?.content?.data;
-          const type = data?.type || '';
-          const route = getRouteForNotification(type, data);
-          if (route) {
-            onNavigate(route);
-          }
+    // Check cold-start notification tap
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) {
+        const data: any = response.notification?.request?.content?.data;
+        const type: string = data?.type || '';
+        const route = getRouteForNotification(type, data);
+        if (route) {
+          console.log('[Push] Cold start navigation to:', route);
+          onNavigate(route);
         }
-      }).catch(() => {});
+      }
+    }).catch((err) => {
+      console.warn('[Push] Error getting last notification response:', err);
+    });
 
-      const subscription = Notifications.addNotificationResponseReceivedListener(
-        (response: any) => {
-          const data = response?.notification?.request?.content?.data;
-          const type = data?.type || '';
-          const route = getRouteForNotification(type, data);
-          if (route) {
-            onNavigate(route);
-          }
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      (response: any) => {
+        const data: any = response?.notification?.request?.content?.data;
+        const type: string = data?.type || '';
+        const route = getRouteForNotification(type, data);
+        if (route) {
+          console.log('[Push] Navigation to:', route, 'for type:', type);
+          onNavigate(route);
         }
-      );
+      }
+    );
 
-      return () => {
-        subscription.remove();
-      };
-    } catch {
-      // In web or mock environments, listen via Linking
-      const linkingSub = Linking.addEventListener('url', ({ url }) => {
-        onNavigate(url);
-      });
-      return () => linkingSub.remove();
-    }
+    return () => {
+      subscription.remove();
+    };
+  }
+
+  /**
+   * Configures foreground notification display behavior
+   */
+  handleForegroundNotification(): void {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
   }
 }
 
@@ -238,6 +298,8 @@ export const push = new AppPushService();
 // Refresh push token on auth state change (login and app launch)
 supabase.auth.onAuthStateChange((_event, session) => {
   if (session?.user?.id) {
-    push.registerForPushNotifications(session.user.id).catch(() => {});
+    push.registerForPushNotifications(session.user.id).catch((err) => {
+      console.warn('[Push] Failed to register on auth state change:', err);
+    });
   }
 });

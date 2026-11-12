@@ -9,6 +9,7 @@ import '@/shared/i18n';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
 import { supabase, isSupabaseConfigured, queryClient, push, notificationRouter, restorePersistedCache } from '@/services';
+import { PUSH_NOTIFICATIONS_ENABLED, usePushNotificationConfig } from '@/services/push';
 import { theme } from '@/shared/theme';
 import { InAppNotificationBanner, useNotificationRealtime } from '@/features/notifications';
 import { ThemedAlertDialog } from '@/shared/ui';
@@ -126,6 +127,14 @@ function RootRouteGuard({ children }: { children: React.ReactNode }) {
 export default function RootLayout() {
   const router = useRouter();
   const initAuth = useAuthStore((state) => state.initAuth);
+
+  // Configure push notifications: handle foreground display + register token
+  useEffect(() => {
+    if (PUSH_NOTIFICATIONS_ENABLED) {
+      push.handleForegroundNotification();
+    }
+  }, []);
+  usePushNotificationConfig();
 
   const [fontsLoaded] = useFonts({
     BricolageGrotesque_700Bold,
