@@ -25,9 +25,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   return (
     <View style={styles.container}>
       <FadeInView delay={0}>
-        <FadeInView delay={0}>
         <Text style={styles.sectionTitle}>{t('home.quickPlay')}</Text>
-      </FadeInView>
       </FadeInView>
       <View style={styles.row}>
         {/* Play Card */}

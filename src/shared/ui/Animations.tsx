@@ -171,18 +171,26 @@ export const ShimmerSkeleton: React.FC<ShimmerSkeletonProps> = ({
   }));
 
   return (
-    <Animated.View style={[{ width, height, borderRadius, backgroundColor: '#FBE9E7' }, style]} pointerEvents="none">
-      {/* Base background */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#FBE9E7' }]} />
-      {/* Sweeping shine overlay - uses Animated.View for native driver */}
+    <Animated.View
+      style={[
+        {
+          width,
+          height,
+          borderRadius,
+          backgroundColor: '#FBE9E7',
+          overflow: 'hidden',
+        },
+        style,
+      ]}
+      pointerEvents="none"
+    >
+      {/* Sweeping shine overlay — animates over a translucent white bar that spans the full component width */}
+      <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.25)' }} />
       <Animated.View
         style={[
           {
             position: 'absolute',
-            top: 0,
-            bottom: 0,
-            left: -60,
-            right: 60,
+            inset: 0,
             backgroundColor: 'rgba(255,255,255,0.55)',
           },
           animStyle,
