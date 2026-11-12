@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { SparklesIcon, DatesIcon, LetterIcon } from '@/shared/ui';
+import { SparklesIcon, DatesIcon, LetterIcon, FadeInView } from '@/shared/ui';
 import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export interface QuickActionsProps {
@@ -24,61 +24,71 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>{t('home.quickPlay')}</Text>
+      <FadeInView delay={0}>
+        <FadeInView delay={0}>
+        <Text style={styles.sectionTitle}>{t('home.quickPlay')}</Text>
+      </FadeInView>
+      </FadeInView>
       <View style={styles.row}>
         {/* Play Card */}
-        <TouchableOpacity
-          style={styles.cardWrapper}
-          onPress={() => handlePress(onPlayPress)}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel={t('home.startPlay')}
-        >
-          <View style={styles.cardSurface}>
-            <View style={[styles.iconCircle, styles.playCircle]}>
-              <SparklesIcon color={theme.colors.text} size={scale(20)} />
+        <FadeInView delay={60}>
+          <TouchableOpacity
+            style={styles.cardWrapper}
+            onPress={() => handlePress(onPlayPress)}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.startPlay')}
+          >
+            <View style={styles.cardSurface}>
+              <View style={[styles.iconCircle, styles.playCircle]}>
+                <SparklesIcon color={theme.colors.text} size={scale(20)} />
+              </View>
+              <Text style={styles.cardTitle} maxFontSizeMultiplier={1.3}>
+                {t('home.startPlay')}
+              </Text>
             </View>
-            <Text style={styles.cardTitle} maxFontSizeMultiplier={1.3}>
-              {t('home.startPlay')}
-            </Text>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </FadeInView>
 
         {/* Date Card */}
-        <TouchableOpacity
-          style={styles.cardWrapper}
-          onPress={() => handlePress(onDatePress)}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel={t('home.planDate')}
-        >
-          <View style={styles.cardSurface}>
-            <View style={[styles.iconCircle, styles.dateCircle]}>
-              <DatesIcon color="#FFFFFF" size={scale(20)} />
+        <FadeInView delay={120}>
+          <TouchableOpacity
+            style={styles.cardWrapper}
+            onPress={() => handlePress(onDatePress)}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.planDate')}
+          >
+            <View style={styles.cardSurface}>
+              <View style={[styles.iconCircle, styles.dateCircle]}>
+                <DatesIcon color="#FFFFFF" size={scale(20)} />
+              </View>
+              <Text style={styles.cardTitle} maxFontSizeMultiplier={1.3}>
+                {t('home.planDate')}
+              </Text>
             </View>
-            <Text style={styles.cardTitle} maxFontSizeMultiplier={1.3}>
-              {t('home.planDate')}
-            </Text>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </FadeInView>
 
         {/* Letter Card */}
-        <TouchableOpacity
-          style={styles.cardWrapper}
-          onPress={() => handlePress(onLetterPress)}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel={t('home.writeLetter')}
-        >
-          <View style={styles.cardSurface}>
-            <View style={[styles.iconCircle, styles.letterCircle]}>
-              <LetterIcon color="#FFFFFF" size={scale(20)} />
+        <FadeInView delay={180}>
+          <TouchableOpacity
+            style={styles.cardWrapper}
+            onPress={() => handlePress(onLetterPress)}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.writeLetter')}
+          >
+            <View style={styles.cardSurface}>
+              <View style={[styles.iconCircle, styles.letterCircle]}>
+                <LetterIcon color="#FFFFFF" size={scale(20)} />
+              </View>
+              <Text style={styles.cardTitle} maxFontSizeMultiplier={1.3}>
+                {t('home.writeLetter')}
+              </Text>
             </View>
-            <Text style={styles.cardTitle} maxFontSizeMultiplier={1.3}>
-              {t('home.writeLetter')}
-            </Text>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </FadeInView>
       </View>
     </View>
   );

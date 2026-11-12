@@ -89,7 +89,7 @@ export default function MemoriesScreen() {
               <Text style={styles.subtitle} maxFontSizeMultiplier={1.35}>
                 {activeSection === 'memories'
                   ? t('memories.subtitle')
-                  : 'Time-locked & open-now love letters'}
+                  : t('memories.lettersSubtitle')}
               </Text>
             </View>
             <Button

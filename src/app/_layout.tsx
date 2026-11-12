@@ -11,6 +11,9 @@ import { useActiveCouple } from '@/features/couple';
 import { supabase, isSupabaseConfigured, queryClient, push, notificationRouter, restorePersistedCache } from '@/services';
 import { theme } from '@/shared/theme';
 import { InAppNotificationBanner, useNotificationRealtime } from '@/features/notifications';
+import { ThemedAlertDialog } from '@/shared/ui';
+import { useUserSettings } from '@/features/settings';
+import { maybeRunAutomaticBackup } from '@/features/settings/services/googleDriveBackup';
 import { ErrorState } from '@/shared/ui';
 import { useFonts, BricolageGrotesque_700Bold } from '@expo-google-fonts/bricolage-grotesque';
 import { Figtree_400Regular, Figtree_600SemiBold, Figtree_700Bold } from '@expo-google-fonts/figtree';
@@ -44,8 +47,16 @@ function RootRouteGuard({ children }: { children: React.ReactNode }) {
   const { session, isInitialized } = useAuthStore();
   const { data: coupleData, isLoading: isCoupleLoading } = useActiveCouple();
 
-  // Listen to in-app notification real-time events while app is open
+  // Listen to in-app notification real-time events while app is open & keep userSettings cached
+  useUserSettings();
   useNotificationRealtime();
+
+  // Trigger automatic backup when couple is active and interval has elapsed
+  useEffect(() => {
+    if (session?.user?.id && coupleData?.state === 'ACTIVE' && coupleData?.couple?.id) {
+      maybeRunAutomaticBackup(coupleData.couple.id, session.user.id).catch(() => {});
+    }
+  }, [session?.user?.id, coupleData?.state, coupleData?.couple?.id]);
 
   useEffect(() => {
     // Wait until local session restore has evaluated
@@ -107,6 +118,7 @@ function RootRouteGuard({ children }: { children: React.ReactNode }) {
     <>
       {children}
       <InAppNotificationBanner />
+      <ThemedAlertDialog />
     </>
   );
 }

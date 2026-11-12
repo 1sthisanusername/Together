@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Button, DatePickerField, PlaneIcon, HeartIcon } from '@/shared/ui';
+import {
+  Button,
+  DatePickerField,
+  PlaneIcon,
+  HeartIcon,
+  ThemedToast,
+  formatDateToDateString,
+} from '@/shared/ui';
 import type { ImportantDate } from '@/shared/types';
 import { useAddImportantDate } from '../hooks/useUsData';
 import { theme, scale } from '@/shared/theme';
@@ -18,17 +25,40 @@ export const NextReunionCountdownCard: React.FC<NextReunionCountdownCardProps> =
   const { t } = useTranslation();
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [targetDateStr, setTargetDateStr] = useState('');
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
   const { mutate: addDate, isPending } = useAddImportantDate();
 
+  const startOfToday = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }, []);
+
   const handleSetDate = () => {
-    if (!targetDateStr.trim()) return;
-    addDate({
-      title: 'Next Reunion Trip',
-      eventDate: targetDateStr.trim(),
-      category: 'meeting',
-    });
-    setShowDatePicker(false);
-    setTargetDateStr('');
+    const trimmed = targetDateStr.trim();
+    if (!trimmed) return;
+
+    const todayStr = formatDateToDateString(new Date());
+    if (trimmed < todayStr) {
+      setToastMsg(t('us.dateMustBeTodayOrFuture'));
+      return;
+    }
+
+    addDate(
+      {
+        title: 'Next Reunion Trip',
+        eventDate: trimmed,
+        category: 'meeting',
+      },
+      {
+        onSuccess: () => {
+          setShowDatePicker(false);
+          setTargetDateStr('');
+        },
+        onError: (err) => {
+          setToastMsg(err.message || t('us.saveDateFailed'));
+        },
+      }
+    );
   };
 
   return (
@@ -77,7 +107,7 @@ export const NextReunionCountdownCard: React.FC<NextReunionCountdownCardProps> =
                 <DatePickerField
                   placeholder="Select next reunion date"
                   value={targetDateStr}
-                  minDate={new Date()}
+                  minDate={startOfToday}
                   onChange={setTargetDateStr}
                 />
                 <View style={styles.btnRow}>
@@ -103,6 +133,12 @@ export const NextReunionCountdownCard: React.FC<NextReunionCountdownCardProps> =
           </View>
         )}
       </View>
+      <ThemedToast
+        visible={!!toastMsg}
+        message={toastMsg || ''}
+        type="error"
+        onDismiss={() => setToastMsg(null)}
+      />
     </View>
   );
 };

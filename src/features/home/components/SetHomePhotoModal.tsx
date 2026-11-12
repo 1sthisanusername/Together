@@ -5,10 +5,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { FormSheet, Button, ErrorState, CameraIcon, GalleryIcon } from '@/shared/ui';
+import { FormSheet, Button, ErrorState, CameraIcon, GalleryIcon, ThemedAlert } from '@/shared/ui';
 import { useHomePhoto, useUpdateHomePhoto } from '../hooks/useHomePhoto';
 import { theme, triggerHaptic } from '@/shared/theme';
 
@@ -41,7 +40,10 @@ export const SetHomePhotoModal: React.FC<SetHomePhotoModalProps> = ({
         setSelectedUri(result.assets[0].uri);
       }
     } catch {
-      Alert.alert('Permission Error', 'Please enable photo library access in settings.');
+      ThemedAlert.show({
+        title: 'Permission Error',
+        message: 'Please enable photo library access in settings.',
+      });
     }
   };
 
@@ -50,7 +52,10 @@ export const SetHomePhotoModal: React.FC<SetHomePhotoModalProps> = ({
     try {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert('Permission Needed', 'Camera access is required to take a home photo.');
+        ThemedAlert.show({
+          title: 'Permission Needed',
+          message: 'Camera access is required to take a home photo.',
+        });
         return;
       }
 
@@ -64,7 +69,10 @@ export const SetHomePhotoModal: React.FC<SetHomePhotoModalProps> = ({
         setSelectedUri(result.assets[0].uri);
       }
     } catch {
-      Alert.alert('Camera Error', 'Could not open camera.');
+      ThemedAlert.show({
+        title: 'Camera Error',
+        message: 'Could not open camera.',
+      });
     }
   };
 

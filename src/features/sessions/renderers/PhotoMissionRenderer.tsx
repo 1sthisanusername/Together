@@ -6,14 +6,13 @@ import {
   TouchableOpacity,
   Platform,
   ActivityIndicator,
-  Alert,
   Modal,
 } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Input } from '@/shared/ui';
+import { Card, Button, Input, ThemedAlert } from '@/shared/ui';
 import type { SessionData } from '../hooks/useSession';
 import { useSubmitEvent, useCompleteSession, useSaveSessionAsMemory } from '../hooks/useSession';
 import { storage } from '@/services';
@@ -88,7 +87,10 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Photo library access is needed to select a mission photo.');
+        ThemedAlert.show({
+          title: 'Permission Required',
+          message: 'Photo library access is needed to select a mission photo.',
+        });
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -103,7 +105,10 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
       }
     } catch (err: any) {
       console.warn('Gallery pick error:', err);
-      Alert.alert('Gallery Error', err?.message || 'Could not select photo from gallery.');
+      ThemedAlert.show({
+        title: 'Gallery Error',
+        message: err?.message || 'Could not select photo from gallery.',
+      });
     }
   };
 
@@ -111,7 +116,10 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Camera access is needed to take a photo for the mission.');
+        ThemedAlert.show({
+          title: 'Permission Required',
+          message: 'Camera access is needed to take a photo for the mission.',
+        });
         return;
       }
       const result = await ImagePicker.launchCameraAsync({
@@ -126,7 +134,10 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
       }
     } catch (err: any) {
       console.warn('Camera snap error:', err);
-      Alert.alert('Camera Error', err?.message || 'Could not capture photo from camera.');
+      ThemedAlert.show({
+        title: 'Camera Error',
+        message: err?.message || 'Could not capture photo from camera.',
+      });
     }
   };
 
@@ -169,11 +180,17 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
   const handleSubmit = async () => {
     if (isSubmitting || isUploading) return;
     if (mySubmission) {
-      Alert.alert('Already Shared', 'You have already shared your photo for this mission!');
+      ThemedAlert.show({
+        title: 'Already Shared',
+        message: 'You have already shared your photo for this mission!',
+      });
       return;
     }
     if (!selectedPhotoUrl) {
-      Alert.alert('No Photo Selected', 'Please snap or select a photo first.');
+      ThemedAlert.show({
+        title: 'No Photo Selected',
+        message: 'Please snap or select a photo first.',
+      });
       return;
     }
 
@@ -211,7 +228,10 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
       });
     } catch (err: any) {
       console.warn('Photo mission submission error:', err);
-      Alert.alert('Submission Error', err?.message || 'Failed to submit photo. Please try again.');
+      ThemedAlert.show({
+        title: 'Submission Error',
+        message: err?.message || 'Failed to submit photo. Please try again.',
+      });
     } finally {
       setIsUploading(false);
     }

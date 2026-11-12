@@ -14,7 +14,8 @@
     "delete": "Delete",
     "edit": "Edit",
     "empty": "Nothing here yet",
-    "minutes": "min"
+    "minutes": "min",
+    "vaultTitle": "Private Vault"
   },
   "nav": {
     "home": "Home",
@@ -172,6 +173,7 @@
   "memories": {
     "title": "Our Memories",
     "subtitle": "Your private gallery of dates, photos, and milestones",
+    "lettersSubtitle": "Time-locked & open-now love letters",
     "addMemory": "Add Memory",
     "memoryTitleLabel": "Title",
     "memoryTitlePlaceholder": "e.g. First virtual candlelit dinner",
@@ -196,7 +198,9 @@
     "addDate": "Add Date",
     "dateTitlePlaceholder": "e.g. First time we talked",
     "category": "Category",
-    "completed": "Completed"
+    "completed": "Completed",
+    "dateMustBeTodayOrFuture": "Next reunion date must be today or in the future.",
+    "saveDateFailed": "Could not save reunion date."
   },
   "settings": {
     "title": "Settings",
@@ -209,7 +213,10 @@
     "accountSection": "Account",
     "displayName": "Display Name",
     "timeZone": "Time Zone",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "openVault": "🔒 Open Private Vault",
+    "notificationsQuietTitle": "Notifications & Quiet Hours",
+    "dataBackupTitle": "Data & Cloud Backup"
   },
   "chat": {
     "title": "Messages",

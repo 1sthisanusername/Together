@@ -7,6 +7,8 @@ export const GOOGLE_DRIVE_APPDATA_SCOPE = 'https://www.googleapis.com/auth/drive
 
 export type BackupFrequency = 'daily' | 'weekly' | 'monthly' | 'manual';
 const BACKUP_FREQ_STORAGE_KEY = 'together_backup_frequency';
+const BACKUP_ACCOUNT_KEY_PREFIX = 'together_backup_account_';
+const LAST_BACKUP_AT_KEY_PREFIX = 'together_last_backup_at_';
 
 // Simple content digest checksum (DJB2 hash formatted as hex)
 export function computeContentChecksum(content: string): string {
@@ -87,6 +89,104 @@ export async function getBackupFrequency(): Promise<BackupFrequency> {
  */
 export async function setBackupFrequency(frequency: BackupFrequency): Promise<void> {
   await SecureStore.setItemAsync(BACKUP_FREQ_STORAGE_KEY, frequency);
+}
+
+export async function getBackupAccountEmail(userId: string): Promise<string | null> {
+  try {
+    return await SecureStore.getItemAsync(`${BACKUP_ACCOUNT_KEY_PREFIX}${userId}`);
+  } catch {
+    return null;
+  }
+}
+
+export async function setBackupAccountEmail(userId: string, email: string): Promise<void> {
+  await SecureStore.setItemAsync(`${BACKUP_ACCOUNT_KEY_PREFIX}${userId}`, email);
+}
+
+export async function getLastBackupAt(userId: string): Promise<string | null> {
+  try {
+    return await SecureStore.getItemAsync(`${LAST_BACKUP_AT_KEY_PREFIX}${userId}`);
+  } catch {
+    return null;
+  }
+}
+
+export async function setLastBackupAt(userId: string, isoTimestamp: string): Promise<void> {
+  await SecureStore.setItemAsync(`${LAST_BACKUP_AT_KEY_PREFIX}${userId}`, isoTimestamp);
+}
+
+/**
+ * Prompts the user to pick a Google account and grant the Drive appdata scope.
+ */
+export async function selectBackupGoogleAccount(userId: string): Promise<{ email: string }> {
+  let GoogleSignin: any;
+  try {
+    const googleModule = await import('@react-native-google-signin/google-signin');
+    GoogleSignin = googleModule.GoogleSignin;
+  } catch {
+    throw new Error('Google account picker is only available in the native app build.');
+  }
+
+  if (!GoogleSignin) {
+    throw new Error('Google account picker is unavailable on this device.');
+  }
+
+  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '';
+  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
+
+  GoogleSignin.configure({
+    webClientId: webClientId || undefined,
+    iosClientId: iosClientId || undefined,
+    scopes: ['profile', 'email', GOOGLE_DRIVE_APPDATA_SCOPE],
+  });
+
+  await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+  // Sign out first so Android always shows the account chooser instead of silently reusing the current session
+  await GoogleSignin.signOut().catch(() => {});
+  const response = await GoogleSignin.signIn();
+  const email = response?.data?.user?.email || (response as any)?.user?.email;
+
+  if (!email) {
+    throw new Error('No Google account was selected.');
+  }
+
+  await setBackupAccountEmail(userId, email);
+  await supabase
+    .from('user_settings')
+    .upsert(
+      { user_id: userId, backup_account_email: email, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    );
+
+  return { email };
+}
+
+/**
+ * Runs an automatic backup if the configured frequency interval has elapsed.
+ */
+export async function maybeRunAutomaticBackup(coupleId: string, userId: string): Promise<boolean> {
+  try {
+    const freq = await getBackupFrequency();
+    if (freq === 'manual') return false;
+
+    const lastIso = await getLastBackupAt(userId);
+    const intervalMs =
+      freq === 'daily'
+        ? 24 * 60 * 60 * 1000
+        : freq === 'weekly'
+        ? 7 * 24 * 60 * 60 * 1000
+        : 30 * 24 * 60 * 60 * 1000;
+
+    if (lastIso) {
+      const elapsed = Date.now() - new Date(lastIso).getTime();
+      if (elapsed < intervalMs) return false;
+    }
+
+    await createDualBackup(coupleId, userId);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -239,6 +339,19 @@ export async function createDualBackup(
     createIndividualBackup(userId),
     createCoupleSharedBackup(coupleId),
   ]);
+
+  const nowIso = new Date().toISOString();
+  await setLastBackupAt(userId, nowIso).catch(() => {});
+  try {
+    await supabase
+      .from('user_settings')
+      .upsert(
+        { user_id: userId, last_backup_at: nowIso, updated_at: nowIso },
+        { onConflict: 'user_id' }
+      );
+  } catch {
+    // Non-fatal: local backup timestamp is already persisted
+  }
 
   return { individual, couple };
 }

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  Alert,
   ScrollView,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +19,7 @@ import {
   ResponsiveContainer,
   CameraIcon,
   GalleryIcon,
+  ThemedAlert,
 } from '@/shared/ui';
 import { theme, scale, useResponsiveLayout, triggerHaptic } from '@/shared/theme';
 
@@ -52,7 +52,10 @@ export default function CameraScreen() {
         setSelectedUri(result.assets[0].uri);
       }
     } catch {
-      Alert.alert('Permission Error', 'Please enable photo library access in settings.');
+      ThemedAlert.show({
+          title: 'Permission Error',
+          message: 'Please enable photo library access in settings.',
+        });
     }
   };
 
@@ -61,7 +64,10 @@ export default function CameraScreen() {
     try {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert('Permission Needed', 'Camera access is required to take a home photo.');
+        ThemedAlert.show({
+          title: 'Permission Needed',
+          message: 'Camera access is required to take a home photo.',
+        });
         return;
       }
 
@@ -75,7 +81,10 @@ export default function CameraScreen() {
         setSelectedUri(result.assets[0].uri);
       }
     } catch {
-      Alert.alert('Camera Error', 'Could not open camera.');
+      ThemedAlert.show({
+        title: 'Camera Error',
+        message: 'Could not open camera.',
+      });
     }
   };
 

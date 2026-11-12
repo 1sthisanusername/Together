@@ -9,11 +9,16 @@ const CACHED_QUERY_KEYS = new Set([
   'homeData',
   'activeCouple',
   'profile',
+  'userSettings',
   'daily_question',
   'messages',
   'letters',
   'memories',
   'reunions',
+  'importantDates',
+  'bucketItems',
+  'notifications',
+  'activities',
   'vault_items',
 ]);
 
@@ -21,10 +26,24 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 2,
-      staleTime: 1000 * 60 * 5, // 5 minutes fresh
+      staleTime: 1000 * 60 * 30, // 30 minutes fresh in local memory/storage unless invalidated by targeted Realtime/mutation
       gcTime: 1000 * 60 * 60 * 24, // 24 hours retained
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     },
   },
+});
+
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+queryClient.getQueryCache().subscribe((event) => {
+  if (event?.type === 'updated' && event.action?.type === 'success') {
+    const key = String(event.query.queryKey[0]);
+    if (!CACHED_QUERY_KEYS.has(key)) return;
+    if (persistTimer) clearTimeout(persistTimer);
+    persistTimer = setTimeout(() => {
+      persistQueryCache().catch(() => {});
+    }, 1500);
+  }
 });
 
 /**

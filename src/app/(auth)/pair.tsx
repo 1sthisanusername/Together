@@ -18,7 +18,7 @@ import { useAuthStore, OnboardingWalkthrough } from '@/features/auth';
 import { useUpdateProfile } from '@/features/settings/hooks/useSettings';
 import { restoreBackupArchive, validateCoupleBackupArchive } from '@/features/settings/services/googleDriveBackup';
 import { safeSecureStore as SecureStore } from '@/shared/utils';
-import { LoadingState, ErrorState, Avatar, Button, Card, KeyboardScreen, DatePickerField } from '@/shared/ui';
+import { LoadingState, ErrorState, Avatar, Button, Card, KeyboardScreen, DatePickerField, ThemedAlert } from '@/shared/ui';
 import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 const NICKNAME_SET_PREFIX = 'together_nickname_configured_';
@@ -85,10 +85,10 @@ export default function PairScreen() {
                 );
                 const formattedDate = validated.exportedAt
                   ? new Date(validated.exportedAt).toLocaleDateString(undefined, {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })
                   : 'Recent';
                 const formattedSize = `${Math.round(((info as any).size || content.length) / 1024)} KB`;
                 setDiscoveredBackup({
@@ -98,7 +98,7 @@ export default function PairScreen() {
                 });
               }
             })
-            .catch(() => {});
+            .catch(() => { });
         });
       } catch {
         // Fallback
@@ -132,10 +132,16 @@ export default function PairScreen() {
       await SecureStore.setItemAsync(`${RESTORE_PROMPTED_PREFIX}${userId}`, 'true');
       setDiscoveredBackup(null);
       triggerHaptic('success');
-      Alert.alert('Space Restored! ☁️', 'Your letters, memories, and dreams have been safely restored.');
+      ThemedAlert.show({
+        title: 'Space Restored! ☁️',
+        message: 'Your letters, memories, and dreams have been safely restored.',
+      });
     } catch (err: any) {
       setIsRestoringBackup(false);
-      Alert.alert('Restore Failed', err.message || 'Could not restore backup.');
+      ThemedAlert.show({
+          title: 'Restore Failed',
+          message: err.message || 'Could not restore backup.',
+        });
     }
   };
 

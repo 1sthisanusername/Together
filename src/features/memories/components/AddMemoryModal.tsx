@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Image } from 'expo-image';
@@ -14,7 +13,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system/legacy';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
-import { FormSheet, Input, ErrorState, DatePickerField } from '@/shared/ui';
+import { FormSheet, Input, ErrorState, DatePickerField, ThemedAlert } from '@/shared/ui';
 import { useCreateMemory, type MemoryPhotoItem } from '../hooks/useMemories';
 import { theme, scale } from '@/shared/theme';
 
@@ -79,7 +78,10 @@ export const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
 
       const fileInfo = await FileSystem.getInfoAsync(manipulated.uri);
       if (fileInfo.exists && (fileInfo as any).size > 5 * 1024 * 1024) {
-        Alert.alert('File Too Large', 'Photos must be under 5 MB each.');
+        ThemedAlert.show({
+          title: 'File Too Large',
+          message: 'Photos must be under 5 MB each.',
+        });
         return null;
       }
 
@@ -99,17 +101,20 @@ export const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
   const handlePickFromGallery = async () => {
     setLocalError(null);
     if (photos.length >= 5) {
-      Alert.alert('Photo Limit', 'You can attach up to 5 photos per memory.');
+      ThemedAlert.show({
+        title: 'Photo Limit',
+        message: 'You can attach up to 5 photos per memory.',
+      });
       return;
     }
 
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required',
-          'Photo library access is needed to select memory photos.'
-        );
+        ThemedAlert.show({
+          title: 'Permission Required',
+          message: 'Photo library access is needed to select memory photos.',
+        });
         return;
       }
 
@@ -139,17 +144,20 @@ export const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
   const handleTakePhoto = async () => {
     setLocalError(null);
     if (photos.length >= 5) {
-      Alert.alert('Photo Limit', 'You can attach up to 5 photos per memory.');
+      ThemedAlert.show({
+        title: 'Photo Limit',
+        message: 'You can attach up to 5 photos per memory.',
+      });
       return;
     }
 
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required',
-          'Camera access is needed to take a memory photo.'
-        );
+        ThemedAlert.show({
+          title: 'Permission Required',
+          message: 'Camera access is needed to take a memory photo.',
+        });
         return;
       }
 

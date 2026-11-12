@@ -10,7 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useDailyQuestion, useDailyQuestionHistory } from '../hooks/useDailyQuestion';
-import { SparklesIcon, LetterIcon } from '@/shared/ui';
+import { SparklesIcon, LetterIcon, HeartBeat } from '@/shared/ui';
 import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export interface DailyQuestionCardProps {
@@ -72,6 +72,7 @@ export const DailyQuestionCard: React.FC<DailyQuestionCardProps> = ({
 
             {streak > 0 && (
               <View style={styles.streakBadge}>
+                <HeartBeat active color={theme.colors.primary} size={6} />
                 <Text style={styles.streakText}>{streak}d streak</Text>
               </View>
             )}

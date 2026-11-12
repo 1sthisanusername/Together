@@ -2,12 +2,14 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useVaultAuth, VaultPinPad, VaultView } from '@/features/vault';
 import { LoadingState } from '@/shared/ui';
 import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export default function VaultScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const {
     hasPin,
     isUnlocked,
@@ -27,9 +29,9 @@ export default function VaultScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.navBar}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack} activeOpacity={0.8}>
-          <Text style={styles.backButtonText}>← Back</Text>
+          <Text style={styles.backButtonText}>{t('common.back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.navTitle}>Private Vault</Text>
+        <Text style={styles.navTitle}>{t('common.vaultTitle')}</Text>
         <View style={styles.placeholder} />
       </View>
 

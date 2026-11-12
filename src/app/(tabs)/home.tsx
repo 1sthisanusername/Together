@@ -32,6 +32,7 @@ import {
   BellIcon,
   ChatIcon,
   GearIcon,
+  StaggeredList,
 } from '@/shared/ui';
 import { theme, scale, useResponsiveLayout, triggerHaptic } from '@/shared/theme';
 
@@ -210,54 +211,56 @@ export default function HomeScreen() {
               />
             ) : null}
 
-            {/* 1. Header (Both Names + Duration) */}
-            <CoupleHeader
-              coupleName={homeData.coupleName}
-              me={profile}
-              partner={coupleData.partner}
-              daysTogether={homeData.daysTogether}
-              startDate={homeData.startDate}
-              isPartnerOnline={isPartnerOnline}
-            />
-
-            {/* 2. Shared Couple Home Page Cover Photo */}
-            <HomePagePhotoCard partnerName={partnerName} />
-
-            {/* 3. Activity Indicator: only when partner is actively online and session is fresh */}
-            {shouldShowActiveSession ? (
-              <ActiveSessionBanner
-                onJoin={() => router.push(`/session/${homeData.activeSession!.id}`)}
+            <StaggeredList baseDelay={80} staggerGap={55}>
+              {/* 1. Header (Both Names + Duration) */}
+              <CoupleHeader
+                coupleName={homeData.coupleName}
+                me={profile}
+                partner={coupleData.partner}
+                daysTogether={homeData.daysTogether}
+                startDate={homeData.startDate}
+                isPartnerOnline={isPartnerOnline}
               />
-            ) : null}
 
-            {/* 3. Daily Question Prompt Card */}
-            <DailyQuestionCard partnerName={partnerName} />
+              {/* 2. Shared Couple Home Page Cover Photo */}
+              <HomePagePhotoCard partnerName={partnerName} />
 
-            {/* 4. Quick Photos Polaroid Carousel */}
-            <QuickPhotosCard />
+              {/* 3. Activity Indicator: only when partner is actively online and session is fresh */}
+              {shouldShowActiveSession && (
+                <ActiveSessionBanner
+                  onJoin={() => router.push(`/session/${homeData.activeSession!.id}`)}
+                />
+              )}
 
-            {/* 5. TimeZone Sticker Clock */}
-            <TimeZoneClockCard
-              partnerName={partnerName}
-              myTimeInfo={homeData.myTimeInfo}
-              partnerTimeInfo={homeData.partnerTimeInfo}
-              timeDifferenceHours={homeData.timeDifferenceHours}
-            />
+              {/* 3. Daily Question Prompt Card */}
+              <DailyQuestionCard partnerName={partnerName} />
 
-            {/* 6. Reunion Countdown Card */}
-            {homeData.nextMeeting ? (
-              <NextReunionCountdownCard
-                nextMeeting={homeData.nextMeeting}
-                daysRemaining={homeData.daysToNextMeeting}
+              {/* 4. Quick Photos Polaroid Carousel */}
+              <QuickPhotosCard />
+
+              {/* 5. TimeZone Sticker Clock */}
+              <TimeZoneClockCard
+                partnerName={partnerName}
+                myTimeInfo={homeData.myTimeInfo}
+                partnerTimeInfo={homeData.partnerTimeInfo}
+                timeDifferenceHours={homeData.timeDifferenceHours}
               />
-            ) : null}
 
-            {/* 7. Quick Actions Sticker Cards */}
-            <QuickActions
-              onPlayPress={() => router.push('/(tabs)/play')}
-              onDatePress={() => router.push('/(tabs)/memories')}
-              onLetterPress={() => setShowLetterModal(true)}
-            />
+              {/* 6. Reunion Countdown Card */}
+              {homeData.nextMeeting && (
+                <NextReunionCountdownCard
+                  nextMeeting={homeData.nextMeeting}
+                  daysRemaining={homeData.daysToNextMeeting}
+                />
+              )}
+
+              {/* 7. Quick Actions Sticker Cards */}
+              <QuickActions
+                onPlayPress={() => router.push('/(tabs)/play')}
+                onDatePress={() => router.push('/(tabs)/memories')}
+                onLetterPress={() => setShowLetterModal(true)}
+              />
+            </StaggeredList>
           </ResponsiveContainer>
         </KeyboardAwareScrollView>
       )}

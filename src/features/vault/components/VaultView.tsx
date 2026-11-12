@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
   Modal,
   TextInput,
 } from 'react-native';
@@ -14,7 +13,7 @@ import { useLetters, LetterCard, ReadLetterModal, EnhancedLetter } from '@/featu
 import { useVaultItems, useCreateVaultItem, useDeleteVaultItem, VaultItem } from '../hooks/useVaultItems';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
-import { Button, LoadingState, EmptyState, FormSheet } from '@/shared/ui';
+import { Button, LoadingState, EmptyState, FormSheet, ThemedAlert } from '@/shared/ui';
 import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export interface VaultViewProps {
@@ -51,15 +50,18 @@ export const VaultView: React.FC<VaultViewProps> = ({ onLock }) => {
       setShowAddNoteModal(false);
       triggerHaptic('success');
     } catch {
-      Alert.alert('Error', 'Could not save note to vault.');
+      ThemedAlert.show({
+        title: 'Error',
+        message: 'Could not save note to vault.',
+      });
     }
   };
 
   const handleDeleteItem = (id: string) => {
-    Alert.alert(
-      'Delete Vault Note',
-      'Are you sure you want to permanently delete this secret note?',
-      [
+    ThemedAlert.show({
+      title: 'Delete Vault Note',
+      message: 'Are you sure you want to permanently delete this secret note?',
+      buttons: [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
@@ -69,12 +71,15 @@ export const VaultView: React.FC<VaultViewProps> = ({ onLock }) => {
               await deleteItem(id);
               triggerHaptic('medium');
             } catch {
-              Alert.alert('Error', 'Failed to delete note.');
+              ThemedAlert.show({
+                title: 'Error',
+                message: 'Failed to delete note.',
+              });
             }
           },
         },
-      ]
-    );
+      ],
+    });
   };
 
   return (

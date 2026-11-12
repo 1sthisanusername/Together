@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { create } from 'zustand';
 import { supabase } from '@/services/supabase';
 import { useAuthStore } from '@/features/auth';
+import type { UserSetting } from '@/shared/types';
+import { shouldShowNotificationBanner } from '../utils/notificationPreferences';
 import type { AppNotification } from '../types';
 
 interface NotificationBannerState {
@@ -159,7 +161,10 @@ export function useNotificationRealtime() {
           const newNotif = payload.new as AppNotification;
           queryClient.invalidateQueries({ queryKey: ['notifications', user.id] });
           queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count', user.id] });
-          showBanner(newNotif);
+          const userSettings = queryClient.getQueryData<UserSetting | null>(['userSettings', user.id]);
+          if (shouldShowNotificationBanner(newNotif.type, userSettings)) {
+            showBanner(newNotif);
+          }
         }
       )
       .subscribe();

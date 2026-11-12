@@ -120,17 +120,21 @@ Deno.serve(async (req) => {
 
       const timezone = recipientProfile?.timezone || 'UTC';
       const nowInTz = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
-      const currentHour = nowInTz.getHours();
+      const currentMinutes = nowInTz.getHours() * 60 + nowInTz.getMinutes();
 
       // Check quiet hours (default: 22:00 to 08:00)
       if (recipientSettings?.quiet_hours_enabled) {
-        const startHour = parseInt((recipientSettings.quiet_hours_start || '22:00:00').split(':')[0], 10);
-        const endHour = parseInt((recipientSettings.quiet_hours_end || '08:00:00').split(':')[0], 10);
+        const [sh, sm] = (recipientSettings.quiet_hours_start || '22:00:00').split(':').map((v: string) => parseInt(v, 10) || 0);
+        const [eh, em] = (recipientSettings.quiet_hours_end || '08:00:00').split(':').map((v: string) => parseInt(v, 10) || 0);
+        const startMin = sh * 60 + sm;
+        const endMin = eh * 60 + em;
 
         const isInQuietHours =
-          startHour > endHour
-            ? currentHour >= startHour || currentHour < endHour
-            : currentHour >= startHour && currentHour < endHour;
+          startMin === endMin
+            ? false
+            : startMin > endMin
+            ? currentMinutes >= startMin || currentMinutes < endMin
+            : currentMinutes >= startMin && currentMinutes < endMin;
 
         if (isInQuietHours) {
           // Delay delivery until quiet hours end
@@ -142,9 +146,13 @@ Deno.serve(async (req) => {
       // Check per-category notification toggles
       if (recipientSettings) {
         if (!recipientSettings.notifications_enabled) continue;
-        if (notif.type.includes('activity') && !recipientSettings.notify_activities) continue;
-        if (notif.type.includes('letter') && !recipientSettings.notify_letters) continue;
-        if (notif.type.includes('date') && !recipientSettings.notify_dates) continue;
+        const normType = (notif.type || '').toLowerCase();
+        if ((normType.includes('message') || normType.includes('chat') || normType.includes('voice')) && recipientSettings.notify_messages === false) continue;
+        if (normType.includes('letter') && recipientSettings.notify_letters === false) continue;
+        if ((normType.includes('daily_question') || normType.includes('question')) && recipientSettings.notify_daily_question === false) continue;
+        if ((normType.includes('photo') || normType.includes('memory') || normType.includes('mission')) && recipientSettings.notify_photos === false) continue;
+        if ((normType.includes('game') || normType.includes('activity') || normType.includes('quiz') || normType.includes('round')) && (recipientSettings.notify_games === false || recipientSettings.notify_activities === false)) continue;
+        if (normType.includes('date') && recipientSettings.notify_dates === false) continue;
       }
 
       // 3. Fetch active push tokens for recipient

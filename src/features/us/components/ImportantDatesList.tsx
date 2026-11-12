@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Input, DatePickerField, FormSheet } from '@/shared/ui';
+import { Card, Button, Input, DatePickerField, FormSheet, ThemedAlert } from '@/shared/ui';
 import type { ImportantDate } from '@/shared/types';
 import {
   useAddImportantDate,
@@ -75,18 +75,18 @@ export const ImportantDatesList: React.FC<ImportantDatesListProps> = ({ dates })
   };
 
   const handleDelete = (id: string, itemTitle: string) => {
-    Alert.alert(
-      'Delete Date',
-      `Are you sure you want to remove "${itemTitle}"?`,
-      [
+    ThemedAlert.show({
+      title: 'Delete Date',
+      message: `Are you sure you want to remove "${itemTitle}"?`,
+      buttons: [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
           onPress: () => deleteDate(id),
         },
-      ]
-    );
+      ],
+    });
   };
 
   const handleClose = () => {

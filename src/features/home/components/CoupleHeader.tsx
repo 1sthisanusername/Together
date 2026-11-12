@@ -116,7 +116,7 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
             }}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel={`${durationText}. Tap to toggle display format.`}
+            accessibilityLabel={`${durationText}. Tap to toggle display format. Long press to edit date.`}
           >
             <View style={styles.durationSurface}>
               <Text style={styles.durationText}>{durationText}</Text>

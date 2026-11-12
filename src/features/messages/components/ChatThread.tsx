@@ -9,7 +9,6 @@ import {
   Platform,
   Keyboard,
   TouchableWithoutFeedback,
-  Alert,
   Animated,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -37,6 +36,7 @@ import {
   GalleryIcon,
   PlusIcon,
   ChatIcon,
+  ThemedAlert,
 } from '@/shared/ui';
 import { theme, scale } from '@/shared/theme';
 
@@ -121,7 +121,10 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Camera permission is required to snap a photo.');
+        ThemedAlert.show({
+          title: 'Permission Required',
+          message: 'Camera permission is required to snap a photo.',
+        });
         return;
       }
       const result = await ImagePicker.launchCameraAsync({
@@ -132,7 +135,10 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
         setPreviewImageUri(result.assets[0].uri);
       }
     } catch (err: any) {
-      Alert.alert('Error', err?.message || 'Failed to capture photo');
+      ThemedAlert.show({
+        title: 'Error',
+        message: err?.message || 'Failed to capture photo',
+      });
     }
   };
 
@@ -140,7 +146,10 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Photo library access is needed to select photos.');
+        ThemedAlert.show({
+          title: 'Permission Required',
+          message: 'Photo library access is needed to select photos.',
+        });
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -152,7 +161,10 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
         setPreviewImageUri(result.assets[0].uri);
       }
     } catch (err: any) {
-      Alert.alert('Error', err?.message || 'Failed to select photo');
+      ThemedAlert.show({
+        title: 'Error',
+        message: err?.message || 'Failed to select photo',
+      });
     }
   };
 
@@ -173,11 +185,15 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
   };
 
   const handleMorePress = () => {
-    Alert.alert('More Options', 'Select an action to share with your partner:', [
-      { text: '📷 Take Photo', onPress: handleCameraPress },
-      { text: '🖼️ Choose from Gallery', onPress: handleGalleryPress },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
+    ThemedAlert.show({
+      title: 'More Options',
+      message: 'Select an action to share with your partner:',
+      buttons: [
+        { text: '📷 Take Photo', onPress: handleCameraPress },
+        { text: '🖼️ Choose from Gallery', onPress: handleGalleryPress },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+    });
   };
 
   return (

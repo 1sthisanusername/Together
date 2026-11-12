@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { WarmGradient } from '@/shared/ui';
+import { WarmGradient, HeartBeat } from '@/shared/ui';
 import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export interface ActiveSessionBannerProps {
@@ -17,7 +17,7 @@ export const ActiveSessionBanner: React.FC<ActiveSessionBannerProps> = ({ onJoin
         <View style={styles.banner}>
           <View style={styles.textContainer}>
             <View style={styles.liveBadge}>
-              <View style={styles.pulseDot} />
+              <HeartBeat active color="#FFB74D" size={6} />
               <Text style={styles.liveLabel}>LIVE</Text>
             </View>
             <Text style={styles.bannerText}>{t('home.activeSessionBanner')}</Text>
@@ -70,12 +70,6 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     paddingHorizontal: 8,
     paddingVertical: 3,
-  },
-  pulseDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 9999,
-    backgroundColor: theme.colors.sunset, // #FFB74D
   },
   liveLabel: {
     fontFamily: theme.typography.families.bold,

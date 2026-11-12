@@ -2,7 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/services';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
+import { formatDateToDateString } from '@/shared/ui';
 import type { BucketItem, ImportantDate } from '@/shared/types';
+
+/** Returns true when an important date is in the past relative to today. */
+export function isImportantDateInPast(dateStr: string): boolean {
+  const today = formatDateToDateString(new Date());
+  return dateStr < today;
+}
 
 export function useBucketItems() {
   const user = useAuthStore((state) => state.user);
@@ -117,6 +124,10 @@ export function useAddImportantDate() {
     }) => {
       if (!user?.id || !coupleData?.couple?.id) throw new Error('Not authenticated');
 
+      if ((category || 'anniversary') === 'meeting' && isImportantDateInPast(eventDate)) {
+        throw new Error('Next reunion date must be today or in the future.');
+      }
+
       const { data, error } = await supabase
         .from('important_dates')
         .insert({
@@ -157,6 +168,10 @@ export function useUpdateImportantDate() {
       category?: string;
       isRecurring?: boolean;
     }) => {
+      if (category === 'meeting' && isImportantDateInPast(eventDate)) {
+        throw new Error('Next reunion date must be today or in the future.');
+      }
+
       const { data, error } = await supabase
         .from('important_dates')
         .update({

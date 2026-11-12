@@ -42,7 +42,7 @@ function resolveLinking(): { canOpenURL: (url: string) => Promise<boolean>; open
   }
   return {
     canOpenURL: async () => true,
-    openURL: async () => {},
+    openURL: async () => { },
   };
 }
 
