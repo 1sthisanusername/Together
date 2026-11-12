@@ -5,11 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useMemories, MemoryCard, AddMemoryModal } from '@/features/memories';
-import { useLetters, LetterCard, WriteLetterModal, ReadLetterModal } from '@/features/letters';
+import { useLetters, LetterCard } from '@/features/letters';
 import { useActiveCouple } from '@/features/couple';
 import { useAuthStore } from '@/features/auth';
 import { SkeletonList, ErrorState, Button, EmptyState, SwipeTabWrapper, ResponsiveContainer, LockIcon } from '@/shared/ui';
-import type { Letter } from '@/shared/types';
 import { theme, scale, useResponsiveLayout, triggerHaptic } from '@/shared/theme';
 
 export default function MemoriesScreen() {
@@ -20,6 +19,7 @@ export default function MemoriesScreen() {
   const partnerName = coupleData?.partner?.display_name || 'Partner';
 
   const [activeSection, setActiveSection] = useState<'memories' | 'letters'>('memories');
+  const [showAddMemoryModal, setShowAddMemoryModal] = useState(false);
 
   // Memories data
   const {
@@ -28,7 +28,6 @@ export default function MemoriesScreen() {
     error: memoriesError,
     refetch: refetchMemories,
   } = useMemories();
-  const [showAddMemoryModal, setShowAddMemoryModal] = useState(false);
 
   // Letters data
   const {
@@ -37,8 +36,6 @@ export default function MemoriesScreen() {
     error: lettersError,
     refetch: refetchLetters,
   } = useLetters();
-  const [showWriteLetterModal, setShowWriteLetterModal] = useState(false);
-  const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
 
   const { horizontalGutter, columns, s } = useResponsiveLayout();
 
@@ -56,7 +53,7 @@ export default function MemoriesScreen() {
     if (activeSection === 'memories') {
       setShowAddMemoryModal(true);
     } else {
-      setShowWriteLetterModal(true);
+      router.push('/letter/write');
     }
   };
 
@@ -251,7 +248,7 @@ export default function MemoriesScreen() {
                     partnerName={partnerName}
                     onPress={() => {
                       triggerHaptic('light');
-                      setSelectedLetter(letter);
+                      router.push(`/letter/read/${letter.id}`);
                     }}
                   />
                 ))
@@ -263,19 +260,6 @@ export default function MemoriesScreen() {
         <AddMemoryModal
           visible={showAddMemoryModal}
           onClose={() => setShowAddMemoryModal(false)}
-        />
-
-        <WriteLetterModal
-          visible={showWriteLetterModal}
-          onClose={() => setShowWriteLetterModal(false)}
-          partnerName={partnerName}
-        />
-
-        <ReadLetterModal
-          letter={selectedLetter}
-          visible={!!selectedLetter}
-          onClose={() => setSelectedLetter(null)}
-          partnerName={partnerName}
         />
       </SwipeTabWrapper>
     </SafeAreaView>

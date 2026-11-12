@@ -9,7 +9,8 @@ import {
   TextInput,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useLetters, LetterCard, ReadLetterModal, EnhancedLetter } from '@/features/letters';
+import { useLetters, LetterCard, EnhancedLetter } from '@/features/letters';
+import { useRouter } from 'expo-router';
 import { useVaultItems, useCreateVaultItem, useDeleteVaultItem, VaultItem } from '../hooks/useVaultItems';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
@@ -26,8 +27,8 @@ export const VaultView: React.FC<VaultViewProps> = ({ onLock }) => {
   const { data: coupleData } = useActiveCouple();
   const partnerName = coupleData?.partner?.display_name || 'Partner';
 
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'letters' | 'notes'>('letters');
-  const [selectedLetter, setSelectedLetter] = useState<EnhancedLetter | null>(null);
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState('');
   const [newNoteContent, setNewNoteContent] = useState('');
@@ -147,7 +148,7 @@ export const VaultView: React.FC<VaultViewProps> = ({ onLock }) => {
                 partnerName={partnerName}
                 onPress={() => {
                   triggerHaptic('light');
-                  setSelectedLetter(letter);
+                  router.push(`/letter/read/${letter.id}`);
                 }}
               />
             ))
@@ -199,14 +200,6 @@ export const VaultView: React.FC<VaultViewProps> = ({ onLock }) => {
           </View>
         )}
       </ScrollView>
-
-      {/* Read Letter Modal */}
-      <ReadLetterModal
-        letter={selectedLetter}
-        visible={!!selectedLetter}
-        onClose={() => setSelectedLetter(null)}
-        partnerName={partnerName}
-      />
 
       {/* Add Secret Note Modal */}
       <FormSheet

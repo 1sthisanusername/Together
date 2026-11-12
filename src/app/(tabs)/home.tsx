@@ -21,7 +21,7 @@ import { PartnerNamePromptCard } from '@/features/couple';
 import { useAuthStore } from '@/features/auth';
 import { useUpdateProfile } from '@/features/settings/hooks/useSettings';
 import { safeSecureStore as SecureStore } from '@/shared/utils';
-import { WriteLetterModal } from '@/features/letters';
+// Letter modals replaced by full-screen routes: /letter/write and /letter/read/[id]
 import { NextReunionCountdownCard } from '@/features/us';
 import { useUnreadNotificationsCount } from '@/features/notifications';
 import {
@@ -46,7 +46,7 @@ export default function HomeScreen() {
   const { isPartnerOnline } = usePresence();
   const { data: unreadNotifsCount = 0 } = useUnreadNotificationsCount();
 
-  const [showLetterModal, setShowLetterModal] = useState(false);
+  // Letter navigation handled via full-screen routes (no modal state needed)
   const [showPickPartnerName, setShowPickPartnerName] = useState(false);
   const { mutateAsync: updateProfile } = useUpdateProfile();
 
@@ -258,18 +258,12 @@ export default function HomeScreen() {
               <QuickActions
                 onPlayPress={() => router.push('/(tabs)/play')}
                 onDatePress={() => router.push('/(tabs)/memories')}
-                onLetterPress={() => setShowLetterModal(true)}
+                onLetterPress={() => router.push('/letter/write')}
               />
             </StaggeredList>
           </ResponsiveContainer>
         </KeyboardAwareScrollView>
       )}
-
-        <WriteLetterModal
-          visible={showLetterModal}
-          onClose={() => setShowLetterModal(false)}
-          partnerName={partnerName}
-        />
       </SwipeTabWrapper>
     </SafeAreaView>
   );
