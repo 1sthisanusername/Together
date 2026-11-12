@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Sheet, Button, Card } from '@/shared/ui';
 import type { EnhancedLetter, StationeryTheme } from '../hooks/useLetters';
@@ -72,7 +72,7 @@ export const ReadLetterModal: React.FC<ReadLetterModalProps> = ({
 
   return (
     <Sheet visible={visible} onClose={onClose} title={letter.title}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <View style={styles.container}>
         {isLocked && !isOpened ? (
           <View style={styles.lockedContainer}>
             <View style={styles.lockedIconWrapper}>
@@ -205,7 +205,7 @@ export const ReadLetterModal: React.FC<ReadLetterModalProps> = ({
             />
           </View>
         )}
-      </ScrollView>
+      </View>
     </Sheet>
   );
 };
