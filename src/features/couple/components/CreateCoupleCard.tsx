@@ -7,8 +7,8 @@ import { Card, Button, Input, ErrorState } from '@/shared/ui';
 import { createCoupleSchema, type CreateCoupleInput } from '../schemas';
 import { useCreateCouple } from '../hooks/useCouple';
 import { useAuthStore } from '@/features/auth';
-import { useUpdateProfile } from '@/features/settings';
-import { theme } from '@/shared/theme';
+import { useUpdateProfile } from '@/features/settings/hooks/useSettings';
+import { theme, scale } from '@/shared/theme';
 
 export interface CreateCoupleCardProps {
   onSuccess?: () => void;
@@ -60,21 +60,6 @@ export const CreateCoupleCard: React.FC<CreateCoupleCardProps> = ({ onSuccess })
 
       <Controller
         control={control}
-        name="nickname"
-        render={({ field: { onChange, onBlur, value } }) => (
-          <Input
-            label="Your Nickname"
-            placeholder="e.g. Milindh, Honey, etc."
-            onBlur={onBlur}
-            onChangeText={onChange}
-            value={value}
-            error={errors.nickname?.message}
-          />
-        )}
-      />
-
-      <Controller
-        control={control}
         name="coupleName"
         render={({ field: { onChange, onBlur, value } }) => (
           <Input
@@ -103,24 +88,24 @@ export const CreateCoupleCard: React.FC<CreateCoupleCardProps> = ({ onSuccess })
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    padding: 24,
+    padding: scale(24),
     backgroundColor: theme.colors.surface,
     borderColor: theme.colors.borderLight,
   },
   title: {
-    fontSize: 20,
+    fontSize: scale(20),
     fontWeight: '800',
-    color: theme.colors.text, // #42362e
-    marginBottom: 6,
+    color: theme.colors.text,
+    marginBottom: scale(6),
     letterSpacing: -0.3,
   },
   subtitle: {
-    fontSize: 14,
-    color: theme.colors.textSecondary, // #a8917f
-    lineHeight: 20,
-    marginBottom: 18,
+    fontSize: scale(14),
+    color: theme.colors.textSecondary,
+    lineHeight: scale(20),
+    marginBottom: scale(18),
   },
   submitButton: {
-    marginTop: 8,
+    marginTop: scale(8),
   },
 });

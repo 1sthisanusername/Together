@@ -22,7 +22,6 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     <View style={styles.container}>
       {icon && (
         <View style={styles.iconWrapper}>
-          <View style={styles.iconShadow} />
           <View style={styles.iconContainer}>{icon}</View>
         </View>
       )}
@@ -54,30 +53,18 @@ const styles = StyleSheet.create({
     padding: scale(28),
   },
   iconWrapper: {
-    position: 'relative',
     marginBottom: scale(18),
   },
-  iconShadow: {
-    position: 'absolute',
-    top: 4,
-    left: 4,
-    width: scale(72),
-    height: scale(72),
-    borderRadius: scale(20),
-    backgroundColor: theme.colors.shadowInk,
-    zIndex: 0,
-  },
   iconContainer: {
-    position: 'relative',
-    zIndex: 1,
     width: scale(72),
     height: scale(72),
-    borderRadius: scale(20),
-    backgroundColor: theme.colors.secondary, // Sunshine #FFC93C
-    borderWidth: theme.borders.chunky,
-    borderColor: theme.colors.border,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
+    borderWidth: 1,
+    borderColor: theme.colors.border, // #FBE9E7
     alignItems: 'center',
     justifyContent: 'center',
+    ...theme.shadows.card,
   },
   title: {
     fontFamily: theme.typography.fontFamilies.display,

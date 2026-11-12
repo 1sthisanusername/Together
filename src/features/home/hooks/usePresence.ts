@@ -73,6 +73,15 @@ export function usePresence(): PresenceStateResult {
     }
 
     const channelName = `presence_couple_${coupleId}`;
+    
+    // Safely cleanup any existing channel before re-subscribing
+    const existing = supabase.getChannels().find(
+      (c) => c.topic === `realtime:${channelName}` || c.topic === channelName
+    );
+    if (existing) {
+      supabase.removeChannel(existing);
+    }
+
     const channel = supabase.channel(channelName, {
       config: {
         presence: {

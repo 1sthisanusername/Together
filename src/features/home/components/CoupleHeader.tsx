@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Button, DatePickerField } from '@/shared/ui';
+import { Button, DatePickerField, HeartIcon } from '@/shared/ui';
 import type { Profile } from '@/shared/types';
 import {
   calculateDaysTogether,
@@ -94,10 +94,16 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
     <View style={styles.container}>
       {/* Names and Relationship Duration (Logo on top in bar, then names, then days) */}
       <View style={styles.headerBlock}>
-        {/* Partner Names */}
-        <Text style={styles.partnerNames} numberOfLines={1}>
-          {myDisplayName} ❤️ {partnerDisplayName}
-        </Text>
+        {/* Partner Names with Vector Heart */}
+        <View style={styles.namesRow}>
+          <Text style={styles.partnerNames} numberOfLines={1}>
+            {myDisplayName}
+          </Text>
+          <HeartIcon color={theme.colors.primary} size={scale(16)} filled />
+          <Text style={styles.partnerNames} numberOfLines={1}>
+            {partnerDisplayName}
+          </Text>
+        </View>
 
         {/* Relationship Duration with format cycling on tap & edit on long press */}
         {durationText ? (
@@ -112,7 +118,6 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
             accessibilityRole="button"
             accessibilityLabel={`${durationText}. Tap to toggle display format.`}
           >
-            <View style={styles.durationShadow} />
             <View style={styles.durationSurface}>
               <Text style={styles.durationText}>{durationText}</Text>
               <Text style={styles.durationCycleHint}>↻</Text>
@@ -124,9 +129,12 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
             onPress={() => setShowDatePicker(!showDatePicker)}
             activeOpacity={0.8}
           >
-            <Text style={styles.setAnniversaryText}>
-              💕 Set your start date to count days together
-            </Text>
+            <View style={styles.setAnniversaryRow}>
+              <HeartIcon color={theme.colors.primary} size={scale(13)} filled />
+              <Text style={styles.setAnniversaryText}>
+                Set your start date to count days together
+              </Text>
+            </View>
           </TouchableOpacity>
         )}
       </View>
@@ -134,7 +142,6 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
       {/* Date Picker Modal / Form (when updating start date) */}
       {showDatePicker && (
         <View style={styles.pickerWrapper}>
-          <View style={styles.pickerShadow} />
           <View style={styles.pickerForm}>
             <Text style={styles.pickerTitle}>Set When You Got Together</Text>
             <DatePickerField
@@ -185,59 +192,55 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   headerBlock: {
-    paddingHorizontal: scale(18),
     marginTop: scale(2),
     marginBottom: scale(6),
     alignItems: 'flex-start',
   },
-  partnerNames: {
-    fontFamily: theme.typography.fontFamilies.display,
-    fontSize: scale(15),
-    fontWeight: '700',
-    color: theme.colors.text,
-    letterSpacing: 0.1,
-  },
-  durationBadgeWrapper: {
-    position: 'relative',
-    marginTop: scale(4),
-  },
-  durationShadow: {
-    position: 'absolute',
-    top: 2,
-    left: 2,
-    right: -2,
-    bottom: -2,
-    backgroundColor: theme.colors.shadowInk,
-    borderRadius: scale(12),
-    zIndex: 0,
-  },
-  durationSurface: {
-    position: 'relative',
-    zIndex: 1,
+  namesRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: scale(6),
-    backgroundColor: theme.colors.secondary, // Sunshine #FFC93C
-    borderWidth: 1.5,
-    borderColor: theme.colors.border,
-    paddingHorizontal: scale(12),
-    paddingVertical: scale(5),
-    borderRadius: scale(12),
+  },
+  partnerNames: {
+    fontFamily: theme.typography.fontFamilies.display,
+    fontSize: scale(17),
+    fontWeight: '700',
+    color: theme.colors.text, // Cozy Night #3E2723
+    letterSpacing: -0.2,
+  },
+  durationBadgeWrapper: {
+    marginTop: scale(6),
+  },
+  durationSurface: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(6),
+    backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
+    borderWidth: 1,
+    borderColor: theme.colors.border, // #FBE9E7
+    paddingHorizontal: scale(14),
+    paddingVertical: scale(6),
+    borderRadius: 9999,
+    ...theme.shadows.hardSm,
   },
   durationText: {
-    fontFamily: theme.typography.fontFamilies.sans,
+    fontFamily: theme.typography.fontFamilies.display,
     fontSize: scale(13),
     fontWeight: '700',
-    color: theme.colors.text,
+    color: theme.colors.primary, // Amour Red #E53935 for high-emotion milestone count
   },
   durationCycleHint: {
     fontSize: scale(11),
-    color: theme.colors.text,
-    opacity: 0.6,
+    color: theme.colors.textSecondary, // #7A625A
   },
   setAnniversaryBtn: {
     marginTop: scale(6),
     paddingVertical: scale(4),
+  },
+  setAnniversaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(6),
   },
   setAnniversaryText: {
     fontFamily: theme.typography.fontFamilies.sans,
@@ -246,28 +249,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   pickerWrapper: {
-    position: 'relative',
-    marginHorizontal: scale(18),
-    marginVertical: scale(12),
-  },
-  pickerShadow: {
-    position: 'absolute',
-    top: 4,
-    left: 4,
-    right: -4,
-    bottom: -4,
-    backgroundColor: theme.colors.shadowInk,
-    borderRadius: scale(16),
-    zIndex: 0,
+    marginVertical: scale(10),
   },
   pickerForm: {
-    position: 'relative',
-    zIndex: 1,
     backgroundColor: theme.colors.surface,
-    borderWidth: theme.borders.chunky,
+    borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: scale(16),
+    borderRadius: 20,
     padding: scale(16),
+    ...theme.shadows.card,
   },
   pickerTitle: {
     fontFamily: theme.typography.fontFamilies.display,

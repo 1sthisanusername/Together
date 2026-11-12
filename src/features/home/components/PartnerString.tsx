@@ -106,22 +106,21 @@ export const PartnerString: React.FC<PartnerStringProps> = ({
             /* TIGHT STRING (WITH REANIMATED WIGGLE) */
             <Animated.View style={[styles.stringContainer, animatedWiggleStyle]}>
               <Svg width={stringWidth} height={stringHeight} viewBox={`0 0 ${stringWidth} ${stringHeight}`}>
-                {/* Taut pulled red string */}
+                {/* Taut pulled Amour Red string */}
                 <Path
                   d={`M 6,${stringHeight / 2} L ${stringWidth - 6},${stringHeight / 2}`}
-                  stroke={theme.colors.primary} // Tomato #FF5A3C
+                  stroke={theme.colors.primary}
                   strokeWidth={3}
                   strokeLinecap="round"
                 />
                 {/* Tie knot on left */}
-                <Circle cx={6} cy={stringHeight / 2} r={3.5} fill={theme.colors.border} />
+                <Circle cx={6} cy={stringHeight / 2} r={3.5} fill={theme.colors.primary} />
                 {/* Tie knot on right */}
-                <Circle cx={stringWidth - 6} cy={stringHeight / 2} r={3.5} fill={theme.colors.border} />
+                <Circle cx={stringWidth - 6} cy={stringHeight / 2} r={3.5} fill={theme.colors.primary} />
               </Svg>
 
-              {/* Connected Vibrating Sticker Tag */}
+              {/* Connected Vibrating Pill Tag */}
               <View style={styles.connectedTag}>
-                <View style={styles.connectedShadow} />
                 <View style={styles.connectedBadge}>
                   <Text style={styles.connectedText}>connected! ⚡</Text>
                 </View>
@@ -134,20 +133,19 @@ export const PartnerString: React.FC<PartnerStringProps> = ({
                 {/* Sagging catenary curve */}
                 <Path
                   d={`M 6,${scale(20)} Q ${stringWidth / 2},${stringHeight - scale(6)} ${stringWidth - 6},${scale(20)}`}
-                  stroke={theme.colors.primary} // Tomato #FF5A3C
-                  strokeWidth={2.8}
+                  stroke={theme.colors.rose}
+                  strokeWidth={2.5}
                   strokeLinecap="round"
                   strokeDasharray="5,3"
                 />
                 {/* Tie knot on left */}
-                <Circle cx={6} cy={scale(20)} r={3.5} fill={theme.colors.border} />
+                <Circle cx={6} cy={scale(20)} r={3.5} fill={theme.colors.rose} />
                 {/* Tie knot on right */}
-                <Circle cx={stringWidth - 6} cy={scale(20)} r={3.5} fill={theme.colors.border} />
+                <Circle cx={stringWidth - 6} cy={scale(20)} r={3.5} fill={theme.colors.rose} />
               </Svg>
 
-              {/* Resting Tag */}
+              {/* Resting Pill Tag */}
               <View style={styles.slackTag}>
-                <View style={styles.slackShadow} />
                 <View style={styles.slackBadge}>
                   <Text style={styles.slackText}>away 💤</Text>
                 </View>
@@ -174,14 +172,18 @@ export const PartnerString: React.FC<PartnerStringProps> = ({
 
       {/* 2. Automatic Online Status Indicator Pill */}
       <View style={styles.statusTogglePill}>
-        <View style={styles.statusPillShadow} />
         <View
           style={[
             styles.statusPillSurface,
             isPartnerOnline ? styles.pillOnline : styles.pillOffline,
           ]}
         >
-          <Text style={styles.statusDot}>{isPartnerOnline ? '🟢' : '⚪'}</Text>
+          <View
+            style={[
+              styles.statusDotCircle,
+              { backgroundColor: isPartnerOnline ? theme.colors.success : theme.colors.textMuted },
+            ]}
+          />
           <Text style={styles.statusPillText}>
             {isPartnerOnline
               ? `${partnerName} is Online • String is tight ⚡`
@@ -233,55 +235,33 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     top: scale(6),
   },
-  connectedShadow: {
-    position: 'absolute',
-    top: 2,
-    left: 2,
-    right: -2,
-    bottom: -2,
-    backgroundColor: theme.colors.border,
-    borderRadius: 8,
-    zIndex: 0,
-  },
   connectedBadge: {
-    position: 'relative',
-    zIndex: 1,
-    backgroundColor: theme.colors.stickers.matcha, // Fresh Mint
-    borderWidth: 1.5,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: 8,
-    paddingHorizontal: scale(8),
-    paddingVertical: scale(2),
+    borderRadius: theme.roundness.full,
+    paddingHorizontal: scale(10),
+    paddingVertical: scale(3),
+    ...theme.shadows.hardSm,
   },
   connectedText: {
     fontFamily: theme.typography.families.bold,
     fontSize: scale(11),
-    color: theme.colors.text,
+    color: theme.colors.primary,
   },
   slackTag: {
     position: 'absolute',
     alignSelf: 'center',
     bottom: scale(10),
   },
-  slackShadow: {
-    position: 'absolute',
-    top: 2,
-    left: 2,
-    right: -2,
-    bottom: -2,
-    backgroundColor: theme.colors.border,
-    borderRadius: 8,
-    zIndex: 0,
-  },
   slackBadge: {
-    position: 'relative',
-    zIndex: 1,
     backgroundColor: theme.colors.surface,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: 8,
-    paddingHorizontal: scale(8),
-    paddingVertical: scale(2),
+    borderRadius: theme.roundness.full,
+    paddingHorizontal: scale(10),
+    paddingVertical: scale(3),
+    ...theme.shadows.hardSm,
   },
   slackText: {
     fontFamily: theme.typography.families.bold,
@@ -289,39 +269,29 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   statusTogglePill: {
-    position: 'relative',
     marginTop: scale(4),
   },
-  statusPillShadow: {
-    position: 'absolute',
-    top: 3,
-    left: 3,
-    right: -3,
-    bottom: -3,
-    backgroundColor: theme.colors.border,
-    borderRadius: 14,
-    zIndex: 0,
-  },
   statusPillSurface: {
-    position: 'relative',
-    zIndex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
-    borderWidth: 2,
+    borderRadius: theme.roundness.full,
+    borderWidth: 1,
     borderColor: theme.colors.border,
     paddingHorizontal: scale(14),
     paddingVertical: scale(6),
-    gap: scale(6),
+    gap: scale(8),
+    ...theme.shadows.hardSm,
   },
   pillOnline: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: theme.colors.surfaceBlush,
   },
   pillOffline: {
     backgroundColor: theme.colors.surface,
   },
-  statusDot: {
-    fontSize: scale(10),
+  statusDotCircle: {
+    width: scale(8),
+    height: scale(8),
+    borderRadius: 4,
   },
   statusPillText: {
     fontFamily: theme.typography.families.bold,

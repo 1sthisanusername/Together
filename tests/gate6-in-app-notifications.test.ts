@@ -52,7 +52,7 @@ describe('GATE 6: In-App Notification Inbox & Realtime Architecture', () => {
     expect(getRouteForNotification('photo_message')).toBe('/chat');
 
     // 2. Letters
-    expect(getRouteForNotification('letter')).toBe('/(tabs)/dates');
+    expect(getRouteForNotification('letter')).toBe('/(tabs)/memories');
 
     // 3. Photo mission / challenges
     expect(getRouteForNotification('photo_mission')).toBe('/(tabs)/play');
@@ -93,7 +93,7 @@ describe('GATE 6: In-App Notification Inbox & Realtime Architecture', () => {
     const content = fs.readFileSync(homePath, 'utf8');
 
     expect(content).toContain("router.push('/notifications')");
-    expect(content).toContain('🔔');
+    expect(content).toContain('<BellIcon');
     expect(content).toContain('useUnreadNotificationsCount');
     expect(content).toContain('unreadNotifsCount > 0');
     expect(content).toContain('styles.badge');

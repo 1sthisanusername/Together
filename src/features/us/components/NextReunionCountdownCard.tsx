@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Button, DatePickerField } from '@/shared/ui';
+import { Button, DatePickerField, PlaneIcon, HeartIcon } from '@/shared/ui';
 import type { ImportantDate } from '@/shared/types';
 import { useAddImportantDate } from '../hooks/useUsData';
 import { theme, scale } from '@/shared/theme';
@@ -33,14 +33,11 @@ export const NextReunionCountdownCard: React.FC<NextReunionCountdownCardProps> =
 
   return (
     <View style={styles.cardWrapper}>
-      {/* Hard Ink Shadow */}
-      <View style={styles.cardShadow} />
-
-      {/* Paper Surface */}
       <View style={styles.cardSurface}>
         <View style={styles.headerRow}>
           <View style={styles.labelBadge}>
-            <Text style={styles.labelText}>✈️ Next Reunion</Text>
+            <PlaneIcon color={theme.colors.text} size={scale(13)} />
+            <Text style={styles.labelText}>Next Reunion</Text>
           </View>
         </View>
 
@@ -52,7 +49,10 @@ export const NextReunionCountdownCard: React.FC<NextReunionCountdownCardProps> =
                 {daysRemaining === 1 ? 'day' : 'days'}
               </Text>
             </View>
-            <Text style={styles.daysSub}>until we are together again 💕</Text>
+            <View style={styles.subRow}>
+              <Text style={styles.daysSub}>until we are together again</Text>
+              <HeartIcon color={theme.colors.rose} size={scale(13)} filled />
+            </View>
             <Text style={styles.dateDetail}>
               Target: {new Date(nextMeeting.event_date).toLocaleDateString(undefined, {
                 month: 'short',
@@ -68,9 +68,9 @@ export const NextReunionCountdownCard: React.FC<NextReunionCountdownCardProps> =
               <TouchableOpacity
                 style={styles.setBtn}
                 onPress={() => setShowDatePicker(true)}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
               >
-                <Text style={styles.setBtnText}>＋ Set Reunion Countdown</Text>
+                <Text style={styles.setBtnText}>+ Set Reunion Countdown</Text>
               </TouchableOpacity>
             ) : (
               <View style={styles.inputContainer}>
@@ -109,47 +109,36 @@ export const NextReunionCountdownCard: React.FC<NextReunionCountdownCardProps> =
 
 const styles = StyleSheet.create({
   cardWrapper: {
-    marginHorizontal: scale(18),
-    marginVertical: scale(8),
-    position: 'relative',
-  },
-  cardShadow: {
-    position: 'absolute',
-    top: 4,
-    left: 4,
-    right: -4,
-    bottom: -4,
-    backgroundColor: theme.colors.border,
-    borderRadius: 20,
-    zIndex: 0,
+    width: '100%',
+    marginVertical: scale(7),
   },
   cardSurface: {
-    position: 'relative',
-    zIndex: 1,
-    backgroundColor: theme.colors.background, // Paper #FFF4E3
+    backgroundColor: theme.colors.surfaceBlush, // #FFF0ED soft pale blush
     borderRadius: 20,
-    borderWidth: 2.5,
-    borderColor: theme.colors.border,
-    padding: scale(18),
+    borderWidth: 1,
+    borderColor: theme.colors.border, // #FBE9E7
+    padding: scale(20),
     alignItems: 'center',
+    ...theme.shadows.card,
   },
   headerRow: {
     width: '100%',
     alignItems: 'flex-start',
-    marginBottom: scale(8),
+    marginBottom: scale(10),
   },
   labelBadge: {
-    backgroundColor: theme.colors.stickers.sunshine, // Sunshine Yellow
-    borderWidth: 1.5,
-    borderColor: theme.colors.border,
-    borderRadius: 8,
-    paddingHorizontal: scale(8),
-    paddingVertical: scale(3),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(5),
+    backgroundColor: theme.colors.sunset,
+    borderRadius: theme.roundness.full,
+    paddingHorizontal: scale(10),
+    paddingVertical: scale(4),
   },
   labelText: {
     fontFamily: theme.typography.families.bold,
     fontSize: scale(11),
-    color: theme.colors.text,
+    color: theme.colors.text, // #3E2723
   },
   countdownContainer: {
     alignItems: 'center',
@@ -163,25 +152,30 @@ const styles = StyleSheet.create({
   daysNumber: {
     fontFamily: theme.typography.families.display,
     fontSize: scale(52),
-    fontWeight: '900',
-    color: theme.colors.text,
+    fontWeight: '800',
+    color: theme.colors.primary, // Amour Red #E53935 for milestone counter
     lineHeight: scale(58),
   },
   daysUnit: {
     fontFamily: theme.typography.families.bold,
     fontSize: scale(20),
-    color: theme.colors.primary,
+    color: theme.colors.coral, // Joyful Coral #FF7043
+  },
+  subRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(5),
+    marginTop: scale(2),
   },
   daysSub: {
     fontFamily: theme.typography.families.bold,
     fontSize: scale(13),
-    color: theme.colors.textSecondary,
-    marginTop: scale(2),
+    color: theme.colors.text, // Cozy Night #3E2723
   },
   dateDetail: {
     fontFamily: theme.typography.families.body,
     fontSize: scale(12),
-    color: theme.colors.textMuted,
+    color: theme.colors.textSecondary, // #7A625A
     marginTop: scale(6),
   },
   emptyContainer: {
@@ -193,22 +187,20 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.families.body,
     fontSize: scale(13),
     color: theme.colors.textSecondary,
-    marginBottom: scale(10),
+    marginBottom: scale(12),
     textAlign: 'center',
   },
   setBtn: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1.5,
-    borderColor: theme.colors.border,
-    borderRadius: 12,
-    paddingHorizontal: scale(14),
-    paddingVertical: scale(8),
+    backgroundColor: theme.colors.primary, // #E53935
+    borderRadius: 9999,
+    paddingHorizontal: scale(18),
+    paddingVertical: scale(10),
     ...theme.shadows.hardSm,
   },
   setBtnText: {
     fontFamily: theme.typography.families.bold,
     fontSize: scale(13),
-    color: theme.colors.text,
+    color: '#FFFFFF',
   },
   inputContainer: {
     width: '100%',

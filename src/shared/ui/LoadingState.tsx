@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface LoadingStateProps {
   message?: string;
@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    padding: scale(24),
     backgroundColor: theme.colors.background,
   },
 });

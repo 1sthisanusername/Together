@@ -12,38 +12,43 @@ vi.mock('@expo-google-fonts/caveat', () => import('./mocks/expo-google-fonts'));
 
 import { theme, palette, scale, spacing, radii, motion, triggerHaptic } from '../src/shared/theme';
 
-describe('STRING & STICKERS Design System & Motion Tokens', () => {
-  it('implements String & Stickers palette with exact specified color tokens', () => {
-    // Paper #FFF4E3, Ink #2B2118, Tomato #FF5A3C, Sunshine #FFC93C, Pool #2EC4B6, Bubblegum #FF8FB1
-    expect(theme.colors.background).toBe(palette.paper);
-    expect(theme.colors.background).toBe('#FFF4E3');
+describe('LOVE, JOY & CONNECTION Design System & Motion Tokens', () => {
+  it('implements Love, Joy & Connection palette with exact specified color tokens', () => {
+    expect(theme.colors.background).toBe(palette.warmOffWhite);
+    expect(theme.colors.background).toBe('#FFFDFB');
 
-    expect(theme.colors.text).toBe(palette.ink);
-    expect(theme.colors.text).toBe('#2B2118');
+    expect(theme.colors.text).toBe(palette.cozyNight);
+    expect(theme.colors.text).toBe('#3E2723');
 
-    expect(theme.colors.border).toBe(palette.ink);
-    expect(theme.colors.border).toBe('#2B2118');
+    expect(theme.colors.textSecondary).toBe(palette.cozyNightMuted);
+    expect(theme.colors.textSecondary).toBe('#7A625A');
 
-    expect(theme.colors.primary).toBe(palette.tomato);
-    expect(theme.colors.primary).toBe('#FF5A3C');
+    expect(theme.colors.border).toBe(palette.disabledBlush);
+    expect(theme.colors.border).toBe('#FBE9E7');
 
-    expect(theme.colors.secondary).toBe(palette.sunshine);
-    expect(theme.colors.secondary).toBe('#FFC93C');
+    expect(theme.colors.primary).toBe(palette.amourRed);
+    expect(theme.colors.primary).toBe('#E53935');
+    expect(theme.colors.primaryPressed).toBe('#C62828');
 
-    expect(theme.colors.pool).toBe(palette.pool);
-    expect(theme.colors.pool).toBe('#2EC4B6');
+    expect(theme.colors.secondary).toBe(palette.joyfulCoral);
+    expect(theme.colors.secondary).toBe('#FF7043');
 
-    expect(theme.colors.bubblegum).toBe(palette.bubblegum);
-    expect(theme.colors.bubblegum).toBe('#FF8FB1');
+    expect(theme.colors.rose).toBe(palette.blushingRose);
+    expect(theme.colors.rose).toBe('#F48FB1');
+
+    expect(theme.colors.sunset).toBe(palette.warmSunset);
+    expect(theme.colors.sunset).toBe('#FFB74D');
+
+    expect(theme.colors.surfaceBlush).toBe('#FFF0ED');
   });
 
   it('implements the dark mode variant tokens', () => {
-    expect(palette.paperDark).toBe('#1C1611');
-    expect(palette.inkDark).toBe('#FFF4E3');
-    expect(palette.tomatoDark).toBe('#FF6E54');
-    expect(palette.sunshineDark).toBe('#FFD359');
-    expect(palette.poolDark).toBe('#40D9CB');
-    expect(palette.bubblegumDark).toBe('#FFA1BD');
+    expect(palette.paperDark).toBe('#1E1412');
+    expect(palette.inkDark).toBe('#FFFDFB');
+    expect(palette.amourRedDark).toBe('#EF5350');
+    expect(palette.coralDark).toBe('#FF8A65');
+    expect(palette.roseDark).toBe('#F8BBD0');
+    expect(palette.sunsetDark).toBe('#FFCC80');
   });
 
   it('configures Google Fonts: Bricolage Grotesque, Figtree, Caveat', () => {
@@ -54,12 +59,13 @@ describe('STRING & STICKERS Design System & Motion Tokens', () => {
     expect(theme.typography.fontFamilies.handwrittenRegular).toBe('Caveat_600SemiBold');
   });
 
-  it('enforces chunky outlines and hard offset ink shadows (no blur/soft shadows)', () => {
-    expect(theme.borders.chunky).toBe(2);
-    expect(theme.shadows.hardSm.shadowColor).toBe('#2B2118');
-    expect(theme.shadows.hardSm.shadowRadius).toBe(0); // 0 blur!
-    expect(theme.shadows.hardMd.shadowRadius).toBe(0);
-    expect(theme.shadows.hardLg.shadowRadius).toBe(0);
+  it('enforces subtle 1px borders and warm diffused Cozy Night shadows', () => {
+    expect(theme.borders.subtle).toBe(1);
+    expect(theme.shadows.card.shadowColor).toBe('#3E2723');
+    expect(theme.shadows.card.shadowOpacity).toBe(0.07);
+    expect(theme.shadows.card.shadowRadius).toBe(24);
+    expect(theme.roundness.lg).toBe(20);
+    expect(theme.roundness.full).toBe(9999);
   });
 
   it('motion tokens provide spring physics and sink-into-shadow press offset', async () => {
@@ -71,16 +77,16 @@ describe('STRING & STICKERS Design System & Motion Tokens', () => {
     await expect(triggerHaptic('light')).resolves.not.toThrow();
   });
 
-  it('splash screen background matches Paper color #FFF4E3 in app.json', () => {
+  it('splash screen background matches warm off-white #FFFDFB in app.json', () => {
     const appJsonPath = path.resolve(__dirname, '../app.json');
     const content = fs.readFileSync(appJsonPath, 'utf8');
     const appJson = JSON.parse(content);
 
-    expect(appJson.expo.splash.backgroundColor).toBe('#FFF4E3');
+    expect(appJson.expo.splash.backgroundColor).toBe('#FFFDFB');
     if (appJson.expo.android?.splash) {
-      expect(appJson.expo.android.splash.backgroundColor).toBe('#FFF4E3');
+      expect(appJson.expo.android.splash.backgroundColor).toBe('#FFFDFB');
     }
-    expect(appJson.expo.android.adaptiveIcon.backgroundColor).toBe('#FFF4E3');
+    expect(appJson.expo.android.adaptiveIcon.backgroundColor).toBe('#FFFDFB');
   });
 
   it('shared components export clean String & Stickers primitives', () => {

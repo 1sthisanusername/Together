@@ -152,7 +152,6 @@ export default function BucketListScreen() {
           activeOpacity={0.8}
           accessibilityLabel="Back"
         >
-          <View style={styles.btnShadow} />
           <View style={styles.btnSurface}>
             <Text style={styles.backArrow}>←</Text>
             <Text style={styles.backLabel}>Back</Text>
@@ -167,9 +166,8 @@ export default function BucketListScreen() {
           activeOpacity={0.8}
           accessibilityLabel="Add dream"
         >
-          <View style={styles.btnShadow} />
-          <View style={[styles.btnSurface, { backgroundColor: theme.colors.secondary }]}>
-            <Text style={styles.addLabel}>+ Dream</Text>
+          <View style={[styles.btnSurface, { backgroundColor: theme.colors.primary }]}>
+            <Text style={[styles.addLabel, { color: theme.colors.textInverse }]}>+ Dream</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -274,7 +272,6 @@ export default function BucketListScreen() {
         >
           {items.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <View style={styles.emptyCardShadow} />
               <View style={styles.emptyCardSurface}>
                 <Text style={styles.emptyEmoji}>
                   {statusFilter === 'completed' ? '🌟' : '🗺️'}
@@ -345,7 +342,7 @@ export default function BucketListScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: theme.colors.background, // Paper #FFF4E3
+    backgroundColor: theme.colors.background,
   },
   topBar: {
     flexDirection: 'row',
@@ -360,28 +357,17 @@ const styles = StyleSheet.create({
   addButtonWrapper: {
     position: 'relative',
   },
-  btnShadow: {
-    position: 'absolute',
-    top: 2,
-    left: 2,
-    right: -2,
-    bottom: -2,
-    backgroundColor: theme.colors.shadowInk,
-    borderRadius: scale(10),
-    zIndex: 0,
-  },
   btnSurface: {
-    position: 'relative',
-    zIndex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: scale(10),
-    paddingVertical: scale(6),
+    paddingHorizontal: scale(14),
+    paddingVertical: scale(8),
     backgroundColor: theme.colors.surface,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: scale(10),
+    borderRadius: theme.roundness.full,
     gap: scale(4),
+    ...theme.shadows.hardSm,
   },
   backArrow: {
     fontSize: scale(14),
@@ -411,22 +397,21 @@ const styles = StyleSheet.create({
     marginHorizontal: scale(16),
     marginTop: scale(6),
     marginBottom: scale(8),
-    backgroundColor: '#EFE7DA',
-    padding: scale(3),
-    borderRadius: scale(12),
-    borderWidth: 1.5,
+    backgroundColor: theme.colors.surfaceBlush,
+    padding: scale(4),
+    borderRadius: theme.roundness.full,
+    borderWidth: 1,
     borderColor: theme.colors.border,
   },
   segmentTab: {
     flex: 1,
-    paddingVertical: scale(6),
+    paddingVertical: scale(7),
     alignItems: 'center',
-    borderRadius: scale(9),
+    borderRadius: theme.roundness.full,
   },
   segmentTabActive: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    ...theme.shadows.hardSm,
   },
   segmentLabel: {
     fontFamily: theme.typography.fontFamilies.sans,
@@ -436,7 +421,7 @@ const styles = StyleSheet.create({
   },
   segmentLabelActive: {
     fontWeight: '800',
-    color: theme.colors.text,
+    color: theme.colors.primary,
   },
   categoryBarWrapper: {
     marginBottom: scale(8),
@@ -448,17 +433,17 @@ const styles = StyleSheet.create({
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: scale(10),
-    paddingVertical: scale(5),
-    borderRadius: scale(10),
-    borderWidth: 1.5,
-    borderColor: theme.colors.borderLight,
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(6),
+    borderRadius: theme.roundness.full,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
     gap: scale(4),
   },
   filterChipSelected: {
-    backgroundColor: theme.colors.pool,
-    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderColor: theme.colors.primary,
   },
   filterChipIcon: {
     fontSize: scale(11),
@@ -470,7 +455,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   filterChipLabelSelected: {
-    color: theme.colors.text,
+    color: theme.colors.primary,
     fontWeight: '800',
   },
   scrollContent: {
@@ -487,25 +472,14 @@ const styles = StyleSheet.create({
     marginHorizontal: scale(16),
     marginTop: scale(24),
   },
-  emptyCardShadow: {
-    position: 'absolute',
-    top: 4,
-    left: 4,
-    right: -4,
-    bottom: -4,
-    backgroundColor: theme.colors.shadowInk,
-    borderRadius: scale(16),
-    zIndex: 0,
-  },
   emptyCardSurface: {
-    position: 'relative',
-    zIndex: 1,
-    backgroundColor: theme.colors.surface,
-    borderWidth: 2,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: scale(16),
+    borderRadius: theme.roundness.lg,
     padding: scale(24),
     alignItems: 'center',
+    ...theme.shadows.card,
   },
   emptyEmoji: {
     fontSize: scale(36),

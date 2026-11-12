@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,17 +11,26 @@ import {
   InvitePartnerCard,
   JoinCoupleCard,
   UnlinkCoupleDialog,
+  OnboardingNicknameCard,
+  RestoreBackupPromptCard,
 } from '@/features/couple';
 import { useAuthStore, OnboardingWalkthrough } from '@/features/auth';
-import { LoadingState, ErrorState, Avatar, Button, Card, KeyboardScreen, Input, DatePickerField } from '@/shared/ui';
-import { theme } from '@/shared/theme';
+import { useUpdateProfile } from '@/features/settings/hooks/useSettings';
+import { restoreBackupArchive, validateCoupleBackupArchive } from '@/features/settings/services/googleDriveBackup';
+import { safeSecureStore as SecureStore } from '@/shared/utils';
+import { LoadingState, ErrorState, Avatar, Button, Card, KeyboardScreen, DatePickerField } from '@/shared/ui';
+import { theme, scale, triggerHaptic } from '@/shared/theme';
+
+const NICKNAME_SET_PREFIX = 'together_nickname_configured_';
+const RESTORE_PROMPTED_PREFIX = 'together_restore_prompted_';
 
 export default function PairScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { signOut } = useAuthStore();
+  const { signOut, user, profile } = useAuthStore();
   const { data: coupleData, isLoading, error, refetch } = useActiveCouple();
   const { mutate: updateStartDate, isPending: isUpdatingDate } = useUpdateStartDate();
+  const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile();
   const { unlinkedMessage, clearUnlinkedMessage } = usePartnerUnlinkStore();
 
   const [tab, setTab] = useState<'create' | 'join'>('create');
@@ -29,7 +38,113 @@ export default function PairScreen() {
   const [annivInput, setAnnivInput] = useState('');
   const [annivError, setAnnivError] = useState<string | null>(null);
 
-  if (isLoading) {
+  // Dedicated Nickname Step State
+  const [hasSetNickname, setHasSetNickname] = useState<boolean | null>(null);
+
+  // Backup restore check state
+  const [discoveredBackup, setDiscoveredBackup] = useState<{
+    archive: any;
+    date: string;
+    size: string;
+  } | null>(null);
+  const [isRestoringBackup, setIsRestoringBackup] = useState(false);
+
+  const userId = user?.id || '';
+
+  // 1. Check if user already configured their nickname
+  useEffect(() => {
+    if (!userId) return;
+    SecureStore.getItemAsync(`${NICKNAME_SET_PREFIX}${userId}`)
+      .then((val) => {
+        setHasSetNickname(val === 'true');
+      })
+      .catch(() => setHasSetNickname(true));
+  }, [userId]);
+
+  // 2. First sign-in device backup discovery
+  useEffect(() => {
+    if (!userId) return;
+    SecureStore.getItemAsync(`${RESTORE_PROMPTED_PREFIX}${userId}`).then((prompted) => {
+      if (prompted) return;
+      // Probe Google Drive appdata / local backup cache
+      try {
+        import('expo-file-system/legacy').then((FileSystem) => {
+          if (!FileSystem.documentDirectory) return;
+          FileSystem.readDirectoryAsync(FileSystem.documentDirectory)
+            .then(async (files) => {
+              const backupFile = files.find(
+                (f) => f.includes('together_couple_') && f.endsWith('.json')
+              );
+              if (backupFile) {
+                const content = await FileSystem.readAsStringAsync(
+                  `${FileSystem.documentDirectory}${backupFile}`
+                );
+                const validated = validateCoupleBackupArchive(content);
+                const info = await FileSystem.getInfoAsync(
+                  `${FileSystem.documentDirectory}${backupFile}`
+                );
+                const formattedDate = validated.exportedAt
+                  ? new Date(validated.exportedAt).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  : 'Recent';
+                const formattedSize = `${Math.round(((info as any).size || content.length) / 1024)} KB`;
+                setDiscoveredBackup({
+                  archive: validated,
+                  date: formattedDate,
+                  size: formattedSize,
+                });
+              }
+            })
+            .catch(() => {});
+        });
+      } catch {
+        // Fallback
+      }
+    });
+  }, [userId]);
+
+  const handleConfirmNickname = async (nickname: string, letPartnerChoose: boolean) => {
+    try {
+      await updateProfile({ displayName: nickname });
+      if (letPartnerChoose && coupleData?.couple?.id) {
+        // Record let_partner_choose flag in couple metadata if applicable
+        await SecureStore.setItemAsync(
+          `let_partner_choose_${coupleData.couple.id}_${userId}`,
+          'true'
+        );
+      }
+      await SecureStore.setItemAsync(`${NICKNAME_SET_PREFIX}${userId}`, 'true');
+      setHasSetNickname(true);
+    } catch {
+      // Handled
+    }
+  };
+
+  const handleRestoreBackup = async () => {
+    if (!discoveredBackup || !coupleData?.couple?.id) return;
+    try {
+      setIsRestoringBackup(true);
+      await restoreBackupArchive(discoveredBackup.archive, coupleData.couple.id);
+      setIsRestoringBackup(false);
+      await SecureStore.setItemAsync(`${RESTORE_PROMPTED_PREFIX}${userId}`, 'true');
+      setDiscoveredBackup(null);
+      triggerHaptic('success');
+      Alert.alert('Space Restored! ☁️', 'Your letters, memories, and dreams have been safely restored.');
+    } catch (err: any) {
+      setIsRestoringBackup(false);
+      Alert.alert('Restore Failed', err.message || 'Could not restore backup.');
+    }
+  };
+
+  const handleSkipRestore = async () => {
+    await SecureStore.setItemAsync(`${RESTORE_PROMPTED_PREFIX}${userId}`, 'true');
+    setDiscoveredBackup(null);
+  };
+
+  if (isLoading || hasSetNickname === null) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <LoadingState message={t('common.loading')} />
@@ -52,8 +167,17 @@ export default function PairScreen() {
 
   const coupleState = coupleData?.state || 'NO_COUPLE';
 
+  const handleSignOut = async () => {
+    try {
+      triggerHaptic('medium');
+      await signOut();
+      router.replace('/(auth)/login');
+    } catch {
+      router.replace('/(auth)/login');
+    }
+  };
+
   const handleSaveAnniversary = () => {
-    if (!annivInput.trim()) return;
     setAnnivError(null);
     const today = new Date().toISOString().split('T')[0];
     if (annivInput.trim() > today) {
@@ -71,12 +195,47 @@ export default function PairScreen() {
     });
   };
 
+  // Google first name extraction
+  const googleFullName = user?.user_metadata?.full_name || user?.user_metadata?.name || '';
+  const googleFirstName = googleFullName.split(' ')[0] || user?.email?.split('@')[0] || 'Friend';
+
+  // Dedicated Nickname Step (runs before pairing on fresh sign-in)
+  if (!hasSetNickname) {
+    return (
+      <KeyboardScreen contentContainerStyle={styles.scrollContent}>
+        <OnboardingNicknameCard
+          initialGoogleName={googleFirstName}
+          onConfirm={handleConfirmNickname}
+          isLoading={isUpdatingProfile}
+        />
+        <Button
+          title={t('auth.signOut')}
+          variant="ghost"
+          size="sm"
+          onPress={handleSignOut}
+          style={styles.signOutButton}
+        />
+      </KeyboardScreen>
+    );
+  }
+
   // 1. ACTIVE: 2 members linked
   if (coupleState === 'ACTIVE' && coupleData?.partner) {
     const hasStartDate = !!coupleData.couple?.start_date;
 
     return (
       <KeyboardScreen contentContainerStyle={styles.scrollContent}>
+        {/* Optional Google Drive restore prompt on first device sign in */}
+        {discoveredBackup ? (
+          <RestoreBackupPromptCard
+            backupDate={discoveredBackup.date}
+            backupSize={discoveredBackup.size}
+            onRestore={handleRestoreBackup}
+            onSkip={handleSkipRestore}
+            isLoading={isRestoringBackup}
+          />
+        ) : null}
+
         <Card style={styles.connectedCard}>
           <Text style={styles.connectedBadge}>✓ {t('couple.linkedSuccessTitle')}</Text>
           <Avatar
@@ -89,7 +248,7 @@ export default function PairScreen() {
           </Text>
           <Text style={styles.connectedSubtitle}>{t('couple.linkedSuccessSubtitle')}</Text>
 
-          {/* Onboarding step: Optional anniversary date prompt */}
+          {/* Onboarding step: Optional anniversary date prompt (Once for new couples only) */}
           {!hasStartDate ? (
             <View style={styles.annivPromptBox}>
               <Text style={styles.annivPromptIcon}>💕</Text>
@@ -150,7 +309,7 @@ export default function PairScreen() {
           title={t('auth.signOut')}
           variant="ghost"
           size="md"
-          onPress={signOut}
+          onPress={handleSignOut}
           style={styles.signOutButton}
         />
 
@@ -181,14 +340,13 @@ export default function PairScreen() {
             code={coupleData.pendingInvite.code}
             expiresAt={coupleData.pendingInvite.expires_at}
             onCancel={() => setShowUnlinkModal(true)}
-            onResend={() => refetch()}
           />
 
           <Button
             title={t('auth.signOut')}
             variant="ghost"
             size="md"
-            onPress={signOut}
+            onPress={handleSignOut}
             style={styles.signOutButton}
           />
 
@@ -252,7 +410,7 @@ export default function PairScreen() {
         title={t('auth.signOut')}
         variant="ghost"
         size="md"
-        onPress={signOut}
+        onPress={handleSignOut}
         style={styles.signOutButton}
       />
     </KeyboardScreen>
@@ -266,84 +424,83 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 32,
+    paddingHorizontal: scale(20),
+    paddingVertical: scale(32),
     alignItems: 'center',
     justifyContent: 'center',
   },
   unlinkedBanner: {
     width: '100%',
-    backgroundColor: '#fffbeb',
-    borderColor: '#fde68a',
+    backgroundColor: theme.colors.surfaceBlush,
+    borderColor: theme.colors.border,
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 20,
+    borderRadius: theme.roundness.lg,
+    padding: scale(12),
+    marginBottom: scale(20),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    ...theme.shadows.card,
   },
   unlinkedBannerText: {
-    fontSize: 14,
-    color: '#92400e',
+    fontSize: scale(14),
+    color: theme.colors.primary,
     fontWeight: '600',
     flex: 1,
   },
   dismissBtn: {
-    marginLeft: 12,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-    backgroundColor: '#fef3c7',
+    marginLeft: scale(12),
+    paddingVertical: scale(5),
+    paddingHorizontal: scale(10),
+    borderRadius: theme.roundness.full,
+    backgroundColor: theme.colors.surfaceDisabled,
   },
   dismissBtnText: {
-    fontSize: 12,
-    color: '#92400e',
+    fontSize: scale(12),
+    color: theme.colors.primary,
     fontWeight: '700',
   },
   header: {
-    marginBottom: 24,
+    marginBottom: scale(24),
     alignItems: 'center',
   },
   title: {
-    fontSize: 26,
+    fontSize: scale(26),
     fontWeight: '800',
     color: theme.colors.text,
-    marginBottom: 8,
+    marginBottom: scale(8),
     textAlign: 'center',
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: scale(15),
     color: theme.colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
-    paddingHorizontal: 16,
+    lineHeight: scale(22),
+    paddingHorizontal: scale(16),
   },
   segmentedControl: {
     flexDirection: 'row',
     backgroundColor: theme.colors.surfaceSubtle,
-    borderRadius: 14,
-    padding: 4,
-    marginBottom: 24,
+    borderRadius: theme.roundness.full,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: scale(4),
+    marginBottom: scale(24),
     width: '100%',
   },
   segment: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: scale(10),
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: theme.roundness.full,
   },
   segmentActive: {
     backgroundColor: theme.colors.surface,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
+    ...theme.shadows.hardSm,
   },
   segmentText: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '600',
     color: theme.colors.textSecondary,
   },
@@ -354,64 +511,64 @@ const styles = StyleSheet.create({
   connectedCard: {
     width: '100%',
     alignItems: 'center',
-    padding: 24,
+    padding: scale(24),
   },
   connectedBadge: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '700',
     color: theme.colors.primary,
     backgroundColor: theme.colors.surfaceSubtle,
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    marginBottom: 16,
+    paddingVertical: scale(4),
+    paddingHorizontal: scale(12),
+    borderRadius: theme.roundness.full,
+    marginBottom: scale(16),
     overflow: 'hidden',
   },
   partnerName: {
-    fontSize: 22,
+    fontSize: scale(22),
     fontWeight: '800',
     color: theme.colors.text,
-    marginTop: 12,
-    marginBottom: 6,
+    marginTop: scale(12),
+    marginBottom: scale(6),
   },
   connectedSubtitle: {
-    fontSize: 14,
+    fontSize: scale(14),
     color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: scale(20),
   },
   unlinkButton: {
-    marginTop: 8,
+    marginTop: scale(8),
   },
   annivPromptBox: {
     width: '100%',
-    backgroundColor: '#FAF6F2',
+    backgroundColor: theme.colors.surfaceBlush,
     borderWidth: 1,
-    borderColor: '#EFE3D8',
-    borderRadius: 16,
-    padding: 16,
+    borderColor: theme.colors.border,
+    borderRadius: theme.roundness.lg,
+    padding: scale(16),
     alignItems: 'center',
-    marginVertical: 12,
+    marginVertical: scale(12),
   },
   annivPromptIcon: {
-    fontSize: 26,
-    marginBottom: 6,
+    fontSize: scale(26),
+    marginBottom: scale(6),
   },
   annivPromptTitle: {
-    fontSize: 16,
+    fontSize: scale(16),
     fontWeight: '800',
     color: theme.colors.text,
-    marginBottom: 4,
+    marginBottom: scale(4),
     textAlign: 'center',
   },
   annivPromptSubtitle: {
-    fontSize: 12,
+    fontSize: scale(12),
     color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 12,
-    lineHeight: 18,
+    marginBottom: scale(12),
+    lineHeight: scale(18),
   },
   signOutButton: {
-    marginTop: 20,
+    marginTop: scale(20),
   },
 });

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Input, DatePickerField } from '@/shared/ui';
+import { Card, Button, Input, DatePickerField, FormSheet } from '@/shared/ui';
 import type { ImportantDate } from '@/shared/types';
 import {
   useAddImportantDate,
@@ -10,7 +10,7 @@ import {
 } from '../hooks/useUsData';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface ImportantDatesListProps {
   dates: ImportantDate[];
@@ -89,24 +89,44 @@ export const ImportantDatesList: React.FC<ImportantDatesListProps> = ({ dates })
     );
   };
 
+  const handleClose = () => {
+    setTitle('');
+    setDateStr('');
+    setEditingId(null);
+    setShowAdd(false);
+  };
+
   return (
     <Card style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.title}>📅 {t('us.importantDatesTitle')}</Text>
         <Button
-          title={showAdd ? t('common.cancel') : `+ ${t('us.addDate')}`}
+          title={`+ ${t('us.addDate')}`}
           size="sm"
           variant="ghost"
           onPress={handleStartAdd}
         />
       </View>
 
-      {showAdd ? (
-        <View style={styles.addForm}>
-          <Text style={styles.formTitle}>
-            {editingId ? 'Edit Important Date' : 'Add Special Date'}
-          </Text>
-
+      <FormSheet
+        visible={showAdd}
+        onClose={handleClose}
+        title={editingId ? 'Edit Important Date' : 'Add Special Date'}
+        primaryLabel={t('common.save')}
+        onPrimary={handleSave}
+        primaryDisabled={!title.trim() || !dateStr.trim() || isAdding || isUpdating}
+        primaryLoading={isAdding || isUpdating}
+        disabledReason={!title.trim() ? 'Please enter a title' : !dateStr.trim() ? 'Please choose a date' : null}
+        secondary={
+          <Button
+            title="Cancel"
+            variant="outline"
+            size="md"
+            onPress={handleClose}
+          />
+        }
+      >
+        <View style={styles.formSheetContent}>
           <Input
             placeholder="e.g. First Date, First Kiss, First Trip..."
             value={title}
@@ -127,20 +147,8 @@ export const ImportantDatesList: React.FC<ImportantDatesListProps> = ({ dates })
             <Text style={styles.checkbox}>{isRecurring ? '☑' : '☐'}</Text>
             <Text style={styles.recurringLabel}>Repeat every year (yearly reminder)</Text>
           </TouchableOpacity>
-
-          <View style={styles.formActions}>
-            <Button
-              title={t('common.save')}
-              variant="primary"
-              size="sm"
-              loading={isAdding || isUpdating}
-              disabled={!title.trim() || !dateStr.trim()}
-              onPress={handleSave}
-              style={{ flex: 1 }}
-            />
-          </View>
         </View>
-      ) : null}
+      </FormSheet>
 
       <View style={styles.list}>
         {dates.length === 0 ? (
@@ -204,142 +212,145 @@ export const ImportantDatesList: React.FC<ImportantDatesListProps> = ({ dates })
 
 const styles = StyleSheet.create({
   card: {
-    padding: 22,
-    marginVertical: 8,
+    padding: scale(22),
+    marginVertical: scale(8),
     width: '100%',
     backgroundColor: theme.colors.surface,
     borderColor: theme.colors.borderLight,
-    borderRadius: 20,
+    borderRadius: theme.roundness.lg,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: scale(16),
   },
   title: {
-    fontSize: 18,
+    fontSize: scale(18),
     fontWeight: '800',
     color: theme.colors.text,
     letterSpacing: -0.3,
   },
   addForm: {
     backgroundColor: theme.colors.surfaceSubtle,
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 16,
+    borderRadius: scale(14),
+    padding: scale(16),
+    marginBottom: scale(16),
     borderWidth: 1,
     borderColor: theme.colors.borderLight,
   },
   formTitle: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '700',
     color: theme.colors.text,
-    marginBottom: 10,
+    marginBottom: scale(10),
   },
   recurringRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginVertical: 10,
+    gap: scale(8),
+    marginVertical: scale(10),
   },
   checkbox: {
-    fontSize: 18,
+    fontSize: scale(18),
     color: theme.colors.primary,
   },
   recurringLabel: {
-    fontSize: 13,
+    fontSize: scale(13),
     color: theme.colors.textSecondary,
     fontWeight: '500',
   },
   formActions: {
     flexDirection: 'row',
-    marginTop: 6,
+    marginTop: scale(6),
   },
   list: {
-    gap: 10,
+    gap: scale(10),
   },
   dateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingVertical: scale(12),
+    paddingHorizontal: scale(14),
     backgroundColor: theme.colors.surfaceSubtle,
-    borderRadius: 14,
+    borderRadius: scale(14),
     borderWidth: 1,
     borderColor: theme.colors.borderLight,
   },
   dateIconWrapper: {
-    marginRight: 12,
+    marginRight: scale(12),
   },
   dateIcon: {
-    fontSize: 22,
+    fontSize: scale(22),
   },
   dateContent: {
     flex: 1,
   },
   dateTitle: {
-    fontSize: 15,
+    fontSize: scale(15),
     fontWeight: '700',
     color: theme.colors.text,
-    marginBottom: 2,
+    marginBottom: scale(2),
   },
   dateSub: {
-    fontSize: 12,
+    fontSize: scale(12),
     color: theme.colors.textSecondary,
   },
   tagRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 4,
+    gap: scale(8),
+    marginTop: scale(4),
     alignItems: 'center',
   },
   addedByTag: {
-    fontSize: 11,
-    color: '#8A7568',
-    backgroundColor: '#EDE5DE',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    fontSize: scale(11),
+    color: theme.colors.textSecondary,
+    backgroundColor: theme.colors.surfaceDisabled,
+    paddingHorizontal: scale(8),
+    paddingVertical: scale(2),
+    borderRadius: theme.roundness.full,
   },
   recurringTag: {
-    fontSize: 11,
+    fontSize: scale(11),
     color: theme.colors.primary,
     fontWeight: '600',
   },
   actionsCol: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginLeft: 8,
+    gap: scale(12),
+    marginLeft: scale(8),
   },
   actionBtn: {
-    padding: 4,
+    padding: scale(4),
   },
   editIcon: {
-    fontSize: 15,
+    fontSize: scale(15),
     color: theme.colors.textSecondary,
     fontWeight: '700',
   },
   deleteIcon: {
-    fontSize: 15,
-    color: '#DC2626',
+    fontSize: scale(15),
+    color: theme.colors.danger,
     fontWeight: '700',
   },
   emptyContainer: {
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: scale(16),
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '600',
     color: theme.colors.textSecondary,
-    marginBottom: 4,
+    marginBottom: scale(4),
   },
   emptySubtext: {
-    fontSize: 12,
+    fontSize: scale(12),
     color: theme.colors.textMuted,
     textAlign: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: scale(16),
+  },
+  formSheetContent: {
+    paddingBottom: scale(12),
   },
 });

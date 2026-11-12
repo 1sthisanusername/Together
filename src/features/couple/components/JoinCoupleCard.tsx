@@ -7,8 +7,8 @@ import { Card, Button, Input, ErrorState } from '@/shared/ui';
 import { acceptInviteSchema, type AcceptInviteInput } from '../schemas';
 import { useAcceptInvite } from '../hooks/useCouple';
 import { useAuthStore } from '@/features/auth';
-import { useUpdateProfile } from '@/features/settings';
-import { theme } from '@/shared/theme';
+import { useUpdateProfile } from '@/features/settings/hooks/useSettings';
+import { theme, scale } from '@/shared/theme';
 
 export interface JoinCoupleCardProps {
   onSuccess?: () => void;
@@ -61,21 +61,6 @@ export const JoinCoupleCard: React.FC<JoinCoupleCardProps> = ({ onSuccess }) => 
 
       <Controller
         control={control}
-        name="nickname"
-        render={({ field: { onChange, onBlur, value } }) => (
-          <Input
-            label="Your Nickname"
-            placeholder="e.g. Vrush, Sweetie, etc."
-            onBlur={onBlur}
-            onChangeText={onChange}
-            value={value}
-            error={errors.nickname?.message}
-          />
-        )}
-      />
-
-      <Controller
-        control={control}
         name="inviteCode"
         render={({ field: { onChange, onBlur, value } }) => (
           <Input
@@ -110,31 +95,31 @@ export const JoinCoupleCard: React.FC<JoinCoupleCardProps> = ({ onSuccess }) => 
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    padding: 24,
+    padding: scale(24),
     backgroundColor: theme.colors.surface,
     borderColor: theme.colors.borderLight,
   },
   title: {
-    fontSize: 20,
+    fontSize: scale(20),
     fontWeight: '800',
-    color: theme.colors.text, // #42362e
-    marginBottom: 6,
+    color: theme.colors.text,
+    marginBottom: scale(6),
     letterSpacing: -0.3,
   },
   subtitle: {
-    fontSize: 14,
-    color: theme.colors.textSecondary, // #a8917f
-    lineHeight: 20,
-    marginBottom: 18,
+    fontSize: scale(14),
+    color: theme.colors.textSecondary,
+    lineHeight: scale(20),
+    marginBottom: scale(18),
   },
   codeInput: {
-    fontSize: 22,
+    fontSize: scale(22),
     fontWeight: '800',
-    letterSpacing: Platform.OS === 'ios' ? 4 : 0,
+    letterSpacing: Platform.OS === 'ios' ? scale(4) : 0,
     textAlign: 'center',
-    color: theme.colors.text, // #42362e
+    color: theme.colors.text,
   },
   submitButton: {
-    marginTop: 8,
+    marginTop: scale(8),
   },
 });

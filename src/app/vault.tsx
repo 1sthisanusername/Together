@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useVaultAuth, VaultPinPad, VaultView } from '@/features/vault';
 import { LoadingState } from '@/shared/ui';
-import { triggerHaptic } from '@/shared/theme';
+import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export default function VaultScreen() {
   const router = useRouter();
@@ -49,43 +49,39 @@ export default function VaultScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFF4E3',
+    backgroundColor: theme.colors.background,
   },
   navBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: '#2B2118',
-    backgroundColor: '#FFF8EE',
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(12),
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceBlush,
   },
   backButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#2B2118',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#2B2118',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
+    paddingVertical: scale(7),
+    paddingHorizontal: scale(14),
+    borderRadius: theme.roundness.full,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    ...theme.shadows.hardSm,
   },
   backButtonText: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '800',
-    color: '#2B2118',
+    color: theme.colors.text,
   },
   navTitle: {
-    fontSize: 18,
+    fontSize: scale(18),
     fontWeight: '900',
-    color: '#2B2118',
+    color: theme.colors.text,
   },
   placeholder: {
-    width: 60,
+    width: scale(60),
   },
 });
 

@@ -37,7 +37,7 @@ describe('Phase 3: Play Tab, Activities & Reunion Extensions Verification', () =
     const content = fs.readFileSync(reunionCardPath, 'utf8');
 
     expect(content).toContain('theme.colors.border');
-    expect(content).toContain('theme.colors.background');
+    expect(content).toContain('theme.colors.surface');
     expect(content).toContain('daysNumber');
     expect(content).toContain('Next Reunion');
   });

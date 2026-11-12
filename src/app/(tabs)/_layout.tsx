@@ -14,28 +14,31 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.colors.primary, // Tomato #FF5A3C
-        tabBarInactiveTintColor: theme.colors.textSecondary, // Ink Muted #7A6E63
+        animation: 'shift',
+        tabBarActiveTintColor: theme.colors.primary, // Amour Red #E53935
+        tabBarInactiveTintColor: theme.colors.textInactive, // rgba(62, 39, 35, 0.5)
         tabBarStyle: {
-          backgroundColor: theme.colors.background, // Paper #FFF4E3
-          borderTopColor: theme.colors.border, // Ink #2B2118
-          borderTopWidth: 2,
-          height: scale(64) + bottomInset,
-          paddingBottom: bottomInset > 0 ? bottomInset + scale(4) : scale(8),
-          paddingTop: scale(8),
-          elevation: 0,
+          backgroundColor: theme.colors.background, // Warm off-white #FFFDFB
+          borderTopColor: theme.colors.border, // Subtle #FBE9E7
+          borderTopWidth: 1,
+          height: scale(72) + bottomInset,
+          paddingBottom: bottomInset > 0 ? bottomInset + scale(6) : scale(10),
+          paddingTop: scale(6),
+          ...theme.shadows.hardSm,
         },
         tabBarItemStyle: {
-          paddingBottom: scale(2),
+          paddingBottom: 0,
           justifyContent: 'center',
           alignItems: 'center',
         },
         tabBarLabelStyle: {
           fontFamily: theme.typography.fontFamilies.display,
           fontSize: scale(11),
-          fontWeight: '800',
+          fontWeight: '700',
           letterSpacing: -0.1,
-          marginBottom: scale(2),
+          lineHeight: scale(14),
+          marginTop: scale(2),
+          marginBottom: 0,
         },
       }}
     >
@@ -43,35 +46,45 @@ export default function TabLayout() {
         name="home"
         options={{
           title: t('nav.home'),
-          tabBarIcon: ({ color }) => <HomeIcon color={color} size={scale(20)} />,
+          tabBarIcon: ({ color, focused }) => (
+            <HomeIcon color={color} focused={focused} size={scale(22)} />
+          ),
         }}
       />
       <Tabs.Screen
         name="play"
         options={{
           title: t('nav.play'),
-          tabBarIcon: ({ color }) => <PlayIcon color={color} size={scale(20)} />,
+          tabBarIcon: ({ color, focused }) => (
+            <PlayIcon color={color} focused={focused} size={scale(22)} />
+          ),
         }}
       />
       <Tabs.Screen
         name="camera"
         options={{
           title: t('nav.camera', 'Camera'),
-          tabBarIcon: ({ color }) => <CameraIcon color={color} size={scale(20)} />,
+          tabBarIcon: ({ color, focused }) => (
+            <CameraIcon color={color} focused={focused} size={scale(28)} />
+          ),
         }}
       />
       <Tabs.Screen
         name="memories"
         options={{
           title: t('nav.memories'),
-          tabBarIcon: ({ color }) => <MemoriesIcon color={color} size={scale(20)} />,
+          tabBarIcon: ({ color, focused }) => (
+            <MemoriesIcon color={color} focused={focused} size={scale(22)} />
+          ),
         }}
       />
       <Tabs.Screen
         name="us"
         options={{
           title: t('nav.us'),
-          tabBarIcon: ({ color }) => <UsIcon color={color} size={scale(20)} />,
+          tabBarIcon: ({ color, focused }) => (
+            <UsIcon color={color} focused={focused} size={scale(22)} />
+          ),
         }}
       />
       <Tabs.Screen

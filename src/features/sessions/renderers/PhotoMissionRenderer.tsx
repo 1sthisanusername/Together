@@ -17,21 +17,13 @@ import { Card, Button, Input } from '@/shared/ui';
 import type { SessionData } from '../hooks/useSession';
 import { useSubmitEvent, useCompleteSession, useSaveSessionAsMemory } from '../hooks/useSession';
 import { storage } from '@/services';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface PhotoMissionProps {
   data: SessionData;
   partnerName: string;
   onFinish: () => void;
 }
-
-// Curated sample snaps for quick testing/demo across web & emulators
-const SAMPLE_PHOTOS = [
-  { label: '☕ Morning Coffee', url: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&auto=format&fit=crop' },
-  { label: '🌅 Golden Hour', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop' },
-  { label: '🛋️ Cozy Home', url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&auto=format&fit=crop' },
-  { label: '🍕 Dinner Date', url: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&auto=format&fit=crop' },
-];
 
 export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
   data,
@@ -47,7 +39,7 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
   };
 
   const [caption, setCaption] = useState('');
-  const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string>(SAMPLE_PHOTOS[0].url);
+  const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [mySignedUrl, setMySignedUrl] = useState<string | null>(null);
   const [partnerSignedUrl, setPartnerSignedUrl] = useState<string | null>(null);
@@ -289,11 +281,9 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
                 transition={200}
               />
             ) : (
-              <Image
-                source={{ uri: SAMPLE_PHOTOS[1].url }}
-                style={styles.polaroidImage}
-                contentFit="cover"
-              />
+              <View style={[styles.polaroidImage, styles.imageLoadingBox]}>
+                <Text style={styles.imagePlaceholderIcon}>📸</Text>
+              </View>
             )}
             <Text style={styles.polaroidCaption} numberOfLines={2}>
               {partnerName}: "{(partnerSubmission?.payload as any)?.caption || 'So sweet!'}"
@@ -404,36 +394,21 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.orPresetsText}>or choose a sample moment:</Text>
-          <View style={styles.presetRow}>
-            {SAMPLE_PHOTOS.map((p, idx) => (
-              <TouchableOpacity
-                key={idx}
-                onPress={() => setSelectedPhotoUrl(p.url)}
-                style={[
-                  styles.presetChip,
-                  selectedPhotoUrl === p.url && styles.presetChipActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.presetChipText,
-                    selectedPhotoUrl === p.url && styles.presetChipTextActive,
-                  ]}
-                >
-                  {p.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={styles.previewContainer}>
-            <Image
-              source={{ uri: selectedPhotoUrl }}
-              style={styles.previewImage}
-              contentFit="cover"
-            />
-          </View>
+          {selectedPhotoUrl ? (
+            <View style={styles.previewContainer}>
+              <Image
+                source={{ uri: selectedPhotoUrl }}
+                style={styles.previewImage}
+                contentFit="cover"
+              />
+            </View>
+          ) : (
+            <View style={styles.noPhotoPlaceholder}>
+              <Text style={styles.noPhotoEmoji}>📷</Text>
+              <Text style={styles.noPhotoText}>No photo selected yet</Text>
+              <Text style={styles.noPhotoSub}>Snap a photo or pick one from your gallery above</Text>
+            </View>
+          )}
 
           <Input
             placeholder="Add a sweet caption or note..."
@@ -521,11 +496,9 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
                   transition={200}
                 />
               ) : (
-                <Image
-                  source={{ uri: SAMPLE_PHOTOS[1].url }}
-                  style={styles.polaroidImage}
-                  contentFit="cover"
-                />
+                <View style={[styles.polaroidImage, styles.imageLoadingBox]}>
+                  <Text style={styles.imagePlaceholderIcon}>📸</Text>
+                </View>
               )}
               <Text style={styles.polaroidCaption} numberOfLines={2}>
                 {partnerName}: "{(partnerSubmission?.payload as any)?.caption}"
@@ -581,72 +554,72 @@ export const PhotoMissionRenderer: React.FC<PhotoMissionProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    padding: scale(16),
     width: '100%',
   },
   badge: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '700',
-    color: '#0284C7',
+    color: theme.colors.primary,
     textTransform: 'uppercase',
     letterSpacing: 1,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: scale(8),
   },
   prompt: {
-    fontSize: 22,
+    fontSize: scale(22),
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text,
     textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 28,
+    marginBottom: scale(16),
+    lineHeight: scale(28),
   },
   instructionCard: {
-    padding: 18,
-    backgroundColor: '#F0F9FF',
-    borderColor: '#BAE6FD',
-    marginBottom: 16,
+    padding: scale(18),
+    backgroundColor: theme.colors.surfaceBlush,
+    borderColor: theme.colors.border,
+    marginBottom: scale(16),
   },
   instructionText: {
-    fontSize: 15,
-    color: '#0369A1',
-    lineHeight: 22,
+    fontSize: scale(15),
+    color: theme.colors.text,
+    lineHeight: scale(22),
     textAlign: 'center',
   },
   partnerReadyTopCard: {
-    backgroundColor: '#FFF0F5',
-    borderColor: '#FFB6C1',
-    borderWidth: 2,
-    padding: 16,
-    marginBottom: 18,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderColor: theme.colors.rose,
+    borderWidth: 1,
+    padding: scale(16),
+    marginBottom: scale(18),
   },
   partnerReadyHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
-    marginBottom: 12,
+    gap: scale(12),
+    marginBottom: scale(12),
   },
   partnerReadyIcon: {
-    fontSize: 28,
+    fontSize: scale(28),
   },
   partnerReadyTitle: {
-    fontSize: 16,
+    fontSize: scale(16),
     fontWeight: '800',
-    color: '#DB2777',
-    marginBottom: 4,
+    color: theme.colors.primary,
+    marginBottom: scale(4),
   },
   partnerReadySubtitle: {
-    fontSize: 13,
-    color: '#831843',
-    lineHeight: 18,
+    fontSize: scale(13),
+    color: theme.colors.textSecondary,
+    lineHeight: scale(18),
   },
   lockedPolaroidTeaser: {
-    backgroundColor: '#FFE4E6',
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: '#FDA4AF',
+    backgroundColor: theme.colors.surfaceDisabled,
+    borderRadius: theme.roundness.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.rose,
     borderStyle: 'dashed',
-    padding: 16,
+    padding: scale(16),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -654,105 +627,103 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   lockedIcon: {
-    fontSize: 28,
-    marginBottom: 6,
+    fontSize: scale(28),
+    marginBottom: scale(6),
   },
   lockedTeaserText: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '700',
-    color: '#9F1239',
-    marginBottom: 2,
+    color: theme.colors.primary,
+    marginBottom: scale(2),
   },
   lockedTeaserSub: {
-    fontSize: 12,
-    color: '#BE123C',
+    fontSize: scale(12),
+    color: theme.colors.secondary,
     fontStyle: 'italic',
   },
   mutualNoticePill: {
-    backgroundColor: '#FEF3C7',
-    borderColor: '#FDE68A',
-    borderWidth: 1.5,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderColor: theme.colors.sunset,
+    borderWidth: 1,
+    borderRadius: theme.roundness.full,
+    paddingHorizontal: scale(14),
+    paddingVertical: scale(8),
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: scale(16),
   },
   mutualNoticeText: {
-    fontSize: 12,
-    color: '#92400E',
+    fontSize: scale(12),
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
   uploadSection: {
     width: '100%',
   },
   sectionSubtitle: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '700',
     color: theme.colors.textSecondary,
-    marginBottom: 8,
+    marginBottom: scale(8),
   },
   actionButtonsRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 12,
+    gap: scale(10),
+    marginBottom: scale(12),
   },
   captureActionBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 12,
+    paddingVertical: scale(12),
+    paddingHorizontal: scale(8),
+    borderRadius: theme.roundness.full,
     backgroundColor: theme.colors.surface,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: theme.colors.borderLight,
   },
   captureActionText: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '700',
     color: theme.colors.text,
   },
-  orPresetsText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: theme.colors.textMuted || '#94A3B8',
-    marginBottom: 8,
+  imagePlaceholderIcon: {
+    fontSize: scale(28),
   },
-  presetRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 12,
-  },
-  presetChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#f1f5f9',
+  noPhotoPlaceholder: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: theme.roundness.lg,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderStyle: 'dashed',
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceBlush,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: scale(14),
+    padding: scale(16),
   },
-  presetChipActive: {
-    backgroundColor: '#e0f2fe',
-    borderColor: '#38bdf8',
+  noPhotoEmoji: {
+    fontSize: scale(32),
+    marginBottom: scale(6),
   },
-  presetChipText: {
-    fontSize: 13,
-    color: '#475569',
-    fontWeight: '600',
-  },
-  presetChipTextActive: {
-    color: '#0284c7',
+  noPhotoText: {
+    fontSize: scale(14),
     fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: scale(2),
+  },
+  noPhotoSub: {
+    fontSize: scale(12),
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
   },
   previewContainer: {
     width: '100%',
-    height: 180,
-    borderRadius: 12,
+    aspectRatio: 16 / 9,
+    borderRadius: theme.roundness.lg,
     overflow: 'hidden',
-    marginBottom: 14,
+    marginBottom: scale(14),
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
@@ -761,169 +732,165 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   submitBtn: {
-    marginTop: 8,
+    marginTop: scale(8),
   },
   submittedCard: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
+    backgroundColor: theme.colors.surfaceBlush,
+    borderColor: theme.colors.primary,
     alignItems: 'center',
-    padding: 16,
-    marginBottom: 16,
+    padding: scale(16),
+    marginBottom: scale(16),
   },
   submittedTitle: {
-    fontSize: 16,
+    fontSize: scale(16),
     fontWeight: '800',
-    color: '#15803D',
-    marginBottom: 6,
+    color: theme.colors.primary,
+    marginBottom: scale(6),
   },
   submittedCaption: {
-    fontSize: 14,
-    color: '#166534',
+    fontSize: scale(14),
+    color: theme.colors.text,
     fontStyle: 'italic',
   },
   revealSection: {
-    marginVertical: 12,
+    marginVertical: scale(12),
   },
   revealBanner: {
-    backgroundColor: '#FAF5FF',
-    borderColor: '#E9D5FF',
+    backgroundColor: theme.colors.surfaceBlush,
+    borderColor: theme.colors.rose,
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: theme.roundness.lg,
+    padding: scale(14),
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: scale(14),
   },
   revealBannerEmoji: {
-    fontSize: 24,
-    marginBottom: 4,
+    fontSize: scale(24),
+    marginBottom: scale(4),
   },
   revealBannerTitle: {
-    fontSize: 17,
+    fontSize: scale(17),
     fontWeight: '800',
-    color: '#7E22CE',
+    color: theme.colors.primary,
   },
   revealBannerSub: {
-    fontSize: 13,
-    color: '#9333EA',
-    marginTop: 2,
+    fontSize: scale(13),
+    color: theme.colors.textSecondary,
+    marginTop: scale(2),
   },
   revealedRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: scale(12),
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: scale(16),
   },
   polaroidFrame: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    padding: 8,
-    paddingBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 3,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.roundness.lg,
+    padding: scale(8),
+    paddingBottom: scale(12),
+    ...theme.shadows.card,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.colors.border,
   },
   polaroidImage: {
     width: '100%',
-    height: 120,
-    borderRadius: 6,
-    marginBottom: 8,
+    aspectRatio: 1,
+    borderRadius: theme.roundness.md,
+    marginBottom: scale(8),
   },
   imageLoadingBox: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: theme.colors.surfaceBlush,
     alignItems: 'center',
     justifyContent: 'center',
   },
   polaroidCaption: {
-    fontSize: 12,
-    color: '#334155',
+    fontSize: scale(12),
+    color: theme.colors.text,
     fontStyle: 'italic',
     textAlign: 'center',
   },
   tapToZoomHint: {
-    fontSize: 10,
-    color: theme.colors.textMuted || '#94A3B8',
+    fontSize: scale(10),
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: scale(4),
   },
   waitingCard: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
+    backgroundColor: theme.colors.surfaceBlush,
+    borderColor: theme.colors.sunset,
     alignItems: 'center',
-    padding: 20,
-    marginBottom: 16,
+    padding: scale(20),
+    marginBottom: scale(16),
   },
   waitingLock: {
-    fontSize: 32,
-    marginBottom: 8,
+    fontSize: scale(32),
+    marginBottom: scale(8),
   },
   waitingTitle: {
-    fontSize: 16,
+    fontSize: scale(16),
     fontWeight: '800',
-    color: '#B45309',
-    marginBottom: 6,
+    color: theme.colors.secondary,
+    marginBottom: scale(6),
   },
   waitingText: {
-    fontSize: 14,
-    color: '#92400E',
+    fontSize: scale(14),
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: scale(20),
   },
   completeButton: {
-    marginTop: 12,
+    marginTop: scale(12),
   },
   completedContainer: {
     alignItems: 'center',
-    padding: 24,
+    padding: scale(24),
   },
   completedEmoji: {
-    fontSize: 48,
-    marginBottom: 16,
+    fontSize: scale(48),
+    marginBottom: scale(16),
   },
   completedTitle: {
-    fontSize: 24,
+    fontSize: scale(24),
     fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 8,
+    color: theme.colors.text,
+    marginBottom: scale(8),
   },
   completedSubtitle: {
-    fontSize: 15,
-    color: '#64748B',
+    fontSize: scale(15),
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: scale(20),
   },
   saveButton: {
     width: '100%',
-    marginBottom: 12,
+    marginBottom: scale(12),
   },
   homeButton: {
     width: '100%',
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: 'rgba(62, 39, 35, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: scale(20),
   },
   modalCloseBtn: {
     position: 'absolute',
-    top: 50,
-    right: 20,
+    top: scale(50),
+    right: scale(20),
     zIndex: 10,
     backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(8),
+    borderRadius: theme.roundness.full,
   },
   modalCloseText: {
     color: '#FFFFFF',
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: scale(14),
   },
   modalContent: {
     width: '100%',
@@ -931,15 +898,16 @@ const styles = StyleSheet.create({
   },
   modalImage: {
     width: '100%',
-    height: 400,
-    borderRadius: 12,
+    aspectRatio: 1,
+    maxHeight: scale(480),
+    borderRadius: theme.roundness.md,
   },
   modalCaption: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: scale(16),
     fontWeight: '600',
-    marginTop: 16,
+    marginTop: scale(16),
     textAlign: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: scale(20),
   },
 });

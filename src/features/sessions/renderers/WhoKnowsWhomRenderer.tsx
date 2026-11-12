@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Input } from '@/shared/ui';
+import { Card, Button, Input, ProgressBar } from '@/shared/ui';
 import type { SessionData } from '../hooks/useSession';
 import { useSubmitEvent, useAdvanceRound, useCompleteSession, useSaveSessionAsMemory } from '../hooks/useSession';
+import { theme, scale } from '@/shared/theme';
 
 export interface WhoKnowsWhomProps {
   data: SessionData;
@@ -129,6 +130,7 @@ export const WhoKnowsWhomRenderer: React.FC<WhoKnowsWhomProps> = ({
           {t('sessions.round', { current: currentRoundIdx + 1, total: rounds.length })}
         </Text>
       </View>
+      <ProgressBar current={currentRoundIdx + 1} total={rounds.length} />
 
       <View style={styles.roleBanner}>
         <Text style={styles.roleText}>
@@ -256,162 +258,163 @@ const styles = StyleSheet.create({
     color: '#4F46E5',
   },
   roundText: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '700',
-    color: '#6366F1',
+    color: theme.colors.primary,
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   promptText: {
-    fontSize: 20,
+    fontSize: scale(20),
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text,
     textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 28,
+    marginBottom: scale(24),
+    lineHeight: scale(28),
   },
   optionsList: {
-    gap: 10,
+    gap: scale(10),
   },
   optionBtn: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 18,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.roundness.lg,
+    padding: scale(18),
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     alignItems: 'center',
+    ...theme.shadows.card,
   },
   optionSelected: {
-    borderColor: '#6366F1',
-    backgroundColor: '#EEF2FF',
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.surfaceBlush,
   },
   optionPartner: {
-    borderColor: '#EC4899',
+    borderColor: theme.colors.rose,
   },
   myBadge: {
-    marginTop: 6,
-    fontSize: 12,
+    marginTop: scale(6),
+    fontSize: scale(12),
     fontWeight: '700',
-    color: '#4F46E5',
+    color: theme.colors.primary,
   },
   partnerBadge: {
-    marginTop: 6,
-    fontSize: 12,
+    marginTop: scale(6),
+    fontSize: scale(12),
     fontWeight: '700',
-    color: '#EC4899',
+    color: theme.colors.rose,
   },
   matchCard: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
+    backgroundColor: theme.colors.surfaceBlush,
+    borderColor: theme.colors.primary,
     alignItems: 'center',
-    padding: 16,
-    marginBottom: 12,
+    padding: scale(16),
+    marginBottom: scale(12),
   },
   differCard: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: theme.colors.surfaceSubtle,
+    borderColor: theme.colors.border,
     alignItems: 'center',
-    padding: 16,
-    marginBottom: 12,
+    padding: scale(16),
+    marginBottom: scale(12),
   },
   matchTitle: {
-    fontSize: 15,
+    fontSize: scale(15),
     fontWeight: '700',
-    color: '#065F46',
+    color: theme.colors.text,
     textAlign: 'center',
   },
   optionBtnText: {
-    fontSize: 15,
+    fontSize: scale(15),
     fontWeight: '700',
-    color: '#1E293B',
+    color: theme.colors.text,
   },
   inputSection: {
-    marginTop: 8,
+    marginTop: scale(8),
   },
   lockedCard: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.colors.surfaceBlush,
     alignItems: 'center',
-    padding: 16,
+    padding: scale(16),
   },
   lockedLabel: {
-    fontSize: 12,
+    fontSize: scale(12),
     fontWeight: '600',
-    color: '#64748B',
-    marginBottom: 4,
+    color: theme.colors.textSecondary,
+    marginBottom: scale(4),
   },
   lockedValue: {
-    fontSize: 16,
+    fontSize: scale(16),
     fontWeight: '700',
-    color: '#1E293B',
+    color: theme.colors.text,
   },
   statusCard: {
-    backgroundColor: '#F8FAFC',
-    marginTop: 20,
+    backgroundColor: theme.colors.surfaceBlush,
+    marginTop: scale(20),
     alignItems: 'center',
   },
   statusText: {
-    fontSize: 14,
-    color: '#64748B',
+    fontSize: scale(14),
+    color: theme.colors.textSecondary,
     fontWeight: '600',
   },
   partnerWaitingCard: {
-    backgroundColor: '#FEF3C7',
-    borderColor: '#FDE68A',
-    marginTop: 20,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderColor: theme.colors.sunset,
+    marginTop: scale(20),
     alignItems: 'center',
   },
   partnerWaitingText: {
-    fontSize: 14,
-    color: '#B45309',
+    fontSize: scale(14),
+    color: theme.colors.secondary,
     fontWeight: '700',
     textAlign: 'center',
   },
   revealSection: {
-    marginTop: 20,
+    marginTop: scale(20),
   },
   partnerRevealCard: {
-    backgroundColor: '#FDF2F8',
-    borderColor: '#FCE7F3',
+    backgroundColor: theme.colors.surfaceBlush,
+    borderColor: theme.colors.rose,
     alignItems: 'center',
-    padding: 16,
+    padding: scale(16),
   },
   revealPartnerLabel: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '700',
-    color: '#DB2777',
-    marginBottom: 4,
+    color: theme.colors.primary,
+    marginBottom: scale(4),
   },
   revealPartnerValue: {
-    fontSize: 16,
+    fontSize: scale(16),
     fontWeight: '800',
-    color: '#831843',
+    color: theme.colors.text,
   },
   nextButton: {
-    marginTop: 16,
+    marginTop: scale(16),
   },
   completedContainer: {
     alignItems: 'center',
-    padding: 32,
+    padding: scale(32),
   },
   completedEmoji: {
-    fontSize: 48,
-    marginBottom: 16,
+    fontSize: scale(48),
+    marginBottom: scale(16),
   },
   completedTitle: {
-    fontSize: 24,
+    fontSize: scale(24),
     fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 8,
+    color: theme.colors.text,
+    marginBottom: scale(8),
   },
   completedSubtitle: {
-    fontSize: 15,
-    color: '#64748B',
+    fontSize: scale(15),
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 28,
+    marginBottom: scale(28),
   },
   saveButton: {
     width: '100%',
-    marginBottom: 12,
+    marginBottom: scale(12),
   },
   homeButton: {
     width: '100%',

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -9,10 +9,10 @@ export interface LogoProps {
 
 export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true }) => {
   const dimensions = {
-    sm: { imageSize: 36, textSize: 16 },
-    md: { imageSize: 56, textSize: 22 },
-    lg: { imageSize: 76, textSize: 28 },
-    xl: { imageSize: 96, textSize: 36 },
+    sm: { imageSize: scale(36), textSize: scale(16) },
+    md: { imageSize: scale(56), textSize: scale(22) },
+    lg: { imageSize: scale(76), textSize: scale(28) },
+    xl: { imageSize: scale(96), textSize: scale(36) },
   }[size];
 
   return (
@@ -43,18 +43,18 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: scale(10),
   },
   brandText: {
     fontWeight: '800',
-    color: theme.colors.text, // #42362E deep espresso
+    color: theme.colors.text,
     letterSpacing: -0.5,
   },
   subText: {
-    fontSize: 12,
-    color: theme.colors.textSecondary, // #A8917F soft cedar
+    fontSize: scale(12),
+    color: theme.colors.textSecondary,
     letterSpacing: 0.8,
-    marginTop: 2,
+    marginTop: scale(2),
     textTransform: 'lowercase',
   },
 });

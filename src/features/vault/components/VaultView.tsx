@@ -14,8 +14,8 @@ import { useLetters, LetterCard, ReadLetterModal, EnhancedLetter } from '@/featu
 import { useVaultItems, useCreateVaultItem, useDeleteVaultItem, VaultItem } from '../hooks/useVaultItems';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
-import { Button, LoadingState, EmptyState } from '@/shared/ui';
-import { triggerHaptic } from '@/shared/theme';
+import { Button, LoadingState, EmptyState, FormSheet } from '@/shared/ui';
+import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export interface VaultViewProps {
   onLock: () => void;
@@ -204,55 +204,43 @@ export const VaultView: React.FC<VaultViewProps> = ({ onLock }) => {
       />
 
       {/* Add Secret Note Modal */}
-      <Modal visible={showAddNoteModal} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>🔒 New Secret Note</Text>
-              <TouchableOpacity onPress={() => setShowAddNoteModal(false)}>
-                <Text style={styles.modalClose}>✕</Text>
-              </TouchableOpacity>
-            </View>
+      <FormSheet
+        visible={showAddNoteModal}
+        onClose={() => setShowAddNoteModal(false)}
+        title="🔒 New Secret Note"
+        primaryLabel="Save Secret 🔒"
+        onPrimary={handleCreateNote}
+        primaryDisabled={!newNoteContent.trim() || isCreating}
+        primaryLoading={isCreating}
+        disabledReason={!newNoteContent.trim() ? 'Please write your secret note before saving' : null}
+        secondary={
+          <Button
+            title="Cancel"
+            variant="outline"
+            size="md"
+            onPress={() => setShowAddNoteModal(false)}
+            style={styles.modalBtn}
+          />
+        }
+      >
+        <TextInput
+          style={styles.inputTitle}
+          placeholder="Title (optional)"
+          placeholderTextColor="#7A6B5D"
+          value={newNoteTitle}
+          onChangeText={setNewNoteTitle}
+        />
 
-            <TextInput
-              style={styles.inputTitle}
-              placeholder="Title (optional)"
-              placeholderTextColor="#7A6B5D"
-              value={newNoteTitle}
-              onChangeText={setNewNoteTitle}
-            />
-
-            <TextInput
-              style={styles.inputContent}
-              placeholder="Write your secret, password, or confession..."
-              placeholderTextColor="#7A6B5D"
-              value={newNoteContent}
-              onChangeText={setNewNoteContent}
-              multiline
-              numberOfLines={5}
-            />
-
-            <View style={styles.modalActions}>
-              <Button
-                title="Cancel"
-                variant="outline"
-                size="md"
-                onPress={() => setShowAddNoteModal(false)}
-                style={styles.modalBtn}
-              />
-              <Button
-                title="Save Secret 🔒"
-                variant="primary"
-                size="md"
-                loading={isCreating}
-                disabled={!newNoteContent.trim()}
-                onPress={handleCreateNote}
-                style={styles.modalBtn}
-              />
-            </View>
-          </View>
-        </View>
-      </Modal>
+        <TextInput
+          style={styles.inputContent}
+          placeholder="Write something private..."
+          placeholderTextColor="#7A6B5D"
+          value={newNoteContent}
+          onChangeText={setNewNoteContent}
+          multiline
+          numberOfLines={5}
+        />
+      </FormSheet>
     </View>
   );
 };
@@ -260,216 +248,193 @@ export const VaultView: React.FC<VaultViewProps> = ({ onLock }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF4E3',
+    backgroundColor: theme.colors.background,
   },
   headerBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: 2,
-    borderBottomColor: '#2B2118',
-    backgroundColor: '#FFF8EE',
+    paddingHorizontal: scale(20),
+    paddingVertical: scale(14),
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceBlush,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: scale(10),
   },
   vaultBadgeEmoji: {
-    fontSize: 26,
+    fontSize: scale(26),
   },
   vaultTitle: {
-    fontSize: 18,
+    fontSize: scale(18),
     fontWeight: '900',
-    color: '#2B2118',
+    color: theme.colors.text,
   },
   vaultSubtitle: {
-    fontSize: 11,
+    fontSize: scale(11),
     fontWeight: '700',
-    color: '#2EC4B6',
+    color: theme.colors.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   lockBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#2B2118',
-    backgroundColor: '#FFC93C',
-    shadowColor: '#2B2118',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
+    paddingVertical: scale(7),
+    paddingHorizontal: scale(14),
+    borderRadius: theme.roundness.full,
+    backgroundColor: theme.colors.sunset,
+    ...theme.shadows.hardSm,
   },
   lockBtnText: {
-    fontSize: 12,
+    fontSize: scale(12),
     fontWeight: '800',
-    color: '#2B2118',
+    color: theme.colors.text,
   },
   tabsRow: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 10,
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(12),
+    gap: scale(10),
   },
   tabBtn: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: '#2B2118',
-    backgroundColor: '#FFFFFF',
+    paddingVertical: scale(10),
+    borderRadius: theme.roundness.full,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
     alignItems: 'center',
   },
   tabBtnActive: {
-    backgroundColor: '#2EC4B6',
-    shadowColor: '#2B2118',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+    ...theme.shadows.hardSm,
   },
   tabBtnText: {
-    fontSize: 12,
+    fontSize: scale(12),
     fontWeight: '800',
-    color: '#2B2118',
+    color: theme.colors.text,
   },
   tabBtnTextActive: {
-    color: '#FFFFFF',
+    color: theme.colors.textInverse,
   },
   contentScroll: {
-    paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingHorizontal: scale(16),
+    paddingBottom: scale(40),
   },
   addNoteBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: '#2B2118',
-    backgroundColor: '#FF8FB1',
+    paddingVertical: scale(13),
+    paddingHorizontal: scale(18),
+    borderRadius: theme.roundness.full,
+    backgroundColor: theme.colors.rose,
     alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: '#2B2118',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
+    marginBottom: scale(16),
+    ...theme.shadows.hardSm,
   },
   addNoteBtnText: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '900',
-    color: '#2B2118',
+    color: theme.colors.text,
   },
   noteCard: {
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#2B2118',
-    backgroundColor: '#FFFFFF',
-    marginBottom: 12,
-    shadowColor: '#2B2118',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
+    padding: scale(16),
+    borderRadius: theme.roundness.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    marginBottom: scale(12),
+    ...theme.shadows.card,
   },
   noteHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: scale(8),
   },
   noteTitle: {
-    fontSize: 16,
+    fontSize: scale(16),
     fontWeight: '800',
-    color: '#2B2118',
+    color: theme.colors.text,
     flex: 1,
   },
   deleteIcon: {
-    fontSize: 16,
+    fontSize: scale(16),
   },
   noteContent: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: '#2B2118',
-    marginBottom: 10,
+    fontSize: scale(14),
+    lineHeight: scale(22),
+    color: theme.colors.text,
+    marginBottom: scale(10),
   },
   noteDate: {
-    fontSize: 11,
+    fontSize: scale(11),
     fontWeight: '700',
-    color: '#7A6B5D',
+    color: theme.colors.textSecondary,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(43, 33, 24, 0.6)',
+    backgroundColor: 'rgba(62, 39, 35, 0.55)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: scale(20),
   },
   modalContainer: {
-    width: '100%',
-    maxWidth: 360,
-    backgroundColor: '#FFF4E3',
-    borderRadius: 20,
-    borderWidth: 2.5,
-    borderColor: '#2B2118',
-    padding: 20,
-    shadowColor: '#2B2118',
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4,
+    width: '90%',
+    maxWidth: scale(360),
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.roundness.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: scale(20),
+    ...theme.shadows.card,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: scale(16),
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: scale(18),
     fontWeight: '900',
-    color: '#2B2118',
+    color: theme.colors.text,
   },
   modalClose: {
-    fontSize: 20,
+    fontSize: scale(20),
     fontWeight: '800',
-    color: '#2B2118',
-    padding: 4,
+    color: theme.colors.text,
+    padding: scale(4),
   },
   inputTitle: {
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#2B2118',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 14,
-    fontSize: 15,
+    height: scale(48),
+    borderRadius: theme.roundness.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    paddingHorizontal: scale(14),
+    fontSize: scale(15),
     fontWeight: '700',
-    color: '#2B2118',
-    marginBottom: 12,
+    color: theme.colors.text,
+    marginBottom: scale(12),
   },
   inputContent: {
-    height: 120,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#2B2118',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: '#2B2118',
+    height: scale(120),
+    borderRadius: theme.roundness.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    paddingHorizontal: scale(14),
+    paddingVertical: scale(12),
+    fontSize: scale(14),
+    color: theme.colors.text,
     textAlignVertical: 'top',
-    marginBottom: 16,
+    marginBottom: scale(16),
   },
   modalActions: {
     flexDirection: 'row',
-    gap: 10,
+    gap: scale(10),
   },
   modalBtn: {
     flex: 1,

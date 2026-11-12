@@ -22,14 +22,10 @@ export function useDailyQuestion() {
   const coupleId = coupleData?.couple?.id;
   const partnerId = coupleData?.partner?.id;
 
-  // Local YYYY-MM-DD string
-  const today = new Date();
-  const y = today.getFullYear();
-  const m = String(today.getMonth() + 1).padStart(2, '0');
-  const d = String(today.getDate()).padStart(2, '0');
-  const todayStr = `${y}-${m}-${d}`;
+  // Shared UTC YYYY-MM-DD string so both partners receive the identical question at the same moment
+  const todayStr = new Date().toISOString().split('T')[0];
 
-  const question = getDailyQuestionForDate(todayStr);
+  const question = getDailyQuestionForDate(todayStr, coupleId);
 
   const queryKey = ['daily_question', coupleId, todayStr];
 
@@ -102,8 +98,16 @@ export function useDailyQuestion() {
   useEffect(() => {
     if (!coupleId) return;
 
+    const channelName = `daily_q_${coupleId}_${todayStr}`;
+    const existing = supabase.getChannels().find(
+      (c) => c.topic === `realtime:${channelName}` || c.topic === channelName
+    );
+    if (existing) {
+      supabase.removeChannel(existing);
+    }
+
     const channel = supabase
-      .channel(`daily_q_${coupleId}_${todayStr}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -149,6 +153,7 @@ export function useDailyQuestion() {
             user_id: user.id,
             question_date: todayStr,
             question_text: question.text,
+            question_id: question.id,
             answer: trimmed,
           },
           { onConflict: 'couple_id, user_id, question_date' }

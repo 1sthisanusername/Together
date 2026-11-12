@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Card } from '@/shared/ui';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 const SLIDES = [
   {
@@ -79,59 +79,59 @@ export const OnboardingWalkthrough: React.FC = () => {
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    padding: 20,
-    backgroundColor: '#FDFBF9',
-    borderColor: '#EFE7E1',
-    borderRadius: 16,
-    marginBottom: 20,
+    padding: scale(20),
+    backgroundColor: theme.colors.surfaceBlush,
+    borderColor: theme.colors.border,
+    borderRadius: theme.roundness.lg,
+    marginBottom: scale(20),
     position: 'relative',
     alignItems: 'center',
   },
   closeBtn: {
     position: 'absolute',
-    top: 14,
-    right: 14,
-    padding: 6,
+    top: scale(14),
+    right: scale(14),
+    padding: scale(6),
     zIndex: 10,
   },
   closeText: {
-    fontSize: 16,
-    color: '#94A3B8',
+    fontSize: scale(16),
+    color: theme.colors.textSecondary,
     fontWeight: '700',
   },
   emoji: {
-    fontSize: 40,
-    marginBottom: 10,
+    fontSize: scale(40),
+    marginBottom: scale(10),
     textAlign: 'center',
   },
   title: {
-    fontSize: 18,
+    fontSize: scale(18),
     fontWeight: '800',
     color: theme.colors.text,
     textAlign: 'center',
-    marginBottom: 6,
+    marginBottom: scale(6),
   },
   desc: {
-    fontSize: 14,
+    fontSize: scale(14),
     color: theme.colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 16,
-    paddingHorizontal: 10,
+    lineHeight: scale(20),
+    marginBottom: scale(16),
+    paddingHorizontal: scale(10),
   },
   dotsRow: {
     flexDirection: 'row',
-    gap: 6,
-    marginBottom: 16,
+    gap: scale(6),
+    marginBottom: scale(16),
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#E2E8F0',
+    width: scale(8),
+    height: scale(8),
+    borderRadius: 9999,
+    backgroundColor: theme.colors.surfaceDisabled,
   },
   dotActive: {
-    width: 20,
+    width: scale(20),
     backgroundColor: theme.colors.primary,
   },
   actionRow: {
@@ -139,21 +139,21 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: scale(8),
   },
   skipText: {
-    fontSize: 14,
-    color: '#94A3B8',
+    fontSize: scale(14),
+    color: theme.colors.textSecondary,
     fontWeight: '600',
   },
   nextBtn: {
     backgroundColor: theme.colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(8),
+    borderRadius: theme.roundness.full,
   },
   nextText: {
-    fontSize: 13,
+    fontSize: scale(13),
     color: '#FFFFFF',
     fontWeight: '700',
   },

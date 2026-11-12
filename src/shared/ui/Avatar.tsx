@@ -32,32 +32,17 @@ export const Avatar: React.FC<AvatarProps> = ({
     .join('');
 
   const bgColors: Record<string, string> = {
-    sunshine: theme.colors.secondary, // Sunshine #FFC93C
-    pool: theme.colors.pool,          // Pool #2EC4B6
-    bubblegum: theme.colors.bubblegum,// Bubblegum #FF8FB1
-    tomato: theme.colors.primary,     // Tomato #FF5A3C
+    sunshine: theme.colors.sunset,    // Warm Sunset #FFB74D
+    pool: theme.colors.coral,         // Joyful Coral #FF7043
+    bubblegum: theme.colors.rose,     // Blushing Rose #F48FB1
+    tomato: theme.colors.primary,     // Amour Red #E53935
   };
 
-  const backgroundColor = bgColors[stickerColor] || theme.colors.secondary;
-  const shadowOffset = 3;
+  const backgroundColor = bgColors[stickerColor] || theme.colors.sunset;
 
   return (
-    <View style={[styles.wrapper, { width: scaledSize + shadowOffset, height: scaledSize + shadowOffset }]}>
-      {/* 1. Hard Offset Ink Shadow */}
-      <View
-        style={[
-          styles.shadowUnderlay,
-          {
-            width: scaledSize,
-            height: scaledSize,
-            borderRadius: scaledSize / 2,
-            top: shadowOffset,
-            left: shadowOffset,
-          },
-        ]}
-      />
-
-      {/* 2. Avatar Sticker Surface */}
+    <View style={[styles.wrapper, { width: scaledSize, height: scaledSize }]}>
+      {/* Avatar Surface */}
       {url ? (
         <Image
           source={{ uri: url }}
@@ -108,25 +93,18 @@ const styles = StyleSheet.create({
   wrapper: {
     position: 'relative',
   },
-  shadowUnderlay: {
-    position: 'absolute',
-    backgroundColor: theme.colors.shadowInk,
-    zIndex: 0,
-  },
   image: {
-    position: 'relative',
-    zIndex: 1,
-    borderWidth: 2.5,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    backgroundColor: theme.colors.surfaceBlush,
+    ...theme.shadows.hardSm,
   },
   fallback: {
-    position: 'relative',
-    zIndex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2.5,
-    borderColor: theme.colors.border,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    ...theme.shadows.hardSm,
   },
   initials: {
     fontFamily: theme.typography.fontFamilies.display,
@@ -137,16 +115,16 @@ const styles = StyleSheet.create({
   presenceDot: {
     position: 'absolute',
     zIndex: 2,
-    bottom: 2,
-    right: 2,
+    bottom: 0,
+    right: 0,
     width: 14,
     height: 14,
     borderRadius: 7,
     borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderColor: '#FFFFFF',
   },
   presenceOnline: {
-    backgroundColor: theme.colors.pool, // Pool Teal #2EC4B6
+    backgroundColor: theme.colors.online,
   },
   presenceOffline: {
     backgroundColor: theme.colors.textMuted,

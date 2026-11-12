@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Input } from '@/shared/ui';
 import { useAuthStore } from '@/features/auth';
-import { useUnlinkCouple, UnlinkCoupleDialog, useActiveCouple } from '@/features/couple';
+import { useActiveCouple } from '@/features/couple';
 import { useUpdateProfile } from '../hooks/useSettings';
 import { TimeZonePickerModal, getUtcOffsetString } from './TimeZonePickerModal';
 import {
@@ -13,7 +13,7 @@ import {
   setBackupFrequency,
   type BackupFrequency,
 } from '../services/googleDriveBackup';
-import { theme, triggerHaptic } from '@/shared/theme';
+import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export const SettingsView: React.FC = () => {
   const router = useRouter();
@@ -46,7 +46,6 @@ export const SettingsView: React.FC = () => {
   const [displayName, setDisplayName] = useState(profile?.display_name || '');
   const [timeZone, setTimeZone] = useState(profile?.timezone || detectedZone);
   const [showTimeZoneModal, setShowTimeZoneModal] = useState(false);
-  const [showUnlinkModal, setShowUnlinkModal] = useState(false);
 
   useEffect(() => {
     if (profile?.display_name) setDisplayName(profile.display_name);
@@ -187,50 +186,11 @@ export const SettingsView: React.FC = () => {
         />
       </Card>
 
-      {/* Danger Zone: Protected area placed at bottom to prevent accidental taps */}
-      <Text style={styles.dangerHeading}>Danger Zone</Text>
-      <Card style={styles.dangerCard}>
-        <View style={styles.dangerRow}>
-          <Text style={styles.dangerIcon}>⚠️</Text>
-          <View style={styles.dangerTextCol}>
-            <Text style={styles.dangerTitle}>Disconnect Couple Space</Text>
-            <Text style={styles.dangerSub}>
-              Permanently sever connection with your partner. Requires a 3-step verification process to prevent accidental unlinking.
-            </Text>
-          </View>
-        </View>
-
-        <Button
-          title="Unlink Couple Space..."
-          variant="outline"
-          size="md"
-          onPress={() => {
-            triggerHaptic('warning');
-            setShowUnlinkModal(true);
-          }}
-          style={styles.dangerBtn}
-          textStyle={styles.dangerBtnText}
-        />
-      </Card>
-
-      <Button
-        title={t('settings.signOut')}
-        variant="ghost"
-        size="md"
-        onPress={signOut}
-        style={styles.signOutBtn}
-      />
-
       <TimeZonePickerModal
         visible={showTimeZoneModal}
         selectedZone={timeZone}
         onClose={() => setShowTimeZoneModal(false)}
         onSelectZone={(selected) => setTimeZone(selected)}
-      />
-
-      <UnlinkCoupleDialog
-        visible={showUnlinkModal}
-        onClose={() => setShowUnlinkModal(false)}
       />
     </ScrollView>
   );
@@ -238,41 +198,41 @@ export const SettingsView: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    padding: scale(20),
     backgroundColor: theme.colors.background,
   },
   sectionHeading: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '800',
     color: theme.colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginTop: 12,
-    marginBottom: 8,
-    marginLeft: 4,
+    marginTop: scale(12),
+    marginBottom: scale(8),
+    marginLeft: scale(4),
   },
   card: {
-    padding: 20,
-    marginBottom: 16,
+    padding: scale(20),
+    marginBottom: scale(16),
     backgroundColor: theme.colors.surface,
     borderColor: theme.colors.borderLight,
   },
   timeZoneField: {
-    marginBottom: 16,
+    marginBottom: scale(16),
   },
   fieldLabel: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: 6,
+    marginBottom: scale(6),
     letterSpacing: 0.1,
   },
   fieldHint: {
-    fontSize: 12,
+    fontSize: scale(12),
     color: theme.colors.textMuted,
-    marginTop: -8,
-    marginBottom: 14,
-    lineHeight: 16,
+    marginTop: -scale(8),
+    marginBottom: scale(14),
+    lineHeight: scale(16),
   },
   timeZonePickerBtn: {
     flexDirection: 'row',
@@ -281,80 +241,80 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surfaceSubtle,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderRadius: scale(14),
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(12),
   },
   timeZoneTextCol: {
     flex: 1,
-    marginRight: 8,
+    marginRight: scale(8),
   },
   timeZoneValue: {
-    fontSize: 15,
+    fontSize: scale(15),
     fontWeight: '700',
     color: theme.colors.text,
-    marginBottom: 2,
+    marginBottom: scale(2),
   },
   timeZoneSub: {
-    fontSize: 12,
+    fontSize: scale(12),
     color: theme.colors.textSecondary,
   },
   offsetBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: scale(6),
   },
   offsetBadgeText: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '700',
     color: theme.colors.primary,
   },
   chevron: {
-    fontSize: 20,
+    fontSize: scale(20),
     fontWeight: '600',
     color: theme.colors.textSecondary,
   },
   saveBtn: {
-    marginTop: 8,
+    marginTop: scale(8),
   },
   vaultBtn: {
-    marginBottom: 12,
+    marginBottom: scale(12),
   },
   backupSubtext: {
-    fontSize: 13,
-    color: '#5C4A3A',
-    lineHeight: 18,
-    marginBottom: 12,
+    fontSize: scale(13),
+    color: theme.colors.textSecondary,
+    lineHeight: scale(18),
+    marginBottom: scale(12),
   },
   backupFieldLabel: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '700',
     color: theme.colors.text,
-    marginBottom: 8,
+    marginBottom: scale(8),
   },
   freqRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
+    gap: scale(8),
+    marginBottom: scale(16),
   },
   freqChip: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    borderRadius: 10,
-    borderWidth: 1.5,
+    paddingVertical: scale(9),
+    paddingHorizontal: scale(6),
+    borderRadius: theme.roundness.full,
+    borderWidth: 1,
     borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surfaceSubtle,
+    backgroundColor: theme.colors.surfaceBlush,
     alignItems: 'center',
     justifyContent: 'center',
   },
   freqChipActive: {
-    backgroundColor: '#FFC93C', // Sunshine accent
-    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.sunset,
+    borderColor: theme.colors.sunset,
     ...theme.shadows.hardSm,
   },
   freqChipText: {
-    fontSize: 12,
+    fontSize: scale(12),
     fontWeight: '600',
     color: theme.colors.textSecondary,
   },
@@ -363,47 +323,47 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   backupBtn: {
-    backgroundColor: '#2EC4B6',
+    backgroundColor: theme.colors.secondary,
   },
   dangerHeading: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '800',
     color: theme.colors.danger,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginTop: 16,
-    marginBottom: 8,
-    marginLeft: 4,
+    marginTop: scale(16),
+    marginBottom: scale(8),
+    marginLeft: scale(4),
   },
   dangerCard: {
-    padding: 18,
-    marginBottom: 16,
-    backgroundColor: '#FFF5F5',
-    borderColor: '#FECACA',
-    borderWidth: 2,
+    padding: scale(18),
+    marginBottom: scale(16),
+    backgroundColor: theme.colors.surfaceBlush,
+    borderColor: theme.colors.border,
+    borderWidth: 1,
   },
   dangerRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 14,
+    gap: scale(12),
+    marginBottom: scale(14),
     alignItems: 'flex-start',
   },
   dangerIcon: {
-    fontSize: 24,
+    fontSize: scale(24),
   },
   dangerTextCol: {
     flex: 1,
   },
   dangerTitle: {
-    fontSize: 15,
+    fontSize: scale(15),
     fontWeight: '800',
     color: theme.colors.danger,
-    marginBottom: 4,
+    marginBottom: scale(4),
   },
   dangerSub: {
-    fontSize: 13,
-    color: '#991B1B',
-    lineHeight: 18,
+    fontSize: scale(13),
+    color: theme.colors.primaryPressed,
+    lineHeight: scale(18),
   },
   dangerBtn: {
     borderColor: theme.colors.danger,
@@ -414,7 +374,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   signOutBtn: {
-    marginTop: 16,
+    marginTop: scale(16),
   },
 });
 

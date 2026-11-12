@@ -1,15 +1,17 @@
 import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
-import { theme } from '@/shared/theme';
+import { theme, wp } from '@/shared/theme';
 
 export default function IndexScreen() {
   // Plain background with the app logo only — seamless continuation of the native splash screen
   // Route decisions are managed exclusively by RootRouteGuard at the app root.
+  const logoSize = Math.round(Math.min(wp(36), 180));
+
   return (
     <View style={styles.container}>
       <Image
         source={require('../../assets/splash-icon.png')}
-        style={styles.logo}
+        style={{ width: logoSize, aspectRatio: 1 }}
         resizeMode="contain"
         accessibilityLabel="Together"
       />
@@ -23,9 +25,5 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  logo: {
-    width: 140,
-    height: 140,
   },
 });

@@ -3,18 +3,18 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 describe('GATE 5: Splash Screen & Clean Background Architecture', () => {
-  it('app.json configures splash with plain background #F7F9F6 and app logo', () => {
+  it('app.json configures splash with warm off-white background #FFFDFB and app logo', () => {
     const appJsonPath = path.resolve(__dirname, '../app.json');
     const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
 
     expect(appJson.expo.splash).toBeDefined();
     expect(appJson.expo.splash.image).toBe('./assets/splash-icon.png');
-    expect(appJson.expo.splash.backgroundColor).toBe('#FFF4E3');
+    expect(appJson.expo.splash.backgroundColor).toBe('#FFFDFB');
     expect(appJson.expo.splash.resizeMode).toBe('contain');
 
     if (appJson.expo.android?.splash) {
       expect(appJson.expo.android.splash.image).toBe('./assets/splash-icon.png');
-      expect(appJson.expo.android.splash.backgroundColor).toBe('#FFF4E3');
+      expect(appJson.expo.android.splash.backgroundColor).toBe('#FFFDFB');
       expect(appJson.expo.android.splash.resizeMode).toBe('contain');
     }
   });

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, RefreshControl, TouchableOpacity, Text } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,12 +17,23 @@ import {
   usePresence,
 } from '@/features/home';
 import { useActiveCouple } from '@/features/couple';
+import { PartnerNamePromptCard } from '@/features/couple';
 import { useAuthStore } from '@/features/auth';
+import { useUpdateProfile } from '@/features/settings/hooks/useSettings';
+import { safeSecureStore as SecureStore } from '@/shared/utils';
 import { WriteLetterModal } from '@/features/letters';
 import { NextReunionCountdownCard } from '@/features/us';
 import { useUnreadNotificationsCount } from '@/features/notifications';
-import { LoadingState, ErrorState, SwipeTabWrapper } from '@/shared/ui';
-import { theme, scale, triggerHaptic } from '@/shared/theme';
+import {
+  LoadingState,
+  ErrorState,
+  SwipeTabWrapper,
+  ResponsiveContainer,
+  BellIcon,
+  ChatIcon,
+  GearIcon,
+} from '@/shared/ui';
+import { theme, scale, useResponsiveLayout, triggerHaptic } from '@/shared/theme';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -34,6 +46,51 @@ export default function HomeScreen() {
   const { data: unreadNotifsCount = 0 } = useUnreadNotificationsCount();
 
   const [showLetterModal, setShowLetterModal] = useState(false);
+  const [showPickPartnerName, setShowPickPartnerName] = useState(false);
+  const { mutateAsync: updateProfile } = useUpdateProfile();
+
+  const partnerId = coupleData?.partner?.id;
+  const coupleId = coupleData?.couple?.id;
+
+  useEffect(() => {
+    if (!coupleId || !partnerId) return;
+    const partnerChooseKey = `let_partner_choose_${coupleId}_${partnerId}`;
+    const promptDismissedKey = `partner_name_prompt_dismissed_${coupleId}_${partnerId}`;
+
+    Promise.all([
+      SecureStore.getItemAsync(partnerChooseKey),
+      SecureStore.getItemAsync(promptDismissedKey),
+    ]).then(([letChoose, dismissed]) => {
+      if (letChoose === 'true' && !dismissed) {
+        setShowPickPartnerName(true);
+      }
+    }).catch(() => {});
+  }, [coupleId, partnerId]);
+
+  const handleSavePartnerNickname = async (chosenName: string) => {
+    if (!coupleId || !partnerId) return;
+    try {
+      await SecureStore.setItemAsync(
+        `partner_name_prompt_dismissed_${coupleId}_${partnerId}`,
+        'true'
+      );
+      // Clean up the let-choose flag so prompt never reappears
+      await SecureStore.deleteItemAsync(`let_partner_choose_${coupleId}_${partnerId}`);
+      setShowPickPartnerName(false);
+      refetch();
+    } catch {
+      setShowPickPartnerName(false);
+    }
+  };
+
+  const handleDismissPartnerNickname = async () => {
+    if (!coupleId || !partnerId) return;
+    await SecureStore.setItemAsync(
+      `partner_name_prompt_dismissed_${coupleId}_${partnerId}`,
+      'true'
+    );
+    setShowPickPartnerName(false);
+  };
 
   const isInitialLoading = (isCoupleLoading || isHomeLoading) && (!homeData || !coupleData);
 
@@ -46,6 +103,7 @@ export default function HomeScreen() {
   const shouldShowActiveSession =
     !!homeData?.activeSession && isPartnerOnline && isSessionFresh;
 
+  const { horizontalGutter, sectionGap, s } = useResponsiveLayout();
   const insets = useSafeAreaInsets();
   let tabBarHeight = 56;
   try {
@@ -64,69 +122,60 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <SwipeTabWrapper currentTab="home">
         {/* Playful Top Bar with Chunky Sticker Badges */}
-      <View style={styles.topBar}>
+      <ResponsiveContainer style={[styles.topBar, { paddingHorizontal: horizontalGutter }]}>
         <View style={styles.brandContainer}>
-          <Text style={styles.brandTitle}>Together</Text>
+          <Text style={[styles.brandTitle, { fontSize: s(24) }]}>Together</Text>
           <View style={styles.brandDot} />
         </View>
 
         <View style={styles.topBarActions}>
           {/* Notifications Button */}
           <TouchableOpacity
-            style={styles.actionBtnWrapper}
+            style={styles.actionBtnSurface}
             onPress={() => {
               triggerHaptic('light');
               router.push('/notifications');
             }}
-            activeOpacity={0.8}
+            activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityLabel={`Notifications, ${unreadNotifsCount} unread`}
           >
-            <View style={styles.actionBtnShadow} />
-            <View style={styles.actionBtnSurface}>
-              <Text style={styles.actionIcon}>🔔</Text>
-              {unreadNotifsCount > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
-                    {unreadNotifsCount > 99 ? '99+' : unreadNotifsCount}
-                  </Text>
-                </View>
-              )}
-            </View>
+            <BellIcon color={theme.colors.text} size={scale(20)} />
+            {unreadNotifsCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>
+                  {unreadNotifsCount > 99 ? '99+' : unreadNotifsCount}
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
 
           {/* Chat Button */}
           <TouchableOpacity
-            style={styles.actionBtnWrapper}
+            style={styles.actionBtnSurface}
             onPress={() => {
               triggerHaptic('light');
               router.push('/chat');
             }}
-            activeOpacity={0.8}
+            activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityLabel="Messages"
           >
-            <View style={styles.actionBtnShadow} />
-            <View style={styles.actionBtnSurface}>
-              <Text style={styles.actionIcon}>💬</Text>
-            </View>
+            <ChatIcon color={theme.colors.text} size={scale(20)} />
           </TouchableOpacity>
 
           {/* Settings Button */}
           <TouchableOpacity
-            style={styles.actionBtnWrapper}
+            style={styles.actionBtnSurface}
             onPress={() => {
               triggerHaptic('light');
               router.push('/settings');
             }}
-            activeOpacity={0.8}
+            activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityLabel="Settings"
           >
-            <View style={styles.actionBtnShadow} />
-            <View style={styles.actionBtnSurface}>
-              <Text style={styles.actionIcon}>⚙️</Text>
-            </View>
+            <GearIcon color={theme.colors.text} size={scale(20)} />
           </TouchableOpacity>
         </View>
-      </View>
+      </ResponsiveContainer>
 
       {isInitialLoading ? (
         <View style={styles.loadingContainer}>
@@ -140,62 +189,77 @@ export default function HomeScreen() {
           retryTitle={t('common.retry')}
         />
       ) : (
-        <ScrollView
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
+        <KeyboardAwareScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingHorizontal: horizontalGutter, paddingBottom: bottomPadding },
+          ]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
+          bottomOffset={scale(32)}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={false} onRefresh={() => { refetch(); }} />}
         >
-          {/* 1. Header (Both Names + Duration) */}
-          <CoupleHeader
-            coupleName={homeData.coupleName}
-            me={profile}
-            partner={coupleData.partner}
-            daysTogether={homeData.daysTogether}
-            startDate={homeData.startDate}
-            isPartnerOnline={isPartnerOnline}
-          />
+          <ResponsiveContainer style={{ gap: sectionGap }}>
+            {/* One-time prompt: Pick a nickname for partner if they chose 'let my partner choose' */}
+            {showPickPartnerName ? (
+              <PartnerNamePromptCard
+                partnerName={partnerName}
+                onSave={handleSavePartnerNickname}
+                onDismiss={handleDismissPartnerNickname}
+              />
+            ) : null}
 
-          {/* 2. Shared Couple Home Page Cover Photo */}
-          <HomePagePhotoCard partnerName={partnerName} />
-
-          {/* 3. Activity Indicator: only when partner is actively online and session is fresh */}
-          {shouldShowActiveSession ? (
-            <ActiveSessionBanner
-              onJoin={() => router.push(`/session/${homeData.activeSession!.id}`)}
+            {/* 1. Header (Both Names + Duration) */}
+            <CoupleHeader
+              coupleName={homeData.coupleName}
+              me={profile}
+              partner={coupleData.partner}
+              daysTogether={homeData.daysTogether}
+              startDate={homeData.startDate}
+              isPartnerOnline={isPartnerOnline}
             />
-          ) : null}
 
-          {/* 3. Daily Question Prompt Card */}
-          <DailyQuestionCard partnerName={partnerName} />
+            {/* 2. Shared Couple Home Page Cover Photo */}
+            <HomePagePhotoCard partnerName={partnerName} />
 
-          {/* 4. Quick Photos Polaroid Carousel */}
-          <QuickPhotosCard />
+            {/* 3. Activity Indicator: only when partner is actively online and session is fresh */}
+            {shouldShowActiveSession ? (
+              <ActiveSessionBanner
+                onJoin={() => router.push(`/session/${homeData.activeSession!.id}`)}
+              />
+            ) : null}
 
-          {/* 5. TimeZone Sticker Clock */}
-          <TimeZoneClockCard
-            partnerName={partnerName}
-            myTimeInfo={homeData.myTimeInfo}
-            partnerTimeInfo={homeData.partnerTimeInfo}
-            timeDifferenceHours={homeData.timeDifferenceHours}
-          />
+            {/* 3. Daily Question Prompt Card */}
+            <DailyQuestionCard partnerName={partnerName} />
 
-          {/* 6. Reunion Countdown Card */}
-          {homeData.nextMeeting ? (
-            <NextReunionCountdownCard
-              nextMeeting={homeData.nextMeeting}
-              daysRemaining={homeData.daysToNextMeeting}
+            {/* 4. Quick Photos Polaroid Carousel */}
+            <QuickPhotosCard />
+
+            {/* 5. TimeZone Sticker Clock */}
+            <TimeZoneClockCard
+              partnerName={partnerName}
+              myTimeInfo={homeData.myTimeInfo}
+              partnerTimeInfo={homeData.partnerTimeInfo}
+              timeDifferenceHours={homeData.timeDifferenceHours}
             />
-          ) : null}
 
-          {/* 7. Quick Actions Sticker Cards */}
-          <QuickActions
-            onPlayPress={() => router.push('/(tabs)/play')}
-            onDatePress={() => router.push('/(tabs)/dates')}
-            onLetterPress={() => setShowLetterModal(true)}
-          />
-        </ScrollView>
+            {/* 6. Reunion Countdown Card */}
+            {homeData.nextMeeting ? (
+              <NextReunionCountdownCard
+                nextMeeting={homeData.nextMeeting}
+                daysRemaining={homeData.daysToNextMeeting}
+              />
+            ) : null}
+
+            {/* 7. Quick Actions Sticker Cards */}
+            <QuickActions
+              onPlayPress={() => router.push('/(tabs)/play')}
+              onDatePress={() => router.push('/(tabs)/memories')}
+              onLetterPress={() => setShowLetterModal(true)}
+            />
+          </ResponsiveContainer>
+        </KeyboardAwareScrollView>
       )}
 
         <WriteLetterModal
@@ -235,8 +299,8 @@ const styles = StyleSheet.create({
   brandDot: {
     width: scale(7),
     height: scale(7),
-    borderRadius: scale(3.5),
-    backgroundColor: theme.colors.primary, // Tomato #FF5A3C
+    borderRadius: 9999,
+    backgroundColor: theme.colors.primary, // Amour Red #E53935
     marginTop: scale(4),
   },
   topBarActions: {
@@ -244,49 +308,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: scale(10),
   },
-  actionBtnWrapper: {
-    position: 'relative',
-    marginRight: 2,
-    marginBottom: 2,
-  },
-  actionBtnShadow: {
-    position: 'absolute',
-    top: 2.5,
-    left: 2.5,
-    right: -2.5,
-    bottom: -2.5,
-    backgroundColor: theme.colors.shadowInk,
-    borderRadius: scale(12),
-    zIndex: 0,
-  },
   actionBtnSurface: {
     position: 'relative',
-    zIndex: 1,
-    width: scale(38),
-    height: scale(38),
-    borderRadius: scale(12),
-    backgroundColor: theme.colors.surface,
-    borderWidth: theme.borders.chunky,
-    borderColor: theme.colors.border,
+    width: scale(42),
+    height: scale(42),
+    borderRadius: 9999,
+    backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
+    borderWidth: 1,
+    borderColor: theme.colors.border, // #FBE9E7
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  actionIcon: {
-    fontSize: scale(16),
+    ...theme.shadows.hardSm,
   },
   badge: {
     position: 'absolute',
-    top: -5,
-    right: -5,
-    backgroundColor: theme.colors.primary, // Tomato #FF5A3C
-    borderRadius: scale(10),
+    top: -4,
+    right: -4,
+    backgroundColor: theme.colors.primary, // Amour Red #E53935
+    borderRadius: 9999,
     minWidth: scale(18),
     height: scale(18),
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: scale(3),
+    paddingHorizontal: scale(4),
     borderWidth: 1.5,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.background,
   },
   badgeText: {
     color: '#FFFFFF',

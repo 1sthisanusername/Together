@@ -32,30 +32,34 @@ describe('Phase D: Onboarding & Independent Nicknames Architecture', () => {
     }
   });
 
-  it('3. CreateCoupleCard renders Nickname field and updates profile display_name', () => {
+  it('3. Dedicated OnboardingNicknameCard allows choosing nickname or letting partner choose', () => {
     const cardPath = path.resolve(
+      __dirname,
+      '../src/features/couple/components/OnboardingNicknameCard.tsx'
+    );
+    expect(fs.existsSync(cardPath)).toBe(true);
+
+    const content = fs.readFileSync(cardPath, 'utf8');
+    expect(content).toContain('What should your partner call you?');
+    expect(content).toContain('Let my partner choose 💌');
+  });
+
+  it('4. CreateCoupleCard and JoinCoupleCard omit nickname field in favor of dedicated step', () => {
+    const createPath = path.resolve(
       __dirname,
       '../src/features/couple/components/CreateCoupleCard.tsx'
     );
-    expect(fs.existsSync(cardPath)).toBe(true);
-
-    const content = fs.readFileSync(cardPath, 'utf8');
-    expect(content).toContain('Your Nickname');
-    expect(content).toContain('updateProfile');
-    expect(content).toContain('displayName: data.nickname');
-  });
-
-  it('4. JoinCoupleCard renders Nickname field and updates profile display_name', () => {
-    const cardPath = path.resolve(
+    const joinPath = path.resolve(
       __dirname,
       '../src/features/couple/components/JoinCoupleCard.tsx'
     );
-    expect(fs.existsSync(cardPath)).toBe(true);
+    expect(fs.existsSync(createPath)).toBe(true);
+    expect(fs.existsSync(joinPath)).toBe(true);
 
-    const content = fs.readFileSync(cardPath, 'utf8');
-    expect(content).toContain('Your Nickname');
-    expect(content).toContain('updateProfile');
-    expect(content).toContain('displayName: data.nickname');
+    const createContent = fs.readFileSync(createPath, 'utf8');
+    const joinContent = fs.readFileSync(joinPath, 'utf8');
+    expect(createContent).not.toContain('label="Your Nickname"');
+    expect(joinContent).not.toContain('label="Your Nickname"');
   });
 
   it('5. SettingsView explains independent nickname control', () => {

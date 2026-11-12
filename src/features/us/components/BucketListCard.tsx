@@ -41,9 +41,6 @@ export const BucketListCard: React.FC<BucketListCardProps> = ({ items }) => {
 
   return (
     <View style={styles.cardContainer}>
-      {/* Hard Ink Shadow */}
-      <View style={styles.cardShadow} />
-
       {/* Surface */}
       <View style={styles.cardSurface}>
         {/* Header Row: Title & View All Button */}
@@ -131,24 +128,13 @@ const styles = StyleSheet.create({
     marginVertical: scale(8),
     width: '100%',
   },
-  cardShadow: {
-    position: 'absolute',
-    top: 4,
-    left: 4,
-    right: -4,
-    bottom: -4,
-    backgroundColor: theme.colors.shadowInk,
-    borderRadius: scale(18),
-    zIndex: 0,
-  },
   cardSurface: {
-    position: 'relative',
-    zIndex: 1,
     backgroundColor: theme.colors.surface,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: scale(18),
+    borderRadius: theme.roundness.lg,
     padding: scale(18),
+    ...theme.shadows.card,
   },
   headerRow: {
     flexDirection: 'row',
@@ -168,12 +154,10 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   countBadge: {
-    backgroundColor: theme.colors.secondary, // Sunshine #FFC93C
-    borderWidth: 1.5,
-    borderColor: theme.colors.border,
-    borderRadius: scale(10),
-    paddingHorizontal: scale(7),
-    paddingVertical: scale(1),
+    backgroundColor: theme.colors.sunset,
+    borderRadius: theme.roundness.full,
+    paddingHorizontal: scale(8),
+    paddingVertical: scale(2),
   },
   countBadgeText: {
     fontFamily: theme.typography.fontFamilies.sans,
@@ -182,18 +166,18 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   viewAllBtn: {
-    paddingVertical: scale(4),
-    paddingHorizontal: scale(8),
-    borderRadius: scale(8),
-    backgroundColor: '#F8F4EE',
+    paddingVertical: scale(5),
+    paddingHorizontal: scale(10),
+    borderRadius: theme.roundness.full,
+    backgroundColor: theme.colors.surfaceBlush,
     borderWidth: 1,
-    borderColor: theme.colors.borderLight,
+    borderColor: theme.colors.border,
   },
   viewAllText: {
     fontFamily: theme.typography.fontFamilies.sans,
     fontSize: scale(12),
     fontWeight: '700',
-    color: theme.colors.text,
+    color: theme.colors.primary,
   },
   addInputRow: {
     flexDirection: 'row',
@@ -211,16 +195,16 @@ const styles = StyleSheet.create({
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: scale(8),
-    paddingHorizontal: scale(10),
-    backgroundColor: '#FAF7F2',
-    borderRadius: scale(10),
-    borderWidth: 1.5,
-    borderColor: '#E8DED1',
+    paddingVertical: scale(10),
+    paddingHorizontal: scale(12),
+    backgroundColor: theme.colors.surfaceBlush,
+    borderRadius: scale(14),
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   itemDone: {
-    backgroundColor: '#F0ECE4',
-    opacity: 0.7,
+    backgroundColor: theme.colors.surfaceDisabled,
+    opacity: 0.75,
   },
   checkbox: {
     fontSize: scale(15),

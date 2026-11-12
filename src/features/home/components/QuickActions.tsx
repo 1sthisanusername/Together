@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { SparklesIcon, DatesIcon, LetterIcon } from '@/shared/ui';
 import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export interface QuickActionsProps {
@@ -30,13 +31,16 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
           style={styles.cardWrapper}
           onPress={() => handlePress(onPlayPress)}
           activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={t('home.startPlay')}
         >
-          <View style={styles.cardShadow} />
-          <View style={[styles.cardSurface, styles.playSurface]}>
+          <View style={styles.cardSurface}>
             <View style={[styles.iconCircle, styles.playCircle]}>
-              <Text style={styles.icon}>✨</Text>
+              <SparklesIcon color={theme.colors.text} size={scale(20)} />
             </View>
-            <Text style={styles.cardTitle}>{t('home.startPlay')}</Text>
+            <Text style={styles.cardTitle} maxFontSizeMultiplier={1.3}>
+              {t('home.startPlay')}
+            </Text>
           </View>
         </TouchableOpacity>
 
@@ -45,13 +49,16 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
           style={styles.cardWrapper}
           onPress={() => handlePress(onDatePress)}
           activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={t('home.planDate')}
         >
-          <View style={styles.cardShadow} />
-          <View style={[styles.cardSurface, styles.dateSurface]}>
+          <View style={styles.cardSurface}>
             <View style={[styles.iconCircle, styles.dateCircle]}>
-              <Text style={styles.icon}>🕯️</Text>
+              <DatesIcon color="#FFFFFF" size={scale(20)} />
             </View>
-            <Text style={styles.cardTitle}>{t('home.planDate')}</Text>
+            <Text style={styles.cardTitle} maxFontSizeMultiplier={1.3}>
+              {t('home.planDate')}
+            </Text>
           </View>
         </TouchableOpacity>
 
@@ -60,13 +67,16 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
           style={styles.cardWrapper}
           onPress={() => handlePress(onLetterPress)}
           activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={t('home.writeLetter')}
         >
-          <View style={styles.cardShadow} />
-          <View style={[styles.cardSurface, styles.letterSurface]}>
+          <View style={styles.cardSurface}>
             <View style={[styles.iconCircle, styles.letterCircle]}>
-              <Text style={styles.icon}>💌</Text>
+              <LetterIcon color="#FFFFFF" size={scale(20)} />
             </View>
-            <Text style={styles.cardTitle}>{t('home.writeLetter')}</Text>
+            <Text style={styles.cardTitle} maxFontSizeMultiplier={1.3}>
+              {t('home.writeLetter')}
+            </Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -77,13 +87,13 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    marginVertical: scale(12),
+    marginVertical: scale(10),
   },
   sectionTitle: {
     fontFamily: theme.typography.fontFamilies.display,
     fontSize: scale(16),
-    fontWeight: '800',
-    color: theme.colors.text,
+    fontWeight: '700',
+    color: theme.colors.text, // #3E2723
     marginBottom: scale(10),
     letterSpacing: -0.3,
   },
@@ -94,68 +104,40 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     flex: 1,
-    position: 'relative',
-    marginRight: 3,
-    marginBottom: 3,
-  },
-  cardShadow: {
-    position: 'absolute',
-    top: 3,
-    left: 3,
-    right: -3,
-    bottom: -3,
-    backgroundColor: theme.colors.shadowInk,
-    borderRadius: scale(14),
-    zIndex: 0,
   },
   cardSurface: {
-    position: 'relative',
-    zIndex: 1,
-    backgroundColor: theme.colors.surface,
-    borderRadius: scale(14),
-    paddingVertical: scale(14),
-    paddingHorizontal: scale(6),
+    backgroundColor: theme.colors.surface, // #FFFFFF with 1px solid #FBE9E7
+    borderRadius: 20,
+    paddingVertical: scale(16),
+    paddingHorizontal: scale(8),
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: theme.borders.chunky,
-    borderColor: theme.colors.border,
-  },
-  playSurface: {
-    backgroundColor: theme.colors.surface,
-  },
-  dateSurface: {
-    backgroundColor: theme.colors.surface,
-  },
-  letterSurface: {
-    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border, // #FBE9E7
+    ...theme.shadows.card,
   },
   iconCircle: {
-    width: scale(40),
-    height: scale(40),
-    borderRadius: scale(20),
+    width: scale(44),
+    height: scale(44),
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: scale(6),
-    borderWidth: 1.5,
-    borderColor: theme.colors.border,
+    marginBottom: scale(8),
   },
   playCircle: {
-    backgroundColor: theme.colors.secondary, // Sunshine #FFC93C
+    backgroundColor: theme.colors.sunset, // Warm Sunset #FFB74D
   },
   dateCircle: {
-    backgroundColor: theme.colors.primary, // Tomato #FF5A3C
+    backgroundColor: theme.colors.coral, // Joyful Coral #FF7043
   },
   letterCircle: {
-    backgroundColor: theme.colors.bubblegum, // Bubblegum #FF8FB1
-  },
-  icon: {
-    fontSize: scale(18),
+    backgroundColor: theme.colors.rose, // Blushing Rose #F48FB1
   },
   cardTitle: {
     fontFamily: theme.typography.fontFamilies.display,
     fontSize: scale(12),
-    fontWeight: '800',
-    color: theme.colors.text,
+    fontWeight: '700',
+    color: theme.colors.text, // #3E2723
     textAlign: 'center',
     letterSpacing: -0.1,
   },

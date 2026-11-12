@@ -44,7 +44,7 @@ export function getRouteForNotification(type: string, data?: Record<string, any>
     return '/chat';
   }
   if (normalizedType.includes('letter')) {
-    return '/(tabs)/dates';
+    return '/(tabs)/memories';
   }
   if (normalizedType.includes('photo') || normalizedType.includes('mission') || normalizedType.includes('challenge')) {
     return '/(tabs)/play';

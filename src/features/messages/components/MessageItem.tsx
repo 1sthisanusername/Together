@@ -5,7 +5,7 @@ import { VoiceNotePlayer } from './VoiceNotePlayer';
 import { PhotoMessageViewer } from './PhotoMessageViewer';
 import { useDeleteChatMessage, useMarkVoicePlayed } from '../hooks/useMessages';
 import { MessageErrorBoundary, ThemedConfirmDialog } from '@/shared/ui';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface MessageItemProps {
   message: ChatMessage;
@@ -177,20 +177,21 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 20,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderWidth: 1,
+    borderColor: theme.colors.border, // #FBE9E7
     ...theme.shadows.hardSm,
   },
   bubbleMy: {
-    backgroundColor: theme.colors.primary,
-    borderBottomRightRadius: 4,
+    backgroundColor: theme.colors.rose, // Blushing Rose #F48FB1
+    borderColor: theme.colors.rose,
+    borderBottomRightRadius: 6,
   },
   bubblePartner: {
-    backgroundColor: theme.colors.surface,
-    borderBottomLeftRadius: 4,
+    backgroundColor: theme.colors.surfaceBlush, // Soft pale blush #FFF0ED
+    borderBottomLeftRadius: 6,
   },
   bubbleFailed: {
-    backgroundColor: '#FFF0F0',
+    backgroundColor: theme.colors.surfaceDisabled, // #FBE9E7
     borderColor: theme.colors.danger,
   },
   photoBubbleContainer: {
@@ -203,12 +204,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   messageText: {
-    fontSize: 15,
-    lineHeight: 21,
+    fontSize: scale(15),
+    lineHeight: scale(21),
     fontFamily: theme.typography.families.body,
   },
   textMy: {
-    color: '#ffffff',
+    color: theme.colors.text,
   },
   textPartner: {
     color: theme.colors.text,
@@ -217,22 +218,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    gap: 6,
-    marginTop: 4,
+    gap: scale(6),
+    marginTop: scale(4),
   },
   timeText: {
-    fontSize: 10,
+    fontSize: scale(10),
     fontWeight: '500',
     fontFamily: theme.typography.families.body,
   },
   photoTimeText: {
-    fontSize: 10,
+    fontSize: scale(10),
     fontWeight: '500',
     color: theme.colors.textSecondary,
     fontFamily: theme.typography.families.body,
   },
   timeMy: {
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: 'rgba(62, 39, 35, 0.7)',
   },
   timePartner: {
     color: theme.colors.textSecondary,
@@ -242,11 +243,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statusIcon: {
-    fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: scale(10),
+    color: 'rgba(62, 39, 35, 0.75)',
   },
   statusFailed: {
-    fontSize: 10,
+    fontSize: scale(10),
     fontWeight: '700',
     color: theme.colors.danger,
   },

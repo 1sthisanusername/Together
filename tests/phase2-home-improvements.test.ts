@@ -17,7 +17,7 @@ describe('Phase 2: Home Screen Improvements Verification', () => {
     const content = fs.readFileSync(coupleHeaderPath, 'utf8');
 
     expect(content).toContain('Together');
-    expect(content).toContain('❤️');
+    expect(content).toContain('<HeartIcon');
     expect(content).toContain('myDisplayName');
     expect(content).toContain('partnerDisplayName');
     expect(content).toContain('durationText');

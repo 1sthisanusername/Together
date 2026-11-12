@@ -30,8 +30,15 @@ import {
 import { MessageItem } from './MessageItem';
 import { VoiceNoteRecorder } from './VoiceNoteRecorder';
 import { PhotoPreviewModal } from './PhotoPreviewModal';
-import { LoadingState, EmptyState } from '@/shared/ui';
-import { theme } from '@/shared/theme';
+import {
+  LoadingState,
+  EmptyState,
+  CameraIcon,
+  GalleryIcon,
+  PlusIcon,
+  ChatIcon,
+} from '@/shared/ui';
+import { theme, scale } from '@/shared/theme';
 
 export interface ChatThreadProps {
   onBack?: () => void;
@@ -50,6 +57,9 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
   const { mutate: retryMessage } = useRetryChatMessage();
 
   const insets = useSafeAreaInsets();
+  // Dynamically clear the user's system navigation bar (3-button bar, gesture pill, or home line)
+  const bottomSafeInset = Math.max(insets.bottom, 0);
+  const closedBottomPadding = bottomSafeInset > 0 ? bottomSafeInset + scale(10) : scale(14);
   const [inputText, setInputText] = useState('');
   const [previewImageUri, setPreviewImageUri] = useState<string | null>(null);
   const scrollViewRef = useRef<any>(null);
@@ -134,7 +144,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         quality: 0.8,
       });
@@ -196,7 +206,9 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
         ) : !messages || messages.length === 0 ? (
           <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyEmoji}>💬</Text>
+              <View style={styles.emptyIconCircle}>
+                <ChatIcon color={theme.colors.primary} size={scale(28)} />
+              </View>
               <Text style={styles.emptyTitle}>Your Private Messages</Text>
               <Text style={styles.emptySubtitle}>
                 Send sweet notes and voice messages to {partnerName}. No read receipts, no guilt.
@@ -224,9 +236,9 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
         )}
       </KeyboardAvoidingView>
 
-      {/* Input bar inside KeyboardStickyView - exactly ONE offset mechanism */}
-      <KeyboardStickyView offset={{ closed: insets.bottom, opened: 0 }}>
-        <View style={styles.inputBarContainer}>
+      {/* Input bar inside KeyboardStickyView - clears nav bar/line when closed, flush above keyboard when opened */}
+      <KeyboardStickyView offset={{ closed: 0, opened: bottomSafeInset }}>
+        <View style={[styles.inputBarContainer, { paddingBottom: closedBottomPadding }]}>
           <View
             style={[
               styles.pill,
@@ -276,10 +288,10 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
                 <TouchableOpacity
                   style={styles.cameraBtn}
                   onPress={handleCameraPress}
-                  activeOpacity={0.7}
+                  activeOpacity={0.75}
                   accessibilityLabel="Take Photo"
                 >
-                  <Text style={styles.cameraIcon}>📷</Text>
+                  <CameraIcon color="#FFFFFF" size={scale(20)} />
                 </TouchableOpacity>
 
                 {/* Middle: flexible "Message…" field (grows up to ~4 lines) */}
@@ -301,19 +313,19 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
                   <TouchableOpacity
                     style={styles.iconBtn}
                     onPress={handleGalleryPress}
-                    activeOpacity={0.7}
+                    activeOpacity={0.75}
                     accessibilityLabel="Choose from Gallery"
                   >
-                    <Text style={styles.actionIcon}>🖼️</Text>
+                    <GalleryIcon color={theme.colors.text} size={scale(20)} />
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     style={styles.iconBtn}
                     onPress={handleMorePress}
-                    activeOpacity={0.7}
+                    activeOpacity={0.75}
                     accessibilityLabel="More Options"
                   >
-                    <Text style={styles.actionIcon}>➕</Text>
+                    <PlusIcon color={theme.colors.text} size={scale(20)} />
                   </TouchableOpacity>
 
                   {inputText.trim().length > 0 ? (
@@ -371,23 +383,23 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   backBtn: {
-    marginRight: 12,
-    padding: 6,
+    marginRight: scale(12),
+    padding: scale(6),
   },
   backIcon: {
-    fontSize: 20,
+    fontSize: scale(20),
     color: theme.colors.text,
   },
   headerInfo: {
     flex: 1,
   },
   partnerTitle: {
-    fontSize: 17,
+    fontSize: scale(17),
     fontWeight: '800',
     color: theme.colors.text,
   },
   coupleSubtitle: {
-    fontSize: 12,
+    fontSize: scale(12),
     color: theme.colors.textSecondary,
     fontWeight: '500',
   },
@@ -400,45 +412,53 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 36,
+    paddingHorizontal: scale(36),
   },
-  emptyEmoji: {
-    fontSize: 44,
-    marginBottom: 12,
+  emptyIconCircle: {
+    width: scale(64),
+    height: scale(64),
+    borderRadius: 9999,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: scale(14),
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: scale(18),
+    fontWeight: '700',
     color: theme.colors.text,
-    marginBottom: 6,
+    marginBottom: scale(6),
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 14,
+    fontSize: scale(14),
     color: theme.colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: scale(20),
   },
   messageList: {
-    paddingVertical: 14,
+    paddingVertical: scale(14),
   },
   inputBarContainer: {
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    backgroundColor: theme.colors.surface,
+    paddingHorizontal: scale(10),
+    paddingTop: scale(8),
+    backgroundColor: theme.colors.background,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.borderLight,
+    borderTopColor: theme.colors.border,
   },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.surfaceSubtle,
-    borderRadius: 28,
-    borderWidth: 1.5,
-    borderColor: theme.colors.borderLight,
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    minHeight: 52,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderRadius: theme.roundness.full,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    paddingHorizontal: scale(6),
+    paddingVertical: scale(4),
+    minHeight: scale(52),
+    ...theme.shadows.hardSm,
   },
   pillRecording: {
     backgroundColor: '#FEF2F2',
@@ -450,57 +470,57 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cameraBtn: {
-    width: 44,
-    height: 44,
+    width: scale(44),
+    height: scale(44),
     minWidth: 48,
     minHeight: 48,
-    borderRadius: 24,
+    borderRadius: 9999,
     backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cameraIcon: {
-    fontSize: 18,
+    fontSize: scale(18),
   },
   textInput: {
     flex: 1,
-    minHeight: 40,
-    maxHeight: 110,
-    paddingHorizontal: 12,
-    paddingVertical: Platform.OS === 'ios' ? 8 : 4,
-    fontSize: 16,
+    minHeight: scale(40),
+    maxHeight: scale(110),
+    paddingHorizontal: scale(12),
+    paddingVertical: Platform.OS === 'ios' ? scale(8) : scale(4),
+    fontSize: scale(16),
     color: theme.colors.text,
   },
   rightIconsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: scale(2),
   },
   iconBtn: {
-    width: 44,
-    height: 44,
+    width: scale(44),
+    height: scale(44),
     minWidth: 48,
     minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 24,
+    borderRadius: 9999,
   },
   actionIcon: {
-    fontSize: 20,
+    fontSize: scale(20),
   },
   sendBtn: {
-    width: 44,
-    height: 44,
+    width: scale(44),
+    height: scale(44),
     minWidth: 48,
     minHeight: 48,
-    borderRadius: 24,
+    borderRadius: 9999,
     backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendIcon: {
     color: '#ffffff',
-    fontSize: 20,
+    fontSize: scale(20),
     fontWeight: '800',
   },
   recordingRow: {
@@ -508,40 +528,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 6,
+    paddingHorizontal: scale(6),
   },
   timerPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
-    gap: 6,
+    paddingHorizontal: scale(10),
+    paddingVertical: scale(6),
+    borderRadius: theme.roundness.full,
+    gap: scale(6),
     borderWidth: 1,
     borderColor: '#FCA5A5',
   },
   recordingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: scale(8),
+    height: scale(8),
+    borderRadius: 9999,
     backgroundColor: '#EF4444',
   },
   timerText: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '700',
     color: '#B91C1C',
   },
   cancelHintText: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 13,
-    color: '#6B7280',
+    fontSize: scale(13),
+    color: theme.colors.textSecondary,
     fontWeight: '600',
-    marginHorizontal: 8,
+    marginHorizontal: scale(8),
   },
   cancelHintTextActive: {
-    color: '#DC2626',
+    color: theme.colors.danger,
     fontWeight: '800',
   },
   previewModeRow: {
@@ -549,11 +569,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
+    paddingHorizontal: scale(8),
   },
   previewModeTitle: {
     fontFamily: theme.typography.families.bold,
-    fontSize: 13,
+    fontSize: scale(13),
     color: theme.colors.text,
   },
 });

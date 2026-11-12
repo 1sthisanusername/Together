@@ -11,7 +11,7 @@ import {
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface DatePickerFieldProps {
   value?: string | null; // format: 'YYYY-MM-DD'
@@ -171,13 +171,13 @@ export const DatePickerField: React.FC<DatePickerFieldProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: scale(16),
   },
   label: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: 6,
+    marginBottom: scale(6),
   },
   field: {
     flexDirection: 'row',
@@ -186,16 +186,16 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surfaceSubtle,
     borderWidth: 1,
     borderColor: theme.colors.borderLight,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minHeight: 48,
+    borderRadius: scale(12),
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(12),
+    minHeight: scale(48),
   },
   fieldDisabled: {
     opacity: 0.6,
   },
   fieldText: {
-    fontSize: 15,
+    fontSize: scale(15),
     color: theme.colors.text,
     fontWeight: '500',
   },
@@ -204,44 +204,44 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   calendarIcon: {
-    fontSize: 16,
-    marginLeft: 8,
+    fontSize: scale(16),
+    marginLeft: scale(8),
   },
   iosModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(62, 39, 35, 0.45)',
     justifyContent: 'flex-end',
   },
   iosPickerContainer: {
     backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingBottom: 24,
+    borderTopLeftRadius: scale(20),
+    borderTopRightRadius: scale(20),
+    paddingBottom: scale(24),
   },
   iosToolbar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(12),
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.borderLight,
   },
   iosTitleText: {
-    fontSize: 15,
+    fontSize: scale(15),
     fontWeight: '600',
     color: theme.colors.text,
   },
   iosActionBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: scale(4),
+    paddingHorizontal: scale(8),
   },
   iosCancelText: {
-    fontSize: 15,
+    fontSize: scale(15),
     color: theme.colors.textSecondary,
   },
   iosConfirmText: {
-    fontSize: 15,
+    fontSize: scale(15),
     fontWeight: '700',
     color: theme.colors.primary,
   },

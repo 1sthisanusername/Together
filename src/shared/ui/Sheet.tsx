@@ -61,19 +61,20 @@ export const Sheet: React.FC<SheetProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(43, 33, 24, 0.65)', // Warm Ink backdrop
+    backgroundColor: 'rgba(62, 39, 35, 0.5)', // Warm Cozy Night backdrop
   },
   sheetContainer: {
-    backgroundColor: theme.colors.background, // Paper #FFF4E3
-    borderTopLeftRadius: scale(24),
-    borderTopRightRadius: scale(24),
-    borderTopWidth: 2.5,
-    borderLeftWidth: 2.5,
-    borderRightWidth: 2.5,
-    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.background, // #FFFDFB
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: theme.colors.border, // #FBE9E7
     paddingHorizontal: scale(20),
     paddingBottom: scale(36),
     paddingTop: scale(12),
+    ...theme.shadows.card,
   },
   sheetHandle: {
     width: scale(44),
@@ -97,17 +98,17 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   closeTouchArea: {
-    minWidth: 48,
-    minHeight: 48,
+    minWidth: scale(48),
+    minHeight: scale(48),
     justifyContent: 'center',
     alignItems: 'center',
   },
   closePill: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: scale(32),
+    height: scale(32),
+    borderRadius: 9999,
     backgroundColor: theme.colors.surface,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: theme.colors.border,
     justifyContent: 'center',
     alignItems: 'center',

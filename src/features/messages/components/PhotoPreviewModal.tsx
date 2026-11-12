@@ -1,17 +1,13 @@
 import React, { useState } from 'react';
 import {
-  Modal,
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { theme, scale } from '@/shared/theme';
+import { Button, FormSheet } from '@/shared/ui';
 
 export interface PhotoPreviewModalProps {
   visible: boolean;
@@ -48,90 +44,55 @@ export const PhotoPreviewModal: React.FC<PhotoPreviewModalProps> = ({
   };
 
   return (
-    <Modal
+    <FormSheet
       visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={handleCancel}
+      onClose={handleCancel}
+      title="Send Photo 📷"
+      primaryLabel="Send Photo ↑"
+      onPrimary={handleSend}
+      primaryDisabled={isSending}
+      primaryLoading={isSending}
+      secondary={
+        <Button
+          title="Cancel"
+          variant="outline"
+          size="md"
+          onPress={handleCancel}
+          disabled={isSending}
+        />
+      }
     >
-      <KeyboardAvoidingView
-        style={styles.backdrop}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={styles.cardWrapper}>
-          {/* Hard Ink Shadow */}
-          <View style={styles.cardShadow} />
-
-          {/* Paper Surface */}
-          <View style={styles.cardSurface}>
-            <View style={styles.headerRow}>
-              <Text style={styles.title}>Send Photo 📷</Text>
-              <TouchableOpacity
-                onPress={handleCancel}
-                disabled={isSending}
-                style={styles.closeBtn}
-              >
-                <Text style={styles.closeIcon}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Photo Preview Thumbnail */}
-            <View style={styles.imageWrapper}>
-              <Image
-                source={{ uri: imageUri }}
-                style={styles.previewImage}
-                contentFit="contain"
-              />
-            </View>
-
-            {/* Caption Input */}
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={styles.captionInput}
-                placeholder="Add a sweet note or caption…"
-                placeholderTextColor={theme.colors.textSecondary}
-                value={caption}
-                onChangeText={setCaption}
-                maxLength={200}
-                editable={!isSending}
-              />
-            </View>
-
-            {/* Actions */}
-            <View style={styles.actionsRow}>
-              <TouchableOpacity
-                style={[styles.btn, styles.cancelBtn]}
-                onPress={handleCancel}
-                disabled={isSending}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.cancelBtnText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.btn, styles.sendBtn, isSending && styles.btnDisabled]}
-                onPress={handleSend}
-                disabled={isSending}
-                activeOpacity={0.8}
-              >
-                {isSending ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.sendBtnText}>Send Photo ↑</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
+      <View style={styles.contentContainer}>
+        {/* Photo Preview Thumbnail */}
+        <View style={styles.imageWrapper}>
+          <Image
+            source={{ uri: imageUri }}
+            style={styles.previewImage}
+            contentFit="contain"
+          />
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+
+        {/* Caption Input */}
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.captionInput}
+            placeholder="Add a sweet note or caption…"
+            placeholderTextColor={theme.colors.textSecondary}
+            value={caption}
+            onChangeText={setCaption}
+            maxLength={200}
+            editable={!isSending}
+          />
+        </View>
+      </View>
+    </FormSheet>
   );
 };
 
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(43, 33, 24, 0.65)',
+    backgroundColor: 'rgba(62, 39, 35, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: scale(20),
@@ -141,24 +102,13 @@ const styles = StyleSheet.create({
     maxWidth: scale(360),
     position: 'relative',
   },
-  cardShadow: {
-    position: 'absolute',
-    top: 6,
-    left: 6,
-    right: -6,
-    bottom: -6,
-    backgroundColor: theme.colors.border,
-    borderRadius: 22,
-    zIndex: 0,
-  },
   cardSurface: {
-    position: 'relative',
-    zIndex: 1,
-    backgroundColor: theme.colors.background, // Paper #FFF4E3
-    borderRadius: 22,
-    borderWidth: 2.5,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.roundness.lg,
+    borderWidth: 1,
     borderColor: theme.colors.border,
     padding: scale(18),
+    ...theme.shadows.card,
   },
   headerRow: {
     flexDirection: 'row',
@@ -182,10 +132,10 @@ const styles = StyleSheet.create({
   imageWrapper: {
     width: '100%',
     height: scale(220),
-    borderRadius: 16,
+    borderRadius: theme.roundness.lg,
     overflow: 'hidden',
-    backgroundColor: '#FAF5EE',
-    borderWidth: 2,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderWidth: 1,
     borderColor: theme.colors.border,
     marginBottom: scale(14),
   },
@@ -194,9 +144,9 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   inputWrapper: {
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: 14,
+    borderRadius: theme.roundness.md,
     backgroundColor: theme.colors.surface,
     paddingHorizontal: scale(12),
     paddingVertical: scale(8),
@@ -215,14 +165,14 @@ const styles = StyleSheet.create({
   btn: {
     flex: 1,
     height: scale(46),
-    borderRadius: 14,
+    borderRadius: theme.roundness.full,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: theme.colors.border,
   },
   cancelBtn: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.surfaceBlush,
   },
   cancelBtnText: {
     fontFamily: theme.typography.families.bold,
@@ -230,7 +180,8 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   sendBtn: {
-    backgroundColor: theme.colors.primary, // Tomato #FF5A3C
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   sendBtnText: {
     fontFamily: theme.typography.families.bold,
@@ -239,6 +190,9 @@ const styles = StyleSheet.create({
   },
   btnDisabled: {
     opacity: 0.7,
+  },
+  contentContainer: {
+    paddingBottom: scale(12),
   },
 });
 

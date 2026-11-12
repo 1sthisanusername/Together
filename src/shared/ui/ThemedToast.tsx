@@ -135,39 +135,31 @@ const styles = StyleSheet.create({
     zIndex: 9999,
   },
   toastShadow: {
-    position: 'absolute',
-    top: 4,
-    left: 4,
-    right: -4,
-    bottom: -4,
-    backgroundColor: theme.colors.border,
-    borderRadius: 16,
-    zIndex: 0,
+    display: 'none',
   },
   toastSurface: {
-    position: 'relative',
-    zIndex: 1,
-    backgroundColor: theme.colors.background, // Paper #FFF4E3
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.background, // #FFFDFB
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: theme.colors.border, // #FBE9E7
     paddingHorizontal: scale(14),
     paddingVertical: scale(10),
     flexDirection: 'row',
     alignItems: 'center',
     gap: scale(10),
+    ...theme.shadows.card,
   },
   badge: {
     width: scale(32),
     height: scale(32),
-    borderRadius: scale(16),
-    borderWidth: 1.5,
+    borderRadius: 9999,
+    borderWidth: 1,
     borderColor: theme.colors.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
   badgeEmoji: {
-    fontSize: 16,
+    fontSize: scale(16),
   },
   messageText: {
     flex: 1,
@@ -179,9 +171,9 @@ const styles = StyleSheet.create({
   retryBtn: {
     paddingHorizontal: scale(10),
     paddingVertical: scale(6),
-    borderRadius: 8,
+    borderRadius: theme.roundness.full,
     backgroundColor: theme.colors.stickers.sunshine,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: theme.colors.border,
   },
   retryText: {
@@ -193,7 +185,7 @@ const styles = StyleSheet.create({
     padding: scale(4),
   },
   dismissIcon: {
-    fontSize: 14,
+    fontSize: scale(14),
     color: theme.colors.textSecondary,
     fontWeight: 'bold',
   },

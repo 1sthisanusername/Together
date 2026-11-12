@@ -1,97 +1,115 @@
 /**
- * Visual Direction: STRING & STICKERS (Playful)
- * Concept: "Connected by a playful red string, decorated with chunky stickers."
- * Paper textures, deep warm ink outlines, hard offset shadows, vibrant toybox accents.
+ * Visual Direction: LOVE, JOY & CONNECTION
+ * Warm, intimate, and playful aesthetic with Amour Red, Joyful Coral,
+ * Blushing Rose, Warm Sunset, and Cozy Night ink anchors.
  */
 
 export const palette = {
-  // Light Palette ("String & Stickers")
-  paper: '#FFF4E3',       // Canvas: warm natural paper
-  ink: '#2B2118',         // Ink: deep warm black outline & text (WCAG AAA 14.8:1)
-  tomato: '#FF5A3C',      // Primary Accent: vibrant toybox tomato
-  sunshine: '#FFC93C',    // Secondary Accent: warm sticker sunshine
-  pool: '#2EC4B6',        // Interactive / Presence: bright pool teal
-  bubblegum: '#FF8FB1',   // Romantic / Playful: sweet bubblegum pink
-  white: '#FFFFFF',       // Sticker Surface: clean sticker paper
-  cardCream: '#FFF9F0',   // Sub-surface: soft parchment
-  inkMuted: '#7A6E63',    // Secondary text / muted ink
-  inkFaint: '#A89F91',    // Disabled / faint ink
-  danger: '#E03616',      // Alert red
-  success: '#2EC4B6',     // Pool teal success
-  warning: '#FFC93C',     // Sunshine warning
+  // Core Brand & Accent Tokens
+  amourRed: '#E53935',         // Primary Brand / CTA
+  amourRedPressed: '#C62828',  // Pressed / Active CTA state
+  joyfulCoral: '#FF7043',      // Secondary Accent
+  blushingRose: '#F48FB1',     // Soft Accent / Highlights
+  warmSunset: '#FFB74D',       // Alerts / Milestones / Badges
 
-  // Dark Palette Variant (Dark Craft Paper)
-  paperDark: '#1C1611',
-  inkDark: '#FFF4E3',
-  surfaceDark: '#271F19',
-  surfaceSubtleDark: '#332921',
-  borderDark: '#3D3126',
-  tomatoDark: '#FF6E54',
-  sunshineDark: '#FFD359',
-  poolDark: '#40D9CB',
-  bubblegumDark: '#FFA1BD',
-  inkMutedDark: '#A89D91',
+  // Typography & Anchors
+  cozyNight: '#3E2723',        // Primary Typography & Dark Anchor
+  cozyNightMuted: '#7A625A',   // Muted / Secondary Text, timestamps, helpers
+  cozyNightInactive: 'rgba(62, 39, 35, 0.5)', // Inactive tab icons & labels
+
+  // Surfaces & Canvas
+  warmOffWhite: '#FFFDFB',     // Primary App Background
+  softBlush: '#FFF0ED',        // Card & Container Surface
+  disabledBlush: '#FBE9E7',    // Disabled State Surface & 1px subtle border
+  white: '#FFFFFF',            // Pure surface card contrast
+
+  // Semantic aliases
+  danger: '#C62828',
+  success: '#FF7043',
+  online: '#2EC4B6',
+
+  // Dark Mode Variant (Warm Cocoa Night)
+  paperDark: '#1E1412',
+  inkDark: '#FFFDFB',
+  surfaceDark: '#2A1D1A',
+  surfaceSubtleDark: '#362622',
+  borderDark: '#47332E',
+  amourRedDark: '#EF5350',
+  coralDark: '#FF8A65',
+  roseDark: '#F8BBD0',
+  sunsetDark: '#FFCC80',
+  inkMutedDark: '#BCAAA4',
 } as const;
 
 export const theme = {
   colors: {
     // Canvas & Paper Surfaces
-    background: palette.paper,
-    surface: palette.white,
-    surfaceSubtle: palette.cardCream,
-    surfaceHighlight: '#FFEED2',
+    background: palette.warmOffWhite,       // #FFFDFB
+    surface: palette.white,                 // #FFFFFF (with 1px solid #FBE9E7 border)
+    surfaceBlush: palette.softBlush,        // #FFF0ED
+    surfaceSubtle: palette.softBlush,       // #FFF0ED
+    surfaceDisabled: palette.disabledBlush, // #FBE9E7
+    surfaceHighlight: palette.disabledBlush,// #FBE9E7
 
-    // Typography (Chunky Ink)
-    text: palette.ink,
-    textSecondary: palette.inkMuted,
-    textMuted: palette.inkFaint,
-    textInverse: palette.paper,
-    textTomato: palette.tomato,
-    textSunshine: palette.sunshine,
-    textPool: palette.pool,
-    textBubblegum: palette.bubblegum,
+    // Typography (Cozy Night)
+    text: palette.cozyNight,                // #3E2723
+    textSecondary: palette.cozyNightMuted,  // #7A625A
+    textMuted: palette.cozyNightMuted,      // #7A625A
+    textInactive: palette.cozyNightInactive,// rgba(62, 39, 35, 0.5)
+    textInverse: palette.warmOffWhite,      // #FFFDFB
+    textAmour: palette.amourRed,            // #E53935
+    textCoral: palette.joyfulCoral,         // #FF7043
 
-    // Primary Brand Accent (Tomato)
-    primary: palette.tomato,
-    primaryHover: '#E84E32',
-    primaryLight: '#FFEAE5',
-    primaryBorder: palette.ink,
+    // Primary Brand Accent (Amour Red)
+    primary: palette.amourRed,              // #E53935
+    primaryPressed: palette.amourRedPressed,// #C62828
+    primaryHover: palette.amourRedPressed,  // #C62828
+    primaryLight: palette.softBlush,        // #FFF0ED
+    primaryBorder: palette.disabledBlush,   // #FBE9E7
 
-    // Secondary & Sticker Accents
-    secondary: palette.sunshine,
-    secondaryLight: '#FFF8E6',
-    pool: palette.pool,
-    poolLight: '#E6FAF8',
-    bubblegum: palette.bubblegum,
-    bubblegumLight: '#FFF0F5',
-    kintsugi: palette.sunshine, // backward compatibility
-    kintsugiLight: '#FFF8E6',   // backward compatibility
+    // Secondary & Accent Highlights
+    secondary: palette.joyfulCoral,         // #FF7043
+    secondaryLight: palette.softBlush,      // #FFF0ED
+    coral: palette.joyfulCoral,             // #FF7043
+    rose: palette.blushingRose,             // #F48FB1
+    bubblegum: palette.blushingRose,        // #F48FB1
+    bubblegumLight: palette.softBlush,      // #FFF0ED
+    sunset: palette.warmSunset,             // #FFB74D
+    pool: palette.joyfulCoral,              // #FF7043 (migrated warm coral accent)
+    poolLight: palette.softBlush,           // #FFF0ED
+    kintsugi: palette.warmSunset,           // #FFB74D
+    kintsugiLight: '#FFF7EA',
 
-    // Chunky Outlines & Borders
-    border: palette.ink,
-    borderLight: '#DFC9AE',
-    borderStrong: palette.ink,
+    // Borders (Subtle 1px Warm Blush)
+    border: palette.disabledBlush,          // #FBE9E7
+    borderLight: palette.disabledBlush,     // #FBE9E7
+    borderStrong: palette.cozyNight,        // #3E2723
 
-    // Hard Offset Ink Shadows
-    shadowInk: palette.ink,
+    // Warm Diffused Shadow Anchor
+    shadowInk: palette.cozyNight,           // #3E2723
 
     // Feedback Accents
-    heart: palette.tomato,
-    sun: palette.sunshine,
-    moon: palette.pool,
-    success: palette.pool,
-    successLight: '#E6FAF8',
-    warning: palette.sunshine,
-    warningLight: '#FFF8E6',
-    danger: palette.danger,
-    dangerLight: '#FFEAE5',
+    heart: palette.amourRed,                // #E53935
+    sun: palette.warmSunset,                // #FFB74D
+    moon: palette.blushingRose,             // #F48FB1
+    online: palette.online,
+    success: palette.joyfulCoral,
+    successLight: palette.softBlush,
+    warning: palette.warmSunset,            // #FFB74D
+    warningLight: '#FFF8EC',
+    danger: palette.amourRedPressed,        // #C62828
+    dangerLight: palette.disabledBlush,     // #FBE9E7
 
-    // Stickers
+    // Badge & Sticker Highlights
     stickers: {
-      sunshine: palette.sunshine,
-      pool: palette.pool,
-      bubblegum: palette.bubblegum,
-      matcha: palette.pool,
+      sunshine: palette.warmSunset,         // #FFB74D
+      sunset: palette.warmSunset,           // #FFB74D
+      coral: palette.joyfulCoral,           // #FF7043
+      pool: palette.softBlush,              // #FFF0ED
+      bubblegum: palette.blushingRose,      // #F48FB1
+      rose: palette.blushingRose,           // #F48FB1
+      blush: palette.softBlush,             // #FFF0ED
+      matcha: palette.softBlush,
     },
   },
 
@@ -99,18 +117,25 @@ export const theme = {
     background: palette.paperDark,
     surface: palette.surfaceDark,
     surfaceSubtle: palette.surfaceSubtleDark,
-    surfaceHighlight: '#3D3126',
+    surfaceHighlight: palette.borderDark,
     text: palette.inkDark,
     textSecondary: palette.inkMutedDark,
-    textMuted: '#6E645A',
+    textMuted: palette.inkMutedDark,
     textInverse: palette.paperDark,
-    primary: palette.tomatoDark,
-    secondary: palette.sunshineDark,
-    pool: palette.poolDark,
-    bubblegum: palette.bubblegumDark,
+    primary: palette.amourRedDark,
+    secondary: palette.coralDark,
+    pool: palette.coralDark,
+    bubblegum: palette.roseDark,
     border: palette.borderDark,
-    borderLight: '#4A3B2E',
+    borderLight: palette.borderDark,
     shadowInk: '#000000',
+  },
+
+  gradients: {
+    primary: ['#E53935', '#FF7043'] as readonly [string, string],
+    hero: ['#E53935', '#FF7043'] as readonly [string, string],
+    blush: ['#FFF0ED', '#FFFDFB'] as readonly [string, string],
+    rose: ['#F48FB1', '#FF7043'] as readonly [string, string],
   },
 
   typography: {
@@ -130,49 +155,64 @@ export const theme = {
     },
   },
 
-  // Chunky 2px / 2.5px Ink Outlines
+  // Subtle 1px Warm Borders
   borders: {
-    chunky: 2,
-    chunkyThick: 3,
+    subtle: 1,
+    chunky: 1,
+    chunkyThick: 1.5,
   },
 
-  // Hard Offset Ink Shadows (no blur)
+  // Warm, Diffused Elevation Shadows: 0 8px 24px rgba(62, 39, 35, 0.07)
   shadows: {
+    soft: {
+      shadowColor: palette.cozyNight,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.07,
+      shadowRadius: 24,
+      elevation: 4,
+    },
+    card: {
+      shadowColor: palette.cozyNight,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.07,
+      shadowRadius: 24,
+      elevation: 4,
+    },
     hardSm: {
-      shadowColor: palette.ink,
-      shadowOffset: { width: 2, height: 2 },
-      shadowOpacity: 1,
-      shadowRadius: 0,
+      shadowColor: palette.cozyNight,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.07,
+      shadowRadius: 12,
       elevation: 2,
     },
     hardMd: {
-      shadowColor: palette.ink,
-      shadowOffset: { width: 3, height: 3 },
-      shadowOpacity: 1,
-      shadowRadius: 0,
+      shadowColor: palette.cozyNight,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.07,
+      shadowRadius: 18,
       elevation: 3,
     },
     hardLg: {
-      shadowColor: palette.ink,
-      shadowOffset: { width: 4, height: 4 },
-      shadowOpacity: 1,
-      shadowRadius: 0,
+      shadowColor: palette.cozyNight,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.07,
+      shadowRadius: 24,
       elevation: 4,
     },
   },
 
   roundness: {
-    sm: 8,
-    md: 12,
-    lg: 16,
+    sm: 10,
+    md: 16,
+    lg: 20,
     xl: 24,
     full: 9999,
   },
 
   radii: {
-    sm: 8,
-    md: 12,
-    lg: 16,
+    sm: 10,
+    md: 16,
+    lg: 20,
     xl: 24,
     full: 9999,
   },

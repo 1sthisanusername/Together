@@ -49,8 +49,9 @@ describe('GATE 3: Chat Input Bar Layout & Gestures', () => {
     'utf-8'
   );
 
-  it('uses KeyboardStickyView as exactly ONE keyboard-offset mechanism with zero gap when opened', () => {
-    expect(chatThreadFile).toContain('KeyboardStickyView offset={{ closed: insets.bottom, opened: 0 }}');
+  it('uses KeyboardStickyView as exactly ONE keyboard-offset mechanism clearing system nav bar when closed', () => {
+    expect(chatThreadFile).toContain('KeyboardStickyView offset={{ closed: 0, opened: bottomSafeInset }}');
+    expect(chatThreadFile).toContain('paddingBottom: closedBottomPadding');
     // Verify no nested KeyboardAvoidingView wraps the input bar
     const inputBarIdx = chatThreadFile.indexOf('<KeyboardStickyView');
     expect(inputBarIdx).toBeGreaterThan(0);
@@ -58,8 +59,8 @@ describe('GATE 3: Chat Input Bar Layout & Gestures', () => {
 
   it('renders a unified rounded pill with fully rounded ends and small horizontal margins', () => {
     expect(chatThreadFile).toContain('styles.pill');
-    expect(chatThreadFile).toContain('borderRadius: 28');
-    expect(chatThreadFile).toContain('minHeight: 52');
+    expect(chatThreadFile).toContain('borderRadius: theme.roundness.full');
+    expect(chatThreadFile).toContain('minHeight: scale(52)');
   });
 
   it('features a filled round camera button on the left with >= 48dp touch target', () => {
@@ -72,7 +73,7 @@ describe('GATE 3: Chat Input Bar Layout & Gestures', () => {
   it('provides a flexible Message… text input growing up to ~4 lines', () => {
     expect(chatThreadFile).toContain('placeholder={`Message ${partnerName}…`}');
     expect(chatThreadFile).toContain('multiline');
-    expect(chatThreadFile).toContain('maxHeight: 110');
+    expect(chatThreadFile).toContain('maxHeight: scale(110)');
   });
 
   it('renders gallery and plus icons, and replaces mic with send button when text is entered', () => {

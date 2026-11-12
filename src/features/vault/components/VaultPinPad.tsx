@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { triggerHaptic } from '@/shared/theme';
+import { LockIcon } from '@/shared/ui';
+import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export interface VaultPinPadProps {
   isSetup?: boolean;
@@ -90,7 +91,7 @@ export const VaultPinPad: React.FC<VaultPinPadProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.padlockIcon}>
-        <Text style={styles.padlockEmoji}>🔒</Text>
+        <LockIcon color={theme.colors.text} size={28} focused />
       </View>
 
       <Text style={styles.title}>{titleText}</Text>
@@ -133,6 +134,10 @@ export const VaultPinPad: React.FC<VaultPinPadProps> = ({
                     isSpecial && styles.keySpecial,
                   ]}
                   activeOpacity={0.75}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    key === 'C' ? 'Clear PIN' : key === '⌫' ? 'Delete digit' : `Digit ${key}`
+                  }
                   onPress={() => {
                     if (key === 'C') handleClear();
                     else if (key === '⌫') handleBackspace();
@@ -155,103 +160,95 @@ export const VaultPinPad: React.FC<VaultPinPadProps> = ({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    paddingVertical: 24,
-    paddingHorizontal: 20,
+    paddingVertical: scale(24),
+    paddingHorizontal: scale(20),
   },
   padlockIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#FFC93C',
-    borderWidth: 2.5,
-    borderColor: '#2B2118',
+    width: scale(64),
+    height: scale(64),
+    borderRadius: 9999,
+    backgroundColor: theme.colors.sunset,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
-    shadowColor: '#2B2118',
-    shadowOffset: { width: 3, height: 3 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 3,
+    marginBottom: scale(16),
+    ...theme.shadows.card,
   },
   padlockEmoji: {
-    fontSize: 32,
+    fontSize: scale(32),
   },
   title: {
-    fontSize: 22,
+    fontSize: scale(22),
     fontWeight: '900',
-    color: '#2B2118',
-    marginBottom: 6,
+    color: theme.colors.text,
+    marginBottom: scale(6),
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 13,
-    color: '#5C4A3A',
+    fontSize: scale(13),
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 24,
-    paddingHorizontal: 20,
-    lineHeight: 18,
+    marginBottom: scale(24),
+    paddingHorizontal: scale(20),
+    lineHeight: scale(18),
   },
   dotsRow: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 20,
+    gap: scale(16),
+    marginBottom: scale(20),
   },
   dot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#2B2118',
-    backgroundColor: '#FFFFFF',
+    width: scale(20),
+    height: scale(20),
+    borderRadius: 9999,
+    borderWidth: 1.5,
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.surface,
   },
   dotFilled: {
-    backgroundColor: '#2EC4B6',
+    backgroundColor: theme.colors.primary,
     transform: [{ scale: 1.15 }],
   },
   errorText: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '700',
-    color: '#FF5A3C',
-    marginBottom: 14,
+    color: theme.colors.danger,
+    marginBottom: scale(14),
     textAlign: 'center',
   },
   keypad: {
-    width: '100%',
-    maxWidth: 280,
-    gap: 12,
-    marginTop: 8,
+    width: '82%',
+    maxWidth: scale(280),
+    gap: scale(12),
+    marginTop: scale(8),
   },
   keyRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: scale(12),
   },
   keyButton: {
     flex: 1,
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: '#FFF4E3',
-    borderWidth: 2,
-    borderColor: '#2B2118',
+    height: scale(56),
+    borderRadius: theme.roundness.lg,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#2B2118',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
+    ...theme.shadows.hardSm,
   },
   keySpecial: {
-    backgroundColor: '#EAE0D2',
+    backgroundColor: theme.colors.surfaceDisabled,
   },
   keyText: {
-    fontSize: 22,
+    fontSize: scale(22),
     fontWeight: '800',
-    color: '#2B2118',
+    color: theme.colors.text,
   },
   keySpecialText: {
-    fontSize: 18,
+    fontSize: scale(18),
   },
 });
 

@@ -8,7 +8,8 @@ import {
 } from 'react-native';
 import { useHomePhoto } from '../hooks/useHomePhoto';
 import { SetHomePhotoModal } from './SetHomePhotoModal';
-import { triggerHaptic } from '@/shared/theme';
+import { CameraIcon, HeartIcon } from '@/shared/ui';
+import { theme, scale, useResponsiveLayout, triggerHaptic } from '@/shared/theme';
 
 export interface HomePagePhotoCardProps {
   partnerName: string;
@@ -17,6 +18,7 @@ export interface HomePagePhotoCardProps {
 export const HomePagePhotoCard: React.FC<HomePagePhotoCardProps> = ({ partnerName }) => {
   const { homePhotoUrl, isSetByMe } = useHomePhoto();
   const [modalVisible, setModalVisible] = useState(false);
+  const { mediaAspectRatio } = useResponsiveLayout();
 
   const handlePress = () => {
     triggerHaptic('light');
@@ -25,27 +27,28 @@ export const HomePagePhotoCard: React.FC<HomePagePhotoCardProps> = ({ partnerNam
 
   return (
     <View style={styles.wrapper}>
-      <TouchableOpacity onPress={handlePress} activeOpacity={0.88}>
-        <View style={styles.cardShadow} />
+      <TouchableOpacity onPress={handlePress} activeOpacity={0.9}>
         <View style={styles.cardSurface}>
           {homePhotoUrl ? (
-            <View style={styles.photoContainer}>
+            <View style={[styles.photoContainer, { aspectRatio: mediaAspectRatio }]}>
               <Image source={{ uri: homePhotoUrl }} style={styles.photo} resizeMode="cover" />
               <View style={styles.badgeRow}>
                 <View style={styles.attributionPill}>
+                  <HeartIcon color={theme.colors.rose} size={scale(12)} filled />
                   <Text style={styles.attributionText}>
-                    {isSetByMe ? 'Shared by you ❤️' : `Shared by ${partnerName} ❤️`}
+                    {isSetByMe ? 'Shared by you' : `Shared by ${partnerName}`}
                   </Text>
                 </View>
                 <View style={styles.cameraIconPill}>
-                  <Text style={styles.cameraIconText}>📷 Change</Text>
+                  <CameraIcon color={theme.colors.text} size={scale(13)} />
+                  <Text style={styles.cameraIconText}>Change</Text>
                 </View>
               </View>
             </View>
           ) : (
             <View style={styles.placeholderContainer}>
               <View style={styles.placeholderIconWrapper}>
-                <Text style={styles.placeholderIcon}>📸</Text>
+                <CameraIcon color="#FFFFFF" size={scale(24)} />
               </View>
               <Text style={styles.placeholderTitle}>Set your shared home photo</Text>
               <Text style={styles.placeholderSub}>
@@ -69,36 +72,25 @@ export const HomePagePhotoCard: React.FC<HomePagePhotoCardProps> = ({ partnerNam
 
 const styles = StyleSheet.create({
   wrapper: {
-    paddingHorizontal: 18,
-    marginVertical: 10,
-  },
-  cardShadow: {
-    position: 'absolute',
-    top: 4,
-    left: 22,
-    right: 14,
-    bottom: -4,
-    backgroundColor: '#2B2118',
-    borderRadius: 18,
-    zIndex: 0,
+    width: '100%',
+    marginVertical: scale(7),
   },
   cardSurface: {
-    position: 'relative',
-    zIndex: 1,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#2B2118',
-    borderRadius: 18,
+    backgroundColor: theme.colors.surface, // #FFFFFF
+    borderWidth: 1,
+    borderColor: theme.colors.border, // #FBE9E7
+    borderRadius: 20,
     overflow: 'hidden',
-    padding: 8,
+    padding: scale(8),
+    ...theme.shadows.card,
   },
   photoContainer: {
     width: '100%',
-    height: 190,
-    borderRadius: 12,
+    aspectRatio: 16 / 9,
+    borderRadius: 14,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#FFF4E3',
+    backgroundColor: theme.colors.surfaceBlush,
   },
   photo: {
     width: '100%',
@@ -106,98 +98,90 @@ const styles = StyleSheet.create({
   },
   badgeRow: {
     position: 'absolute',
-    bottom: 8,
-    left: 8,
-    right: 8,
+    bottom: 10,
+    left: 10,
+    right: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   attributionPill: {
-    backgroundColor: 'rgba(43, 33, 24, 0.75)',
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(62, 39, 35, 0.78)',
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 9999,
   },
   attributionText: {
-    fontSize: 11,
+    fontFamily: theme.typography.families.sans,
+    fontSize: scale(11),
     fontWeight: '700',
     color: '#FFFFFF',
   },
   cameraIconPill: {
-    backgroundColor: '#FFC93C',
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: '#2B2118',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(5),
+    backgroundColor: theme.colors.sunset,
+    paddingVertical: scale(5),
+    paddingHorizontal: scale(12),
+    borderRadius: 9999,
   },
   cameraIconText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#2B2118',
+    fontFamily: theme.typography.families.bold,
+    fontSize: scale(11),
+    fontWeight: '700',
+    color: theme.colors.text,
   },
   placeholderContainer: {
     alignItems: 'center',
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    backgroundColor: '#FFF8EE',
-    borderRadius: 12,
-    borderWidth: 1.5,
+    paddingVertical: scale(24),
+    paddingHorizontal: scale(16),
+    backgroundColor: theme.colors.surfaceBlush,
+    borderRadius: scale(14),
+    borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: '#D2CCC4',
+    borderColor: theme.colors.rose,
   },
   placeholderIconWrapper: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#FF8FB1',
-    borderWidth: 2,
-    borderColor: '#2B2118',
+    width: scale(50),
+    height: scale(50),
+    borderRadius: 9999,
+    backgroundColor: theme.colors.rose,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
-    shadowColor: '#2B2118',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
-  },
-  placeholderIcon: {
-    fontSize: 24,
+    marginBottom: scale(10),
+    ...theme.shadows.hardSm,
   },
   placeholderTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#2B2118',
-    marginBottom: 4,
+    fontFamily: theme.typography.fontFamilies.display,
+    fontSize: scale(16),
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: scale(4),
   },
   placeholderSub: {
-    fontSize: 12,
-    color: '#7A6B5D',
+    fontFamily: theme.typography.families.body,
+    fontSize: scale(12),
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 14,
-    lineHeight: 16,
-    paddingHorizontal: 12,
+    marginBottom: scale(14),
+    lineHeight: scale(16),
+    paddingHorizontal: scale(12),
   },
   setButtonPill: {
-    backgroundColor: '#2EC4B6',
-    borderWidth: 2,
-    borderColor: '#2B2118',
-    borderRadius: 12,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    shadowColor: '#2B2118',
-    shadowOffset: { width: 1.5, height: 1.5 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 9999,
+    paddingVertical: scale(8),
+    paddingHorizontal: scale(18),
+    ...theme.shadows.hardSm,
   },
   setButtonText: {
-    fontSize: 12,
-    fontWeight: '800',
+    fontFamily: theme.typography.fontFamilies.display,
+    fontSize: scale(12),
+    fontWeight: '700',
     color: '#FFFFFF',
   },
 });

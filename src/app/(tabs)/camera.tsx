@@ -6,25 +6,43 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useHomePhoto, useUpdateHomePhoto } from '@/features/home';
-import { Button, ErrorState, SwipeTabWrapper } from '@/shared/ui';
-import { triggerHaptic } from '@/shared/theme';
+import {
+  Button,
+  ErrorState,
+  SwipeTabWrapper,
+  ResponsiveContainer,
+  CameraIcon,
+  GalleryIcon,
+} from '@/shared/ui';
+import { theme, scale, useResponsiveLayout, triggerHaptic } from '@/shared/theme';
 
 export default function CameraScreen() {
   const router = useRouter();
   const { homePhotoUrl } = useHomePhoto();
   const { mutateAsync: updateHomePhoto, isPending, error, reset } = useUpdateHomePhoto();
   const [selectedUri, setSelectedUri] = useState<string | null>(null);
+  const { horizontalGutter, mediaAspectRatio, s } = useResponsiveLayout();
+  const insets = useSafeAreaInsets();
+  let tabBarHeight = 56;
+  try {
+    tabBarHeight = useBottomTabBarHeight();
+  } catch {
+    tabBarHeight = 56;
+  }
+  const bottomPadding = tabBarHeight + insets.bottom + scale(16);
 
   const handlePickFromGallery = async () => {
     triggerHaptic('light');
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [16, 9],
         quality: 0.85,
@@ -79,75 +97,95 @@ export default function CameraScreen() {
     <SafeAreaView style={styles.safeArea}>
       <SwipeTabWrapper currentTab="camera">
         <View style={styles.header}>
-        <Text style={styles.title}>Home Cover Photo</Text>
-        <Text style={styles.subtitle}>
-          Take or choose a photo that will appear on your shared home screen for both of you.
-        </Text>
-      </View>
-
-      <View style={styles.content}>
-        {error ? (
-          <ErrorState
-            title="Upload Failed"
-            message={error.message}
-            onRetry={reset}
-            retryTitle="Try Again"
-          />
-        ) : null}
-
-        {/* Photo Preview Frame */}
-        <View style={styles.previewCard}>
-          {previewUri ? (
-            <Image source={{ uri: previewUri }} style={styles.previewImage} resizeMode="cover" />
-          ) : (
-            <View style={styles.emptyPlaceholder}>
-              <Text style={styles.emptyIcon}>📷</Text>
-              <Text style={styles.emptyText}>No home photo set yet</Text>
-              <Text style={styles.emptySubtext}>Choose or capture one below!</Text>
+          <ResponsiveContainer style={{ paddingHorizontal: horizontalGutter }}>
+            <View style={styles.titleRow}>
+              <Text style={[styles.title, { fontSize: s(24) }]}>Home Cover Photo</Text>
+              <View style={styles.titleDot} />
             </View>
-          )}
+            <Text style={styles.subtitle}>
+              Take or choose a photo that will appear on your shared home screen for both of you.
+            </Text>
+          </ResponsiveContainer>
         </View>
 
-        {/* Action Buttons: Camera & Gallery */}
-        <View style={styles.btnRow}>
-          <TouchableOpacity
-            style={styles.choiceBtn}
-            onPress={handleTakePhoto}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.choiceIcon}>📸</Text>
-            <Text style={styles.choiceTitle}>Take Photo</Text>
-          </TouchableOpacity>
+        <ScrollView
+          style={styles.scrollFlex}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingHorizontal: horizontalGutter, paddingBottom: bottomPadding },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <ResponsiveContainer>
+            {error ? (
+              <ErrorState
+                title="Upload Failed"
+                message={error.message}
+                onRetry={reset}
+                retryTitle="Try Again"
+              />
+            ) : null}
 
-          <TouchableOpacity
-            style={styles.choiceBtn}
-            onPress={handlePickFromGallery}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.choiceIcon}>🖼️</Text>
-            <Text style={styles.choiceTitle}>From Gallery</Text>
-          </TouchableOpacity>
-        </View>
+            {/* Photo Preview Frame */}
+            <View style={[styles.previewCard, { aspectRatio: mediaAspectRatio }]}>
+              {previewUri ? (
+                <Image source={{ uri: previewUri }} style={styles.previewImage} resizeMode="cover" />
+              ) : (
+                <View style={styles.emptyPlaceholder}>
+                  <View style={styles.emptyIconCircle}>
+                    <CameraIcon color={theme.colors.primary} size={scale(28)} />
+                  </View>
+                  <Text style={styles.emptyText}>No home photo set yet</Text>
+                  <Text style={styles.emptySubtext}>Choose or capture one below!</Text>
+                </View>
+              )}
+            </View>
 
-        {selectedUri ? (
-          <Button
-            title="Set as Home Cover Photo ✨"
-            variant="primary"
-            size="lg"
-            loading={isPending}
-            onPress={handleSave}
-            style={styles.saveBtn}
-          />
-        ) : (
-          <Button
-            title="Go to Home Screen →"
-            variant="outline"
-            size="md"
-            onPress={() => router.replace('/(tabs)/home')}
-            style={styles.saveBtn}
-          />
-        )}
-      </View>
+            {/* Action Buttons: Camera & Gallery */}
+            <View style={styles.btnRow}>
+              <TouchableOpacity
+                style={styles.choiceBtn}
+                onPress={handleTakePhoto}
+                activeOpacity={0.85} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityLabel="Take a photo for home cover"
+              >
+                <CameraIcon color={theme.colors.primary} size={scale(20)} />
+                <Text style={styles.choiceTitle}>Take Photo</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.choiceBtn}
+                onPress={handlePickFromGallery}
+-                activeOpacity={0.85}
++                activeOpacity={0.85}
++                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
++                accessibilityLabel="Pick a photo from gallery for home cover"
+ hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityLabel="Take a photo for home cover"
+              >
+                <GalleryIcon color={theme.colors.coral} size={scale(20)} />
+                <Text style={styles.choiceTitle}>From Gallery</Text>
+              </TouchableOpacity>
+            </View>
+
+            {selectedUri ? (
+              <Button
+                title="Set as Home Cover Photo ✨"
+                variant="primary"
+                size="lg"
+                loading={isPending}
+                onPress={handleSave}
+                style={styles.saveBtn}
+              />
+            ) : (
+              <Button
+                title="Go to Home Screen →"
+                variant="outline"
+                size="md"
+                onPress={() => router.replace('/(tabs)/home')}
+                style={styles.saveBtn}
+              />
+            )}
+          </ResponsiveContainer>
+        </ScrollView>
       </SwipeTabWrapper>
     </SafeAreaView>
   );
@@ -156,46 +194,57 @@ export default function CameraScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFF4E3',
+    backgroundColor: theme.colors.background,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: '#2B2118',
-    backgroundColor: '#FFF8EE',
+    paddingTop: scale(14),
+    paddingBottom: scale(14),
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border, // #FBE9E7
+    backgroundColor: theme.colors.surfaceSubtle, // #FFF0ED
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(5),
+    marginBottom: scale(4),
   },
   title: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#2B2118',
-    marginBottom: 4,
+    fontFamily: theme.typography.fontFamilies.display,
+    fontSize: scale(24),
+    fontWeight: '800',
+    color: theme.colors.text,
+    letterSpacing: -0.5,
+  },
+  titleDot: {
+    width: scale(7),
+    height: scale(7),
+    borderRadius: 9999,
+    backgroundColor: theme.colors.primary,
+    marginTop: scale(4),
   },
   subtitle: {
-    fontSize: 13,
-    color: '#7A6B5D',
-    lineHeight: 18,
+    fontFamily: theme.typography.families.body,
+    fontSize: scale(13),
+    color: theme.colors.textSecondary,
+    lineHeight: scale(18),
   },
-  content: {
+  scrollFlex: {
     flex: 1,
-    padding: 20,
-    justifyContent: 'center',
+  },
+  scrollContent: {
+    paddingVertical: scale(16),
   },
   previewCard: {
     width: '100%',
-    height: 240,
-    borderRadius: 20,
-    borderWidth: 2.5,
-    borderColor: '#2B2118',
-    backgroundColor: '#FFFFFF',
+    aspectRatio: 16 / 10,
+    borderRadius: theme.roundness.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
     overflow: 'hidden',
-    marginBottom: 20,
-    shadowColor: '#2B2118',
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4,
+    marginBottom: scale(20),
+    ...theme.shadows.card,
   },
   previewImage: {
     width: '100%',
@@ -205,55 +254,56 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF8EE',
-    padding: 20,
+    backgroundColor: theme.colors.surfaceBlush,
+    padding: scale(20),
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 8,
+  emptyIconCircle: {
+    width: scale(60),
+    height: scale(60),
+    borderRadius: 9999,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: scale(12),
+    ...theme.shadows.hardSm,
   },
   emptyText: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#2B2118',
-    marginBottom: 4,
+    fontSize: scale(16),
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: scale(4),
   },
   emptySubtext: {
-    fontSize: 12,
-    color: '#7A6B5D',
+    fontSize: scale(12),
+    color: theme.colors.textSecondary,
   },
   btnRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
+    gap: scale(12),
+    marginBottom: scale(16),
   },
   choiceBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: '#2B2118',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#2B2118',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
-  },
-  choiceIcon: {
-    fontSize: 20,
+    gap: scale(8),
+    paddingVertical: scale(14),
+    borderRadius: theme.roundness.full,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    ...theme.shadows.hardSm,
   },
   choiceTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#2B2118',
+    fontSize: scale(14),
+    fontWeight: '700',
+    color: theme.colors.text,
   },
   saveBtn: {
     width: '100%',
-    marginTop: 8,
+    marginTop: scale(8),
   },
 });

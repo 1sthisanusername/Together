@@ -11,6 +11,26 @@ import type {
 } from '../types';
 import type { MediaFile } from '@/shared/types';
 
+function broadcastChatMessage(
+  coupleId: string,
+  event: 'new_msg' | 'update_msg' | 'delete_msg',
+  payload: any
+) {
+  try {
+    const channelTopic = `chat_room_${coupleId}`;
+    const activeChannel = supabase.getChannels().find(
+      (c) => c.topic === `realtime:${channelTopic}` || c.topic === channelTopic
+    );
+    if (activeChannel) {
+      activeChannel.send({
+        type: 'broadcast',
+        event,
+        payload,
+      }).catch(() => {});
+    }
+  } catch {}
+}
+
 export function useMessages() {
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
@@ -24,6 +44,9 @@ export function useMessages() {
   const query = useQuery<ChatMessage[]>({
     queryKey,
     enabled: !!coupleId && !!user?.id,
+    refetchInterval: 3000, // 3-second resilient polling fallback
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
     queryFn: async () => {
       if (!coupleId) return [];
 
@@ -83,77 +106,112 @@ export function useMessages() {
   useEffect(() => {
     if (!coupleId || !user?.id) return;
 
-    const channelName = `chat_messages_${coupleId}_${Math.random().toString(36).slice(2, 9)}`;
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'messages',
-          filter: `couple_id=eq.${coupleId}`,
-        },
-        async (payload) => {
-          if (payload.eventType === 'INSERT') {
-            const newRow = payload.new as any;
-            if (newRow.deleted_at) return;
+    const channelTopic = `chat_room_${coupleId}`;
 
-            let signedUrl: string | null = null;
-            let mediaObj: MediaFile | null = null;
-            if (newRow.media_id) {
-              const { data: media } = await supabase
-                .from('media_files')
-                .select('*')
-                .eq('id', newRow.media_id)
-                .maybeSingle();
+    // Safely remove any existing channel before subscribing
+    const existing = supabase.getChannels().find(
+      (c) => c.topic === `realtime:${channelTopic}` || c.topic === channelTopic
+    );
+    if (existing) {
+      supabase.removeChannel(existing);
+    }
 
-              if (media?.bucket_path) {
-                signedUrl = await storage.getSignedUrl(media.bucket_path, 3600);
-              }
-              mediaObj = media as MediaFile;
-            }
+    const channel = supabase.channel(channelTopic, {
+      config: {
+        broadcast: { ack: false, self: false },
+      },
+    });
 
-            const newMsg: ChatMessage = {
-              ...newRow,
-              media: mediaObj,
-              mediaSignedUrl: signedUrl,
-              status: 'sent',
-            };
+    const handleIncomingMessage = async (newRow: any) => {
+      if (!newRow || newRow.deleted_at) return;
 
-            queryClient.setQueryData<ChatMessage[]>(queryKey, (prev = []) => {
-              // Avoid duplicate if optimistic message matches idempotency_key or id
-              const exists = prev.some(
-                (m) =>
-                  m.id === newMsg.id ||
-                  (m.idempotency_key && m.idempotency_key === newMsg.idempotency_key)
-              );
-              if (exists) {
-                return prev.map((m) =>
-                  m.idempotency_key === newMsg.idempotency_key ? newMsg : m
-                );
-              }
-              return [...prev, newMsg];
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            const updatedRow = payload.new as any;
-            queryClient.setQueryData<ChatMessage[]>(queryKey, (prev = []) => {
-              if (updatedRow.deleted_at) {
-                return prev.filter((m) => m.id !== updatedRow.id);
-              }
-              return prev.map((m) =>
-                m.id === updatedRow.id ? { ...m, ...updatedRow } : m
-              );
-            });
-          } else if (payload.eventType === 'DELETE') {
-            const oldRow = payload.old as any;
-            queryClient.setQueryData<ChatMessage[]>(queryKey, (prev = []) =>
-              prev.filter((m) => m.id !== oldRow.id)
-            );
-          }
+      let signedUrl: string | null = null;
+      let mediaObj: MediaFile | null = newRow.media || null;
+      if (newRow.media_id && !mediaObj) {
+        const { data: media } = await supabase
+          .from('media_files')
+          .select('*')
+          .eq('id', newRow.media_id)
+          .maybeSingle();
+
+        if (media?.bucket_path) {
+          signedUrl = await storage.getSignedUrl(media.bucket_path, 3600);
         }
-      )
-      .subscribe();
+        mediaObj = media as MediaFile;
+      } else if (newRow.media?.bucket_path) {
+        signedUrl = await storage.getSignedUrl(newRow.media.bucket_path, 3600);
+      }
+
+      const newMsg: ChatMessage = {
+        ...newRow,
+        media: mediaObj,
+        mediaSignedUrl: signedUrl,
+        status: 'sent',
+      };
+
+      queryClient.setQueryData<ChatMessage[]>(queryKey, (prev = []) => {
+        const exists = prev.some(
+          (m) =>
+            m.id === newMsg.id ||
+            (m.idempotency_key && m.idempotency_key === newMsg.idempotency_key)
+        );
+        if (exists) {
+          return prev.map((m) =>
+            m.id === newMsg.id ||
+            (m.idempotency_key && m.idempotency_key === newMsg.idempotency_key)
+              ? newMsg
+              : m
+          );
+        }
+        return [...prev, newMsg];
+      });
+    };
+
+    // 1. Instant WebSocket broadcast (<50ms peer-to-peer delivery)
+    channel.on('broadcast', { event: 'new_msg' }, ({ payload }) => {
+      handleIncomingMessage(payload);
+    });
+
+    channel.on('broadcast', { event: 'delete_msg' }, ({ payload }) => {
+      if (payload?.id) {
+        queryClient.setQueryData<ChatMessage[]>(queryKey, (prev = []) =>
+          prev.filter((m) => m.id !== payload.id)
+        );
+      }
+    });
+
+    // 2. Database postgres_changes (when table is in supabase_realtime publication)
+    channel.on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'messages',
+        filter: `couple_id=eq.${coupleId}`,
+      },
+      async (payload) => {
+        if (payload.eventType === 'INSERT') {
+          await handleIncomingMessage(payload.new);
+        } else if (payload.eventType === 'UPDATE') {
+          const updatedRow = payload.new as any;
+          queryClient.setQueryData<ChatMessage[]>(queryKey, (prev = []) => {
+            if (updatedRow.deleted_at) {
+              return prev.filter((m) => m.id !== updatedRow.id);
+            }
+            return prev.map((m) =>
+              m.id === updatedRow.id ? { ...m, ...updatedRow } : m
+            );
+          });
+        } else if (payload.eventType === 'DELETE') {
+          const oldRow = payload.old as any;
+          queryClient.setQueryData<ChatMessage[]>(queryKey, (prev = []) =>
+            prev.filter((m) => m.id !== oldRow.id)
+          );
+        }
+      }
+    );
+
+    channel.subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -225,6 +283,9 @@ export function useSendTextMessage() {
       queryClient.setQueryData<ChatMessage[]>(['messages', coupleId], (prev = []) =>
         prev.map((m) => (m.localId === localId ? { ...data, status: 'sent' } : m))
       );
+
+      // Instantly broadcast to partner over WebSocket (<50ms delivery)
+      broadcastChatMessage(coupleId, 'new_msg', { ...data, status: 'sent' });
 
       // Notification outbox is auto-populated via trg_messages_insert_notify
       analytics.track('message_sent');
@@ -315,6 +376,9 @@ export function useSendVoiceNote() {
         queryClient.setQueryData<ChatMessage[]>(['messages', coupleId], (prev = []) =>
           prev.map((m) => (m.localId === localId ? fullMsg : m))
         );
+
+        // Instantly broadcast to partner over WebSocket (<50ms delivery)
+        broadcastChatMessage(coupleId, 'new_msg', fullMsg);
 
         analytics.track('voice_note_sent');
         return fullMsg;
@@ -416,6 +480,9 @@ export function useSendPhotoMessage() {
           prev.map((m) => (m.localId === localId ? fullMsg : m))
         );
 
+        // Instantly broadcast to partner over WebSocket (<50ms delivery)
+        broadcastChatMessage(coupleId, 'new_msg', fullMsg);
+
         analytics.track('message_sent');
         return fullMsg;
       } catch (err: any) {
@@ -483,6 +550,11 @@ export function useDeleteChatMessage() {
       const bucketPath = (data as any)?.media_bucket_path;
       if (bucketPath) {
         await storage.deleteMedia(bucketPath);
+      }
+
+      // Instantly broadcast deletion to partner
+      if (coupleId) {
+        broadcastChatMessage(coupleId, 'delete_msg', { id: messageId });
       }
 
       analytics.track('message_deleted');

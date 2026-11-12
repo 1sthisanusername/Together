@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Button } from './Button';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface ErrorStateProps {
   title?: string;
@@ -35,25 +35,25 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 24,
+    padding: scale(24),
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    fontSize: 18,
+    fontSize: scale(18),
     fontWeight: '700',
-    color: theme.colors.danger, // #ab5c56
-    marginBottom: 8,
+    color: theme.colors.danger,
+    marginBottom: scale(8),
     textAlign: 'center',
   },
   message: {
-    fontSize: 14,
-    color: theme.colors.textSecondary, // #a8917f
+    fontSize: scale(14),
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 16,
+    lineHeight: scale(20),
+    marginBottom: scale(16),
   },
   retryButton: {
-    marginTop: 8,
+    marginTop: scale(8),
   },
 });

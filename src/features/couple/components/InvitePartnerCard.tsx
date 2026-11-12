@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Share, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Card, Button } from '@/shared/ui';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface InvitePartnerCardProps {
   code: string;
@@ -120,80 +120,80 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     alignItems: 'center',
-    padding: 24,
+    padding: scale(24),
     backgroundColor: theme.colors.surface,
     borderColor: theme.colors.borderLight,
   },
   title: {
-    fontSize: 20,
+    fontSize: scale(20),
     fontWeight: '800',
     color: theme.colors.text,
-    marginBottom: 6,
+    marginBottom: scale(6),
     textAlign: 'center',
     letterSpacing: -0.3,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: scale(14),
     color: theme.colors.textSecondary,
-    lineHeight: 20,
-    marginBottom: 16,
+    lineHeight: scale(20),
+    marginBottom: scale(16),
     textAlign: 'center',
   },
   codeContainer: {
     backgroundColor: theme.colors.surfaceSubtle,
-    borderRadius: 18,
-    paddingVertical: 18,
-    paddingHorizontal: 32,
+    borderRadius: theme.roundness.lg,
+    paddingVertical: scale(18),
+    paddingHorizontal: scale(24),
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: scale(8),
     width: '100%',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: theme.colors.border,
     borderStyle: 'dashed',
   },
   codeLabel: {
-    fontSize: 12,
+    fontSize: scale(12),
     fontWeight: '700',
     color: theme.colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 1.2,
-    marginBottom: 6,
+    marginBottom: scale(6),
   },
   codeText: {
-    fontSize: 34,
+    fontSize: scale(34),
     fontWeight: '800',
     color: theme.colors.text,
-    letterSpacing: 6,
+    letterSpacing: scale(6),
   },
   expiryText: {
-    fontSize: 12,
+    fontSize: scale(12),
     color: theme.colors.textSecondary,
-    marginBottom: 12,
+    marginBottom: scale(12),
   },
   linkRow: {
     width: '100%',
     backgroundColor: theme.colors.surfaceSubtle,
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 16,
+    padding: scale(10),
+    borderRadius: scale(12),
+    marginBottom: scale(16),
     alignItems: 'center',
   },
   linkLabel: {
-    fontSize: 11,
+    fontSize: scale(11),
     color: theme.colors.textSecondary,
     fontWeight: '600',
-    marginBottom: 2,
+    marginBottom: scale(2),
   },
   linkText: {
-    fontSize: 12,
+    fontSize: scale(12),
     color: theme.colors.primary,
     fontWeight: '500',
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: scale(10),
     width: '100%',
-    marginBottom: 16,
+    marginBottom: scale(16),
   },
   actionBtn: {
     flex: 1,
@@ -201,15 +201,15 @@ const styles = StyleSheet.create({
   waitingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 8,
+    gap: scale(8),
+    paddingVertical: scale(8),
   },
   waitingText: {
-    fontSize: 14,
+    fontSize: scale(14),
     color: theme.colors.textSecondary,
     fontWeight: '500',
   },
   cancelBtn: {
-    marginTop: 8,
+    marginTop: scale(8),
   },
 });

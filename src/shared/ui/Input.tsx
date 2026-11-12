@@ -35,9 +35,8 @@ export const Input: React.FC<InputProps> = ({
         </Text>
       )}
 
-      {/* Input wrapper with Hard Offset Ink Shadow */}
+      {/* Warm Input Wrapper */}
       <View style={styles.inputWrapper}>
-        <View style={styles.shadowBlock} />
         <TextInput
           placeholderTextColor={theme.colors.textMuted}
           style={[
@@ -85,35 +84,22 @@ const styles = StyleSheet.create({
   },
   inputWrapper: {
     position: 'relative',
-    marginRight: INPUT_SHADOW,
-    marginBottom: INPUT_SHADOW,
-  },
-  shadowBlock: {
-    position: 'absolute',
-    top: INPUT_SHADOW,
-    left: INPUT_SHADOW,
-    right: -INPUT_SHADOW,
-    bottom: -INPUT_SHADOW,
-    backgroundColor: theme.colors.shadowInk,
-    borderRadius: theme.roundness.md,
-    zIndex: 0,
   },
   input: {
-    position: 'relative',
-    zIndex: 1,
-    backgroundColor: theme.colors.surface, // Clean sticker white #FFFFFF
-    borderWidth: theme.borders.chunky,
-    borderColor: theme.colors.border,
-    borderRadius: theme.roundness.md,
+    backgroundColor: theme.colors.surface, // #FFFFFF
+    borderWidth: 1,
+    borderColor: theme.colors.border, // #FBE9E7
+    borderRadius: 16,
     paddingHorizontal: scale(16),
     minHeight: Math.max(48, scale(48)), // Minimum 48dp enforced
     fontSize: scale(15),
     fontFamily: theme.typography.fontFamilies.sans,
-    color: theme.colors.text,
+    color: theme.colors.text, // #3E2723
+    ...theme.shadows.hardSm,
   },
   inputFocused: {
-    borderColor: theme.colors.primary, // Tomato #FF5A3C
-    backgroundColor: '#FFFFFF',
+    borderColor: theme.colors.primary, // #E53935
+    backgroundColor: theme.colors.background, // #FFFDFB
   },
   inputError: {
     borderColor: theme.colors.danger,

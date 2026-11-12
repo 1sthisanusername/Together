@@ -1,7 +1,7 @@
 export interface DailyQuestion {
   id: string;
   text: string;
-  category: 'memories' | 'dreams' | 'deep' | 'fun' | 'love';
+  category: 'memories' | 'dreams' | 'deep' | 'fun' | 'love' | 'everyday' | 'family' | 'long_distance';
   emoji: string;
 }
 
@@ -99,17 +99,38 @@ export const DAILY_QUESTIONS: DailyQuestion[] = [
 ];
 
 /**
- * Returns a deterministic daily question based on the calendar date (YYYY-MM-DD).
- * Ensures both partners always receive the exact same question on any given day.
+ * Stable hash of a string → non-negative integer.
+ * Used to derive a couple-specific offset so different couples
+ * don't all get the same question on the same day.
  */
-export function getDailyQuestionForDate(dateStr: string): DailyQuestion {
-  // Simple deterministic hash from date string
-  let hash = 0;
-  for (let i = 0; i < dateStr.length; i++) {
-    hash = (hash << 5) - hash + dateStr.charCodeAt(i);
-    hash |= 0;
+function stableHashId(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) {
+    h = (Math.imul(31, h) + id.charCodeAt(i)) | 0;
   }
-  const index = Math.abs(hash) % DAILY_QUESTIONS.length;
+  return Math.abs(h);
+}
+
+/**
+ * Returns a deterministic daily question based on the UTC calendar date
+ * (YYYY-MM-DD) and an optional couple ID.
+ *
+ * Both partners always receive the exact same question on any given day
+ * because both see the same UTC date and share the same couple_id.
+ * Different couples see different questions on the same day thanks to
+ * the couple-specific offset.
+ *
+ * Selection formula:
+ *   dayNumber    = floor(UTC epoch days since 1970-01-01)
+ *   coupleOffset = stableHashId(coupleId) or 0
+ *   index        = (dayNumber + coupleOffset) % bank.length
+ */
+export function getDailyQuestionForDate(dateStr: string, coupleId?: string): DailyQuestion {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const dayNumber = Math.floor(Date.UTC(year, month - 1, day) / 86_400_000);
+  const coupleOffset = coupleId ? stableHashId(coupleId) : 0;
+  const len = DAILY_QUESTIONS.length;
+  const index = ((dayNumber + coupleOffset) % len + len) % len;
   return DAILY_QUESTIONS[index];
 }
 

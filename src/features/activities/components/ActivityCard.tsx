@@ -1,9 +1,20 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Card } from '@/shared/ui';
+import {
+  Card,
+  ScaleIcon,
+  ThoughtIcon,
+  TargetIcon,
+  PaletteIcon,
+  SparklesIcon,
+  WineGlassIcon,
+  CameraIcon,
+  ClockIcon,
+  FlashIcon,
+} from '@/shared/ui';
 import type { Activity } from '@/shared/types';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface ActivityCardProps {
   activity: Activity;
@@ -18,115 +29,155 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const getIcon = () => {
+  const renderIcon = () => {
     switch (activity.kind) {
       case 'would_you_rather':
-        return '⚖️';
+        return <ScaleIcon color={theme.colors.primary} size={20} />;
       case 'who_knows_whom':
-        return '💭';
+        return <ThoughtIcon color={theme.colors.coral} size={20} />;
       case 'guess_my_answer':
-        return '🎯';
+        return <TargetIcon color={theme.colors.primary} size={20} />;
       case 'drawing_guess':
-        return '🎨';
+        return <PaletteIcon color={theme.colors.coral} size={20} />;
       case 'quiz':
-        return '🧠';
+        return <SparklesIcon color={theme.colors.sunset} size={20} />;
       case 'guided_date':
-        return '🍷';
+        return <WineGlassIcon color={theme.colors.primary} size={20} />;
       case 'photo_mission':
-        return '📸';
+        return <CameraIcon color={theme.colors.coral} size={20} focused />;
       default:
-        return '✨';
+        return <SparklesIcon color={theme.colors.primary} size={20} />;
     }
   };
 
   return (
-    <TouchableOpacity onPress={onPress} disabled={isStarting} activeOpacity={0.8}>
-      <Card style={styles.card}>
-        <View style={styles.headerRow}>
-          <Text style={styles.icon}>{getIcon()}</Text>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>
-              {activity.mode === 'live' ? '⚡ Live' : activity.mode === 'async' ? '⏳ Turn-based' : '⚡ Live / Turn'}
-            </Text>
-          </View>
+    <Card
+      style={styles.card}
+      onPress={onPress}
+      disabled={isStarting}
+      accessibilityLabel={`${activity.title} - ${t('activities.duration', { minutes: activity.duration_minutes })}`}
+    >
+      <View style={styles.headerRow}>
+        <View style={styles.iconCircle}>
+          {renderIcon()}
         </View>
-
-        <Text style={styles.title}>{activity.title}</Text>
-        <Text style={styles.description} numberOfLines={2}>
-          {activity.description}
-        </Text>
-
-        <View style={styles.footerRow}>
-          <Text style={styles.duration}>
-            ⏱️ {t('activities.duration', { minutes: activity.duration_minutes })}
+        <View style={styles.badge}>
+          <FlashIcon color={theme.colors.primary} size={12} />
+          <Text style={styles.badgeText} maxFontSizeMultiplier={1.3}>
+            {activity.mode === 'live'
+              ? 'Live'
+              : activity.mode === 'async'
+              ? 'Turn-based'
+              : 'Live / Turn'}
           </Text>
-          <Text style={styles.startText}>{t('activities.startActivity')} →</Text>
         </View>
-      </Card>
-    </TouchableOpacity>
+      </View>
+
+      <Text style={styles.title} maxFontSizeMultiplier={1.3}>
+        {activity.title}
+      </Text>
+      <Text style={styles.description} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+        {activity.description}
+      </Text>
+
+      <View style={styles.footerRow}>
+        <View style={styles.durationRow}>
+          <ClockIcon color={theme.colors.textSecondary} size={13} />
+          <Text style={styles.duration} maxFontSizeMultiplier={1.3}>
+            {t('activities.duration', { minutes: activity.duration_minutes })}
+          </Text>
+        </View>
+        <View style={styles.startPill}>
+          <Text style={styles.startText} maxFontSizeMultiplier={1.3}>
+            {t('activities.startActivity')} →
+          </Text>
+        </View>
+      </View>
+    </Card>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    padding: 18,
-    marginVertical: 6,
-    borderRadius: 20,
+    padding: scale(18),
+    marginVertical: scale(6),
+    borderRadius: theme.roundness.lg,
     backgroundColor: theme.colors.surface,
-    borderColor: theme.colors.borderLight,
+    borderColor: theme.colors.border,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: scale(12),
   },
-  icon: {
-    fontSize: 24,
+  iconCircle: {
+    width: scale(40),
+    height: scale(40),
+    borderRadius: 20,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   badge: {
-    backgroundColor: theme.colors.surfaceSubtle, // #f0ece6
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(4),
+    backgroundColor: theme.colors.surfaceBlush,
+    paddingVertical: scale(5),
+    paddingHorizontal: scale(10),
+    borderRadius: theme.roundness.full,
     borderWidth: 1,
-    borderColor: theme.colors.borderLight,
+    borderColor: theme.colors.border,
   },
   badgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: theme.colors.textSecondary, // #a8917f
+    fontSize: scale(11),
+    fontWeight: '700',
+    color: theme.colors.primary,
   },
   title: {
-    fontSize: 17,
+    fontSize: scale(17),
     fontWeight: '800',
-    color: theme.colors.text, // #42362e
-    marginBottom: 4,
+    color: theme.colors.text,
+    marginBottom: scale(4),
     letterSpacing: -0.3,
   },
   description: {
-    fontSize: 13,
-    color: theme.colors.textSecondary, // #a8917f
-    lineHeight: 19,
-    marginBottom: 14,
+    fontSize: scale(13),
+    color: theme.colors.textSecondary,
+    lineHeight: scale(19),
+    marginBottom: scale(14),
   },
   footerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 10,
+    paddingTop: scale(12),
     borderTopWidth: 1,
-    borderTopColor: theme.colors.surfaceSubtle,
+    borderTopColor: theme.colors.border,
+  },
+  durationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(5),
   },
   duration: {
-    fontSize: 12,
+    fontSize: scale(12),
     fontWeight: '600',
-    color: theme.colors.textMuted,
+    color: theme.colors.textSecondary,
+  },
+  startPill: {
+    paddingVertical: scale(5),
+    paddingHorizontal: scale(12),
+    borderRadius: theme.roundness.full,
+    backgroundColor: theme.colors.surfaceBlush,
   },
   startText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: theme.colors.primary, // #b69788
+    fontSize: scale(12),
+    fontWeight: '800',
+    color: theme.colors.primary,
   },
 });
 

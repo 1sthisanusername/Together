@@ -115,7 +115,7 @@ export function useSendLetter() {
             ? `Sealed until ${new Date(unlockAt).toLocaleDateString()}`
             : 'Ready for you to tear open!',
         },
-        deepLink: 'together://(tabs)/dates',
+        deepLink: 'together://(tabs)/memories',
       }).catch(() => {});
 
       (analytics.track as any)('letter_sent');

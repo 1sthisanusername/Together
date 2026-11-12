@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
-import { Sheet, Input, Button, ErrorState, DatePickerField } from '@/shared/ui';
+import { FormSheet, Input, ErrorState, DatePickerField } from '@/shared/ui';
 import { useSendLetter, StationeryTheme, SealSticker } from '../hooks/useLetters';
 import { theme, scale, triggerHaptic } from '@/shared/theme';
 
@@ -14,10 +13,10 @@ export interface WriteLetterModalProps {
 }
 
 const THEMES: { id: StationeryTheme; label: string; bg: string; border: string; text: string }[] = [
-  { id: 'parchment_cream', label: 'Parchment', bg: '#FFF4E3', border: '#2B2118', text: '#2B2118' },
-  { id: 'rose_petal', label: 'Rose Petal', bg: '#FFF0F5', border: '#FF8FB1', text: '#4A1525' },
-  { id: 'matcha_mint', label: 'Matcha Mint', bg: '#E8F8F5', border: '#2EC4B6', text: '#0E3B33' },
-  { id: 'midnight_sky', label: 'Midnight', bg: '#201B2B', border: '#A29BFE', text: '#FDFBF7' },
+  { id: 'parchment_cream', label: 'Parchment', bg: '#FFF0ED', border: '#FBE9E7', text: '#3E2723' },
+  { id: 'rose_petal', label: 'Rose Petal', bg: '#FCE4EC', border: '#F48FB1', text: '#3E2723' },
+  { id: 'matcha_mint', label: 'Matcha Mint', bg: '#EBF7F2', border: '#B2DFDB', text: '#2B4C43' },
+  { id: 'midnight_sky', label: 'Midnight', bg: '#2A1C1A', border: '#FFB74D', text: '#FFFDFB' },
 ];
 
 const SEALS: SealSticker[] = ['❤️', '💌', '🌸', '🌙', '✨'];
@@ -79,14 +78,25 @@ export const WriteLetterModal: React.FC<WriteLetterModalProps> = ({
     }
   };
 
+  const isFormValid = !!title.trim() && !!content.trim();
+  const disabledReason = !title.trim()
+    ? 'Please enter a title for your letter'
+    : !content.trim()
+    ? 'Please write your message before sending'
+    : null;
+
   return (
-    <Sheet visible={visible} onClose={onClose} title={t('letters.writeNew')}>
-      <KeyboardAwareScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        bottomOffset={24}
-      >
+    <FormSheet
+      visible={visible}
+      onClose={onClose}
+      title={t('letters.writeNew')}
+      primaryLabel={isVault ? 'Save to Vault 🔒' : t('letters.sendLetter')}
+      onPrimary={handleSend}
+      primaryDisabled={!isFormValid}
+      primaryLoading={isPending}
+      disabledReason={disabledReason}
+    >
+      <View style={styles.container}>
         {error ? (
           <ErrorState
             title={t('common.errorTitle')}
@@ -114,7 +124,7 @@ export const WriteLetterModal: React.FC<WriteLetterModalProps> = ({
                   key={item.id}
                   style={[
                     styles.themeChip,
-                    { backgroundColor: item.bg, borderColor: isSelected ? '#2B2118' : '#D2CCC4' },
+                    { backgroundColor: item.bg, borderColor: isSelected ? theme.colors.primary : theme.colors.border },
                     isSelected && styles.themeChipSelected,
                   ]}
                   onPress={() => setSelectedTheme(item.id)}
@@ -212,120 +222,103 @@ export const WriteLetterModal: React.FC<WriteLetterModalProps> = ({
             {isVault ? <Text style={styles.checkmark}>✓</Text> : null}
           </View>
         </TouchableOpacity>
-
-        <Button
-          title={isVault ? 'Save to Vault 🔒' : t('letters.sendLetter')}
-          variant="primary"
-          size="lg"
-          loading={isPending}
-          disabled={!title.trim() || !content.trim()}
-          onPress={handleSend}
-          style={styles.sendButton}
-        />
-      </KeyboardAwareScrollView>
-    </Sheet>
+      </View>
+    </FormSheet>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 12,
+    paddingVertical: scale(12),
   },
   sectionBlock: {
-    marginBottom: 16,
+    marginBottom: scale(16),
   },
   sectionLabel: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '700',
-    color: '#2B2118',
-    marginBottom: 8,
+    color: theme.colors.textSecondary,
+    marginBottom: scale(8),
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   themeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: scale(8),
   },
   themeChip: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    borderWidth: 2,
+    paddingVertical: scale(8),
+    paddingHorizontal: scale(14),
+    borderRadius: theme.roundness.full,
+    borderWidth: 1,
   },
   themeChipSelected: {
-    borderWidth: 2.5,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
     transform: [{ scale: 1.04 }],
-    shadowColor: '#2B2118',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 3,
+    ...theme.shadows.hardSm,
   },
   themeChipText: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '700',
   },
   sealsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: scale(12),
   },
   sealBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFF4E3',
-    borderWidth: 2,
-    borderColor: '#D2CCC4',
+    width: scale(44),
+    height: scale(44),
+    borderRadius: 9999,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sealBtnSelected: {
-    borderColor: '#2B2118',
-    backgroundColor: '#FFC93C',
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.sunset,
     transform: [{ scale: 1.1 }],
-    shadowColor: '#2B2118',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 3,
+    ...theme.shadows.hardSm,
   },
   sealEmoji: {
-    fontSize: 22,
+    fontSize: scale(22),
   },
   contentInput: {
-    height: 130,
+    height: scale(130),
     textAlignVertical: 'top',
   },
   attachmentSection: {
-    marginVertical: 10,
+    marginVertical: scale(10),
   },
   addMediaBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    backgroundColor: '#F8F4EE',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#2B2118',
+    paddingVertical: scale(10),
+    paddingHorizontal: scale(14),
+    backgroundColor: theme.colors.surfaceBlush,
+    borderRadius: theme.roundness.full,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     borderStyle: 'dashed',
   },
   addMediaText: {
     fontFamily: theme.typography.fontFamilies.sans,
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '700',
-    color: '#2B2118',
+    color: theme.colors.text,
   },
   previewContainer: {
     position: 'relative',
-    width: 90,
-    height: 90,
-    borderRadius: 12,
+    width: scale(90),
+    aspectRatio: 1,
+    borderRadius: theme.roundness.lg,
     overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#2B2118',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   previewThumb: {
     width: '100%',
@@ -333,72 +326,73 @@ const styles = StyleSheet.create({
   },
   removePhotoBtn: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#FF5A3C',
+    top: scale(4),
+    right: scale(4),
+    width: scale(22),
+    height: scale(22),
+    borderRadius: 9999,
+    backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   removePhotoText: {
-    color: '#FFFFFF',
-    fontSize: 11,
+    color: theme.colors.textInverse,
+    fontSize: scale(11),
     fontWeight: '800',
   },
   vaultToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: '#2B2118',
-    backgroundColor: '#FFF4E3',
-    marginTop: 8,
-    marginBottom: 16,
+    padding: scale(12),
+    borderRadius: theme.roundness.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceBlush,
+    marginTop: scale(8),
+    marginBottom: scale(16),
   },
   vaultToggleActive: {
-    backgroundColor: '#FFF0F5',
-    borderColor: '#FF8FB1',
+    backgroundColor: '#FCE4EC',
+    borderColor: theme.colors.rose,
   },
   vaultToggleIcon: {
-    fontSize: 22,
-    marginRight: 10,
+    fontSize: scale(22),
+    marginRight: scale(10),
   },
   vaultToggleInfo: {
     flex: 1,
   },
   vaultToggleTitle: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '800',
-    color: '#2B2118',
+    color: theme.colors.text,
   },
   vaultToggleSub: {
-    fontSize: 11,
-    color: '#5C4A3A',
-    marginTop: 2,
+    fontSize: scale(11),
+    color: theme.colors.textSecondary,
+    marginTop: scale(2),
   },
   toggleCheckbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#2B2118',
-    backgroundColor: '#FFFFFF',
+    width: scale(24),
+    height: scale(24),
+    borderRadius: scale(8),
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   toggleCheckboxChecked: {
-    backgroundColor: '#2EC4B6',
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   checkmark: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '900',
   },
   sendButton: {
-    marginTop: 8,
+    marginTop: scale(8),
   },
 });
 

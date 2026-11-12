@@ -14,9 +14,9 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system/legacy';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
-import { Sheet, Input, Button, ErrorState, DatePickerField } from '@/shared/ui';
+import { FormSheet, Input, ErrorState, DatePickerField } from '@/shared/ui';
 import { useCreateMemory, type MemoryPhotoItem } from '../hooks/useMemories';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface AddMemoryModalProps {
   visible: boolean;
@@ -200,14 +200,21 @@ export const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
     }
   };
 
+  const isFormValid = !!title.trim() && !isSubmitting;
+  const disabledReason = !title.trim() ? 'Please enter a title for your memory' : null;
+
   return (
-    <Sheet visible={visible} onClose={handleClose} title={t('memories.addMemory')}>
-      <KeyboardAwareScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        bottomOffset={24}
-      >
+    <FormSheet
+      visible={visible}
+      onClose={handleClose}
+      title={t('memories.addMemory')}
+      primaryLabel={isSubmitting ? 'Saving Memory...' : t('memories.saveMemory')}
+      onPrimary={handleSave}
+      primaryDisabled={!isFormValid}
+      primaryLoading={isSubmitting}
+      disabledReason={disabledReason}
+    >
+      <View style={styles.container}>
         {error || localError ? (
           <ErrorState
             title={t('common.errorTitle')}
@@ -298,41 +305,31 @@ export const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
             </View>
           )}
         </View>
-
-        <Button
-          title={isSubmitting ? 'Saving Memory...' : t('memories.saveMemory')}
-          variant="primary"
-          size="lg"
-          loading={isSubmitting}
-          disabled={!title.trim() || isSubmitting}
-          onPress={handleSave}
-          style={styles.saveBtn}
-        />
-      </KeyboardAwareScrollView>
-    </Sheet>
+      </View>
+    </FormSheet>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 12,
+    paddingVertical: scale(12),
   },
   noteInput: {
-    height: 90,
+    height: scale(90),
   },
   photoSection: {
-    marginBottom: 20,
+    marginBottom: scale(20),
   },
   photoSectionLabel: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: 8,
+    marginBottom: scale(8),
   },
   photoActionsRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 10,
+    gap: scale(12),
+    marginBottom: scale(10),
   },
   photoActionBtn: {
     flex: 1,
@@ -342,64 +339,64 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surfaceSubtle,
     borderWidth: 1,
     borderColor: theme.colors.borderLight,
-    borderRadius: 12,
-    paddingVertical: 10,
-    gap: 6,
+    borderRadius: theme.roundness.full,
+    paddingVertical: scale(10),
+    gap: scale(6),
   },
   actionBtnDisabled: {
     opacity: 0.5,
   },
   photoActionIcon: {
-    fontSize: 16,
+    fontSize: scale(16),
   },
   photoActionText: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '600',
     color: theme.colors.text,
   },
   thumbnailList: {
     flexDirection: 'row',
-    marginTop: 6,
+    marginTop: scale(6),
   },
   thumbnailWrapper: {
     position: 'relative',
-    marginRight: 10,
-    borderRadius: 10,
+    marginRight: scale(10),
+    borderRadius: scale(12),
     overflow: 'hidden',
   },
   thumbnailImage: {
-    width: 72,
-    height: 72,
-    borderRadius: 10,
+    width: scale(72),
+    aspectRatio: 1,
+    borderRadius: scale(12),
   },
   removePhotoBtn: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    top: scale(4),
+    right: scale(4),
+    backgroundColor: 'rgba(62, 39, 35, 0.7)',
+    width: scale(22),
+    height: scale(22),
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
   },
   removePhotoText: {
     color: '#ffffff',
-    fontSize: 10,
+    fontSize: scale(10),
     fontWeight: 'bold',
   },
   progressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
-    gap: 8,
+    marginTop: scale(10),
+    gap: scale(8),
   },
   progressText: {
-    fontSize: 13,
+    fontSize: scale(13),
     color: theme.colors.textSecondary,
     fontWeight: '500',
   },
   saveBtn: {
-    marginTop: 10,
+    marginTop: scale(10),
   },
 });

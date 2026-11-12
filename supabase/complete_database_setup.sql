@@ -48,9 +48,11 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   avatar_url TEXT,
   timezone TEXT NOT NULL DEFAULT 'UTC',
   locale TEXT NOT NULL DEFAULT 'en',
+  last_seen_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()),
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now());
 
 -- 2.2 Couples
 CREATE TABLE IF NOT EXISTS public.couples (
@@ -58,11 +60,17 @@ CREATE TABLE IF NOT EXISTS public.couples (
   name TEXT,
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'unlinked')),
   start_date DATE,
+  home_photo_url TEXT,
+  home_photo_updated_at TIMESTAMPTZ,
+  home_photo_updated_by UUID REFERENCES public.profiles(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 ALTER TABLE public.couples ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'unlinked'));
 ALTER TABLE public.couples ADD COLUMN IF NOT EXISTS start_date DATE;
+ALTER TABLE public.couples ADD COLUMN IF NOT EXISTS home_photo_url TEXT;
+ALTER TABLE public.couples ADD COLUMN IF NOT EXISTS home_photo_updated_at TIMESTAMPTZ;
+ALTER TABLE public.couples ADD COLUMN IF NOT EXISTS home_photo_updated_by UUID REFERENCES public.profiles(id);
 
 -- 2.3 Couple Members
 CREATE TABLE IF NOT EXISTS public.couple_members (
@@ -172,11 +180,13 @@ CREATE TABLE IF NOT EXISTS public.memories (
   media_id UUID,
   media_ids UUID[] NOT NULL DEFAULT '{}',
   favorite BOOLEAN NOT NULL DEFAULT false,
+  is_vault BOOLEAN NOT NULL DEFAULT false,
   deleted_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS media_ids UUID[] NOT NULL DEFAULT '{}';
+ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS is_vault BOOLEAN NOT NULL DEFAULT false;
 
 CREATE INDEX IF NOT EXISTS idx_memories_couple_id ON public.memories(couple_id);
 
@@ -220,6 +230,9 @@ CREATE TABLE IF NOT EXISTS public.letters (
   title TEXT NOT NULL,
   content TEXT NOT NULL,
   theme TEXT NOT NULL DEFAULT 'classic',
+  stationery_theme TEXT DEFAULT 'parchment_cream',
+  seal_sticker TEXT DEFAULT '❤️',
+  is_vault BOOLEAN DEFAULT false,
   unlock_at TIMESTAMPTZ,
   opened_at TIMESTAMPTZ,
   media_id UUID REFERENCES public.media_files(id) ON DELETE SET NULL,
@@ -227,6 +240,9 @@ CREATE TABLE IF NOT EXISTS public.letters (
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
+ALTER TABLE public.letters ADD COLUMN IF NOT EXISTS stationery_theme TEXT DEFAULT 'parchment_cream';
+ALTER TABLE public.letters ADD COLUMN IF NOT EXISTS seal_sticker TEXT DEFAULT '❤️';
+ALTER TABLE public.letters ADD COLUMN IF NOT EXISTS is_vault BOOLEAN DEFAULT false;
 
 CREATE INDEX IF NOT EXISTS idx_letters_couple_id ON public.letters(couple_id);
 
@@ -351,6 +367,36 @@ CREATE TABLE IF NOT EXISTS public.entitlements (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
+-- 2.18 Daily Question Answers (Mutual reveal via RLS)
+CREATE TABLE IF NOT EXISTS public.daily_question_answers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  couple_id UUID NOT NULL REFERENCES public.couples(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  question_date DATE NOT NULL,
+  question_text TEXT NOT NULL,
+  answer TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()),
+  UNIQUE(couple_id, user_id, question_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_answers_couple_date
+  ON public.daily_question_answers(couple_id, question_date);
+
+-- 2.19 Vault Items (Private couple vault)
+CREATE TABLE IF NOT EXISTS public.vault_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  couple_id UUID NOT NULL REFERENCES public.couples(id) ON DELETE CASCADE,
+  created_by UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  content TEXT,
+  media_id UUID REFERENCES public.media_files(id) ON DELETE SET NULL,
+  category TEXT DEFAULT 'photo',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_vault_items_couple_id ON public.vault_items(couple_id);
+
 -- ------------------------------------------------------------------------------
 -- 3. HELPER FUNCTIONS & TRIGGERS
 -- ------------------------------------------------------------------------------
@@ -402,6 +448,9 @@ CREATE TRIGGER tr_user_settings_updated_at BEFORE UPDATE ON public.user_settings
 
 DROP TRIGGER IF EXISTS tr_push_tokens_updated_at ON public.push_tokens;
 CREATE TRIGGER tr_push_tokens_updated_at BEFORE UPDATE ON public.push_tokens FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+DROP TRIGGER IF EXISTS tr_vault_items_updated_at ON public.vault_items;
+CREATE TRIGGER tr_vault_items_updated_at BEFORE UPDATE ON public.vault_items FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- 3.2 Safe Active Couple ID Lookup (SECURITY DEFINER bypasses RLS)
 CREATE OR REPLACE FUNCTION public.get_active_couple_id(p_user_id UUID DEFAULT auth.uid())
@@ -1144,15 +1193,159 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 GRANT EXECUTE ON FUNCTION public.check_anniversaries_and_milestones() TO authenticated, service_role;
 
+-- 4.10 Non-Recursive Session Answer Helper (Fixes session_events RLS recursion)
+CREATE OR REPLACE FUNCTION public.has_user_answered_round(
+  p_session_id UUID,
+  p_user_id UUID,
+  p_round TEXT
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.session_events
+    WHERE session_id = p_session_id
+      AND user_id = p_user_id
+      AND type = 'answer_submitted'
+      AND (payload->>'round')::text = p_round
+  );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.has_user_answered_round(UUID, UUID, TEXT) TO authenticated, service_role;
+
+-- 4.11 Permanent Memory Deletion RPC
+CREATE OR REPLACE FUNCTION public.delete_memory_permanently(p_memory_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_memory RECORD;
+  v_media_paths TEXT[];
+BEGIN
+  SELECT * INTO v_memory
+  FROM public.memories
+  WHERE id = p_memory_id;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Memory not found');
+  END IF;
+
+  IF v_memory.created_by <> auth.uid() THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Only the creator can delete this memory');
+  END IF;
+
+  SELECT array_agg(bucket_path) INTO v_media_paths
+  FROM public.media_files
+  WHERE memory_id = p_memory_id;
+
+  DELETE FROM public.media_files WHERE memory_id = p_memory_id;
+  DELETE FROM public.memories WHERE id = p_memory_id;
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'deleted_id', p_memory_id,
+    'file_paths', COALESCE(v_media_paths, ARRAY[]::TEXT[])
+  );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.delete_memory_permanently(UUID) TO authenticated, service_role;
+
+-- 4.12 Presence Heartbeat RPC
+CREATE OR REPLACE FUNCTION public.heartbeat_presence()
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  UPDATE public.profiles
+  SET last_seen_at = timezone('utc'::text, now())
+  WHERE id = auth.uid();
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.heartbeat_presence() TO authenticated, service_role;
+
+-- 4.13 Daily Question Mutual Reveal Helper (Non-recursive SECURITY DEFINER)
+CREATE OR REPLACE FUNCTION public.has_both_answered_daily_question(
+  p_couple_id UUID,
+  p_date DATE
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN (
+    SELECT count(DISTINCT user_id)
+    FROM public.daily_question_answers
+    WHERE couple_id = p_couple_id
+      AND question_date = p_date
+  ) >= 2;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.has_both_answered_daily_question(UUID, DATE) TO authenticated, service_role;
+
+-- 4.14 Daily Question Streak Calculator
+CREATE OR REPLACE FUNCTION public.get_daily_question_streak(p_couple_id UUID)
+RETURNS INT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_streak INT := 0;
+  v_curr_date DATE := CURRENT_DATE;
+  v_has_answers BOOLEAN;
+BEGIN
+  LOOP
+    SELECT count(DISTINCT user_id) >= 2 INTO v_has_answers
+    FROM public.daily_question_answers
+    WHERE couple_id = p_couple_id
+      AND question_date = v_curr_date;
+
+    IF v_has_answers THEN
+      v_streak := v_streak + 1;
+      v_curr_date := v_curr_date - INTERVAL '1 day';
+    ELSE
+      IF v_curr_date = CURRENT_DATE THEN
+        v_curr_date := v_curr_date - INTERVAL '1 day';
+      ELSE
+        EXIT;
+      END IF;
+    END IF;
+  END LOOP;
+
+  RETURN v_streak;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_daily_question_streak(UUID) TO authenticated, service_role;
+
 -- ------------------------------------------------------------------------------
 -- 5. AUTOMATED NOTIFICATION INBOX TRIGGERS
 -- ------------------------------------------------------------------------------
 
--- 5.1 Trigger: Notification on New Message
+-- Clean up any legacy duplicate notification triggers from older migrations
+DROP TRIGGER IF EXISTS trg_messages_insert_notify ON public.messages;
+DROP TRIGGER IF EXISTS trg_letters_insert_notify ON public.letters;
+DROP TRIGGER IF EXISTS trg_sessions_insert_notify ON public.activity_sessions;
+
+-- 5.1 Trigger: Notification on New Message (Resolves media mime_type safely)
 CREATE OR REPLACE FUNCTION public.fn_messages_insert_notification()
 RETURNS TRIGGER AS $$
 DECLARE
   v_sender_name TEXT;
+  v_mime_type TEXT;
   v_type TEXT;
   v_title TEXT;
   v_body TEXT;
@@ -1160,18 +1353,22 @@ BEGIN
   SELECT display_name INTO v_sender_name FROM public.profiles WHERE id = NEW.sender_id;
   v_sender_name := COALESCE(v_sender_name, 'Partner');
 
-  IF NEW.media_type = 'audio' THEN
+  IF NEW.media_id IS NOT NULL THEN
+    SELECT mime_type INTO v_mime_type FROM public.media_files WHERE id = NEW.media_id;
+  END IF;
+
+  IF NEW.media_type = 'audio' OR v_mime_type LIKE 'audio/%' THEN
     v_type := 'voice_note';
     v_title := v_sender_name || ' sent a voice note';
     v_body := 'Voice note received';
-  ELSIF NEW.media_type = 'photo' THEN
+  ELSIF NEW.media_type = 'photo' OR v_mime_type LIKE 'image/%' THEN
     v_type := 'photo_message';
     v_title := v_sender_name || ' shared a photo';
-    v_body := 'Photo received';
+    v_body := COALESCE(LEFT(NEW.content, 80), 'Photo received');
   ELSE
     v_type := 'message';
     v_title := v_sender_name || ' sent a message';
-    v_body := LEFT(NEW.content, 80);
+    v_body := COALESCE(LEFT(NEW.content, 80), 'New message');
   END IF;
 
   INSERT INTO public.notifications (
@@ -1436,6 +1633,8 @@ ALTER TABLE public.user_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.push_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.feature_flags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.entitlements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.daily_question_answers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.vault_items ENABLE ROW LEVEL SECURITY;
 
 -- 6.1 Profiles Policies
 DROP POLICY IF EXISTS "profiles_select_own_or_partner" ON public.profiles;
@@ -1546,7 +1745,7 @@ CREATE POLICY "sessions_couple_update" ON public.activity_sessions
   FOR UPDATE TO authenticated
   USING (couple_id = public.get_active_couple_id(auth.uid()));
 
--- 6.7 Session Events Policies (Partner answer secrecy enforced in DB)
+-- 6.7 Session Events Policies (Partner answer secrecy enforced in DB without recursion)
 DROP POLICY IF EXISTS "events_couple_select" ON public.session_events;
 CREATE POLICY "events_couple_select" ON public.session_events
   FOR SELECT TO authenticated
@@ -1556,13 +1755,7 @@ CREATE POLICY "events_couple_select" ON public.session_events
       OR
       type <> 'answer_submitted'
       OR
-      EXISTS (
-        SELECT 1 FROM public.session_events my_event
-        WHERE my_event.session_id = session_events.session_id
-          AND my_event.user_id = auth.uid()
-          AND my_event.type = 'answer_submitted'
-          AND (my_event.payload->>'round')::text = (session_events.payload->>'round')::text
-      )
+      public.has_user_answered_round(session_id, auth.uid(), (payload->>'round')::text)
     )
   );
 
@@ -1803,8 +1996,8 @@ BEGIN
     FOR SELECT TO authenticated
     USING (
       bucket_id = 'couples-media' AND
-      (storage.foldername(name))[1]::uuid IN (
-        SELECT couple_id FROM public.couple_members 
+      (storage.foldername(name))[1] IN (
+        SELECT couple_id::text FROM public.couple_members 
         WHERE user_id = auth.uid() AND status = 'active'
       )
     );
@@ -1814,8 +2007,8 @@ BEGIN
     FOR INSERT TO authenticated
     WITH CHECK (
       bucket_id = 'couples-media' AND
-      (storage.foldername(name))[1]::uuid IN (
-        SELECT couple_id FROM public.couple_members 
+      (storage.foldername(name))[1] IN (
+        SELECT couple_id::text FROM public.couple_members 
         WHERE user_id = auth.uid() AND status = 'active'
       )
     );
@@ -1825,8 +2018,8 @@ BEGIN
     FOR DELETE TO authenticated
     USING (
       bucket_id = 'couples-media' AND
-      (storage.foldername(name))[1]::uuid IN (
-        SELECT couple_id FROM public.couple_members 
+      (storage.foldername(name))[1] IN (
+        SELECT couple_id::text FROM public.couple_members 
         WHERE user_id = auth.uid() AND status = 'active'
       )
     );
@@ -1834,6 +2027,48 @@ EXCEPTION
   WHEN OTHERS THEN
     NULL;
 END $$;
+
+-- 6.19 Daily Question Answers Policies (Mutual reveal enforced in DB)
+DROP POLICY IF EXISTS "daily_answers_select" ON public.daily_question_answers;
+CREATE POLICY "daily_answers_select" ON public.daily_question_answers
+  FOR SELECT TO authenticated
+  USING (
+    couple_id = public.get_active_couple_id(auth.uid()) AND (
+      user_id = auth.uid()
+      OR
+      public.has_both_answered_daily_question(couple_id, question_date)
+    )
+  );
+
+DROP POLICY IF EXISTS "daily_answers_insert" ON public.daily_question_answers;
+CREATE POLICY "daily_answers_insert" ON public.daily_question_answers
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    couple_id = public.get_active_couple_id(auth.uid()) AND
+    user_id = auth.uid()
+  );
+
+-- 6.20 Vault Items Policies
+DROP POLICY IF EXISTS "vault_items_couple_select" ON public.vault_items;
+CREATE POLICY "vault_items_couple_select" ON public.vault_items
+  FOR SELECT TO authenticated
+  USING (couple_id = public.get_active_couple_id(auth.uid()));
+
+DROP POLICY IF EXISTS "vault_items_couple_insert" ON public.vault_items;
+CREATE POLICY "vault_items_couple_insert" ON public.vault_items
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    couple_id = public.get_active_couple_id(auth.uid()) AND
+    created_by = auth.uid()
+  );
+
+DROP POLICY IF EXISTS "vault_items_couple_delete" ON public.vault_items;
+CREATE POLICY "vault_items_couple_delete" ON public.vault_items
+  FOR DELETE TO authenticated
+  USING (
+    couple_id = public.get_active_couple_id(auth.uid()) AND
+    created_by = auth.uid()
+  );
 
 -- ------------------------------------------------------------------------------
 -- 7. REALTIME REPLICATION CONFIGURATION (Safe block)
@@ -1843,6 +2078,8 @@ BEGIN
   ALTER TABLE public.notifications REPLICA IDENTITY FULL;
   ALTER TABLE public.session_events REPLICA IDENTITY FULL;
   ALTER TABLE public.activity_sessions REPLICA IDENTITY FULL;
+  ALTER TABLE public.messages REPLICA IDENTITY FULL;
+  ALTER TABLE public.daily_question_answers REPLICA IDENTITY FULL;
 
   IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
     IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'notifications') THEN
@@ -1859,6 +2096,9 @@ BEGIN
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'couples') THEN
       ALTER PUBLICATION supabase_realtime ADD TABLE public.couples;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'daily_question_answers') THEN
+      ALTER PUBLICATION supabase_realtime ADD TABLE public.daily_question_answers;
     END IF;
   END IF;
 EXCEPTION

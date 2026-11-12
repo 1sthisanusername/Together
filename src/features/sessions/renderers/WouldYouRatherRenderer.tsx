@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Card, Button } from '@/shared/ui';
+import { Card, Button, ProgressBar } from '@/shared/ui';
 import type { SessionData } from '../hooks/useSession';
 import {
   useSubmitEvent,
@@ -179,6 +179,7 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
           {t('sessions.round', { current: currentRoundIdx + 1, total: rounds.length })}
         </Text>
       </View>
+      <ProgressBar current={currentRoundIdx + 1} total={rounds.length} />
 
       <Text style={styles.questionText}>{currentRound.question}</Text>
 
@@ -290,28 +291,27 @@ export const WouldYouRatherRenderer: React.FC<WouldYouRatherProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    padding: scale(16),
     width: '100%',
   },
   modeSelectorRow: {
     flexDirection: 'row',
-    backgroundColor: '#EFE7DA',
-    padding: scale(3),
-    borderRadius: scale(12),
-    borderWidth: 1.5,
+    backgroundColor: theme.colors.surfaceBlush,
+    padding: scale(4),
+    borderRadius: theme.roundness.full,
+    borderWidth: 1,
     borderColor: theme.colors.border,
     marginBottom: scale(16),
   },
   modeTab: {
     flex: 1,
-    paddingVertical: scale(6),
+    paddingVertical: scale(7),
     alignItems: 'center',
-    borderRadius: scale(9),
+    borderRadius: theme.roundness.full,
   },
   modeTabActive: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    ...theme.shadows.hardSm,
   },
   modeTabText: {
     fontFamily: theme.typography.fontFamilies.sans,
@@ -321,104 +321,100 @@ const styles = StyleSheet.create({
   },
   modeTabTextActive: {
     fontWeight: '800',
-    color: theme.colors.text,
+    color: theme.colors.primary,
   },
   progressHeader: {
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: scale(12),
   },
   roundText: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '700',
-    color: '#6366F1',
+    color: theme.colors.primary,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   questionText: {
-    fontSize: 20,
+    fontSize: scale(20),
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text,
     textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 28,
+    marginBottom: scale(24),
+    lineHeight: scale(28),
   },
   optionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 2,
-    borderColor: '#E2E8F0',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.roundness.lg,
+    padding: scale(20),
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    ...theme.shadows.card,
   },
   optionSelected: {
-    borderColor: theme.colors.primary, // #b69788
-    backgroundColor: theme.colors.primaryLight, // #f4ede8
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.surfaceBlush,
   },
   optionPartnerPicked: {
-    borderColor: theme.colors.secondary, // #a8917f
+    borderColor: theme.colors.rose,
   },
   optionLetter: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '800',
     color: theme.colors.textSecondary,
-    marginBottom: 6,
+    marginBottom: scale(6),
   },
   optionTitle: {
-    fontSize: 16,
+    fontSize: scale(16),
     fontWeight: '700',
-    color: theme.colors.text, // #42362e
+    color: theme.colors.text,
     textAlign: 'center',
   },
   pickBadge: {
-    marginTop: 8,
-    fontSize: 12,
+    marginTop: scale(8),
+    fontSize: scale(12),
     fontWeight: '700',
-    color: theme.colors.primary, // #b69788
+    color: theme.colors.primary,
   },
   partnerBadge: {
-    marginTop: 4,
-    fontSize: 12,
+    marginTop: scale(4),
+    fontSize: scale(12),
     fontWeight: '700',
-    color: theme.colors.secondary, // #a8917f
+    color: theme.colors.secondary,
   },
   orDivider: {
     alignItems: 'center',
-    marginVertical: 12,
+    marginVertical: scale(12),
   },
   orText: {
-    fontSize: 12,
+    fontSize: scale(12),
     fontWeight: '800',
     color: theme.colors.textMuted,
   },
   statusCard: {
     backgroundColor: theme.colors.surfaceSubtle,
-    marginTop: 20,
+    marginTop: scale(20),
     alignItems: 'center',
   },
   statusText: {
-    fontSize: 14,
+    fontSize: scale(14),
     color: theme.colors.textSecondary,
     fontWeight: '600',
   },
   partnerWaitingCard: {
     backgroundColor: theme.colors.warningLight,
     borderColor: theme.colors.border,
-    marginTop: 20,
+    marginTop: scale(20),
     alignItems: 'center',
   },
   partnerWaitingText: {
-    fontSize: 14,
+    fontSize: scale(14),
     color: theme.colors.warning,
     fontWeight: '700',
     textAlign: 'center',
   },
   revealSection: {
-    marginTop: 24,
+    marginTop: scale(24),
     alignItems: 'center',
   },
   matchCard: {
@@ -435,13 +431,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   revealTitle: {
-    fontSize: 15,
+    fontSize: scale(15),
     fontWeight: '700',
     color: theme.colors.text,
   },
   nextButton: {
     width: '100%',
-    marginTop: 16,
+    marginTop: scale(16),
   },
   soloNextContainer: {
     marginTop: scale(16),

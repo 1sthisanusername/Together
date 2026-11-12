@@ -250,13 +250,21 @@ export function useDeleteMemory() {
         prev.filter((m) => m.id !== memoryId)
       );
 
-      // 1. Attempt atomic permanent deletion via RPC
+      // 1. Attempt atomic permanent deletion via RPC (delete_memory primary, delete_memory_permanently fallback)
       let deletedViaRpc = false;
       try {
-        const { data: rpcRes, error: rpcErr } = await (supabase.rpc as any)(
-          'delete_memory_permanently',
-          { p_memory_id: memoryId }
-        );
+        let rpcRes: any = null;
+        let rpcErr: any = null;
+
+        const res1 = await (supabase.rpc as any)('delete_memory', { p_memory_id: memoryId });
+        rpcRes = res1.data;
+        rpcErr = res1.error;
+
+        if (rpcErr) {
+          const res2 = await (supabase.rpc as any)('delete_memory_permanently', { p_memory_id: memoryId });
+          rpcRes = res2.data;
+          rpcErr = res2.error;
+        }
 
         if (!rpcErr && rpcRes && (rpcRes as any).success) {
           deletedViaRpc = true;

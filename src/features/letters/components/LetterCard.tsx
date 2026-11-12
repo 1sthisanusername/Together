@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/shared/ui';
 import type { EnhancedLetter } from '../hooks/useLetters';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface LetterCardProps {
   letter: EnhancedLetter;
@@ -117,125 +117,121 @@ export const LetterCard: React.FC<LetterCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    padding: 16,
-    marginVertical: 6,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#2B2118',
-    shadowColor: '#2B2118',
-    shadowOffset: { width: 3, height: 3 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 3,
+    padding: scale(16),
+    marginVertical: scale(6),
+    borderRadius: theme.roundness.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    ...theme.shadows.card,
   },
   cardSealed: {
-    backgroundColor: '#FFF8EE',
+    backgroundColor: theme.colors.surfaceBlush,
   },
   cardOpened: {
-    backgroundColor: '#F5EFE6',
+    backgroundColor: theme.colors.surface,
     borderStyle: 'dashed',
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: scale(8),
   },
   sealWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: scale(6),
   },
   envelopeIcon: {
-    fontSize: 24,
+    fontSize: scale(24),
   },
   waxSealStamp: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#FF5A3C',
-    borderWidth: 1.5,
-    borderColor: '#2B2118',
+    width: scale(28),
+    height: scale(28),
+    borderRadius: 9999,
+    backgroundColor: theme.colors.primary,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   waxSealText: {
-    fontSize: 14,
+    fontSize: scale(14),
   },
   badgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: scale(6),
   },
   badge: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: '#2B2118',
+    paddingVertical: scale(4),
+    paddingHorizontal: scale(10),
+    borderRadius: theme.roundness.full,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   badgeVault: {
-    backgroundColor: '#FF8FB1',
+    backgroundColor: theme.colors.rose,
   },
   badgeVaultText: {
-    fontSize: 10,
+    fontSize: scale(10),
     fontWeight: '800',
-    color: '#2B2118',
+    color: theme.colors.text,
   },
   badgeOpened: {
-    backgroundColor: '#E8F8F5',
+    backgroundColor: theme.colors.surfaceBlush,
   },
   badgeOpenedText: {
-    fontSize: 11,
+    fontSize: scale(11),
     fontWeight: '800',
-    color: '#0E3B33',
+    color: theme.colors.textSecondary,
   },
   badgeLocked: {
-    backgroundColor: '#FFE8B6',
+    backgroundColor: theme.colors.surfaceDisabled,
   },
   badgeLockedText: {
-    fontSize: 11,
+    fontSize: scale(11),
     fontWeight: '800',
-    color: '#2B2118',
+    color: theme.colors.text,
   },
   badgeReady: {
-    backgroundColor: '#FFC93C',
+    backgroundColor: theme.colors.sunset,
   },
   badgeReadyText: {
-    fontSize: 11,
+    fontSize: scale(11),
     fontWeight: '800',
-    color: '#2B2118',
+    color: theme.colors.text,
   },
   badgeDelivered: {
-    backgroundColor: '#E8F8F5',
+    backgroundColor: theme.colors.surfaceBlush,
   },
   badgeDeliveredText: {
-    fontSize: 11,
+    fontSize: scale(11),
     fontWeight: '800',
-    color: '#0E3B33',
+    color: theme.colors.primary,
   },
   title: {
-    fontSize: 17,
+    fontSize: scale(17),
     fontWeight: '800',
-    color: '#2B2118',
-    marginBottom: 6,
+    color: theme.colors.text,
+    marginBottom: scale(6),
     letterSpacing: -0.2,
   },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 2,
+    marginTop: scale(2),
   },
   subtext: {
-    fontSize: 13,
-    color: '#7A6B5D',
+    fontSize: scale(13),
+    color: theme.colors.textSecondary,
     fontWeight: '600',
   },
   themeTag: {
-    fontSize: 10,
+    fontSize: scale(10),
     fontWeight: '700',
-    color: '#7A6B5D',
+    color: theme.colors.textSecondary,
     textTransform: 'capitalize',
   },
 });

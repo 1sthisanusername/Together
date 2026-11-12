@@ -10,11 +10,13 @@ import {
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { useMemories } from '@/features/memories';
-import { theme, scale, triggerHaptic } from '@/shared/theme';
+import { MemoriesIcon, PlusIcon, GalleryIcon } from '@/shared/ui';
+import { theme, scale, useResponsiveLayout, triggerHaptic } from '@/shared/theme';
 
 export const QuickPhotosCard: React.FC = () => {
   const router = useRouter();
   const { data: memories = [] } = useMemories();
+  const { polaroidWidth } = useResponsiveLayout();
   const [selectedPhoto, setSelectedPhoto] = useState<{
     id: string;
     url: string;
@@ -56,14 +58,11 @@ export const QuickPhotosCard: React.FC = () => {
 
   return (
     <View style={styles.cardWrapper}>
-      {/* Hard Ink Shadow */}
-      <View style={styles.cardShadow} />
-
-      {/* Paper Surface */}
       <View style={styles.cardSurface}>
         <View style={styles.headerRow}>
           <View style={styles.titleBadge}>
-            <Text style={styles.titleText}>📸 Quick Photos</Text>
+            <MemoriesIcon color={theme.colors.text} size={scale(13)} />
+            <Text style={styles.titleText}>Quick Photos</Text>
           </View>
           <TouchableOpacity
             style={styles.viewAllBtn}
@@ -81,13 +80,13 @@ export const QuickPhotosCard: React.FC = () => {
             contentContainerStyle={styles.photosRow}
           >
             {recentPhotos.map((item, idx) => {
-              const rotation = idx % 2 === 0 ? '-1.5deg' : '1.5deg';
+              const rotation = idx % 2 === 0 ? '-1.2deg' : '1.2deg';
               return (
                 <TouchableOpacity
                   key={item.id}
                   style={[
                     styles.polaroidFrame,
-                    { transform: [{ rotate: rotation }] },
+                    { width: polaroidWidth, transform: [{ rotate: rotation }] },
                   ]}
                   onPress={() => handleSelectPhoto(item)}
                   activeOpacity={0.85}
@@ -106,11 +105,15 @@ export const QuickPhotosCard: React.FC = () => {
 
             {/* Quick Add Polaroid Slot */}
             <TouchableOpacity
-              style={[styles.polaroidFrame, styles.addPolaroidSlot]}
+              style={[
+                styles.polaroidFrame,
+                styles.addPolaroidSlot,
+                { width: polaroidWidth, minHeight: polaroidWidth + scale(12) },
+              ]}
               onPress={handleOpenMemories}
               activeOpacity={0.7}
             >
-              <Text style={styles.addIcon}>＋</Text>
+              <PlusIcon color={theme.colors.primary} size={scale(22)} />
               <Text style={styles.addText}>Add Photo</Text>
             </TouchableOpacity>
           </ScrollView>
@@ -121,7 +124,7 @@ export const QuickPhotosCard: React.FC = () => {
             onPress={handleOpenMemories}
             activeOpacity={0.8}
           >
-            <Text style={styles.emptyEmoji}>🖼️</Text>
+            <GalleryIcon color={theme.colors.rose} size={scale(28)} />
             <Text style={styles.emptyTitle}>Pin Your First Snap!</Text>
             <Text style={styles.emptySubtitle}>
               Tap to add romantic moments and polaroids to your private space.
@@ -205,28 +208,16 @@ export const QuickPhotosCard: React.FC = () => {
 
 const styles = StyleSheet.create({
   cardWrapper: {
-    marginHorizontal: scale(18),
-    marginVertical: scale(8),
-    position: 'relative',
-  },
-  cardShadow: {
-    position: 'absolute',
-    top: 4,
-    left: 4,
-    right: -4,
-    bottom: -4,
-    backgroundColor: theme.colors.border,
-    borderRadius: 20,
-    zIndex: 0,
+    width: '100%',
+    marginVertical: scale(7),
   },
   cardSurface: {
-    position: 'relative',
-    zIndex: 1,
-    backgroundColor: theme.colors.background, // Paper #FFF4E3
+    backgroundColor: theme.colors.surface, // #FFFFFF with 1px solid #FBE9E7
     borderRadius: 20,
-    borderWidth: 2.5,
-    borderColor: theme.colors.border,
-    padding: scale(16),
+    borderWidth: 1,
+    borderColor: theme.colors.border, // #FBE9E7
+    padding: scale(18),
+    ...theme.shadows.card,
   },
   headerRow: {
     flexDirection: 'row',
@@ -235,26 +226,29 @@ const styles = StyleSheet.create({
     marginBottom: scale(12),
   },
   titleBadge: {
-    backgroundColor: theme.colors.stickers.pool, // Pool Teal
-    borderWidth: 1.5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
+    borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: 8,
-    paddingHorizontal: scale(8),
-    paddingVertical: scale(3),
+    borderRadius: 9999,
+    paddingHorizontal: scale(10),
+    paddingVertical: scale(4),
   },
   titleText: {
     fontFamily: theme.typography.families.bold,
     fontSize: scale(11),
-    color: theme.colors.text,
+    color: theme.colors.text, // #3E2723
   },
   viewAllBtn: {
-    paddingVertical: 2,
-    paddingHorizontal: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   viewAllText: {
     fontFamily: theme.typography.families.bold,
     fontSize: scale(12),
-    color: theme.colors.primary,
+    color: theme.colors.primary, // #E53935
   },
   photosRow: {
     paddingVertical: scale(6),
@@ -263,41 +257,38 @@ const styles = StyleSheet.create({
   polaroidFrame: {
     width: scale(112),
     backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: theme.colors.border,
-    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border, // #FBE9E7
+    borderRadius: 20,
     padding: scale(6),
     ...theme.shadows.hardSm,
   },
   polaroidImage: {
     width: '100%',
-    height: scale(96),
-    borderRadius: 8,
-    backgroundColor: '#F3E9DF',
+    aspectRatio: 1,
+    borderRadius: 14,
+    backgroundColor: theme.colors.surfaceBlush,
   },
   polaroidCaption: {
     fontFamily: theme.typography.families.body,
     fontSize: scale(11),
-    color: theme.colors.text,
+    color: theme.colors.text, // #3E2723
     textAlign: 'center',
-    marginTop: scale(4),
+    marginTop: scale(5),
   },
   addPolaroidSlot: {
     justifyContent: 'center',
     alignItems: 'center',
     height: scale(122),
     borderStyle: 'dashed',
-    backgroundColor: '#FFF9F0',
-  },
-  addIcon: {
-    fontSize: scale(24),
-    color: theme.colors.primary,
-    fontWeight: 'bold',
+    borderColor: theme.colors.rose, // #F48FB1
+    backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
+    gap: 4,
   },
   addText: {
     fontFamily: theme.typography.families.bold,
     fontSize: scale(11),
-    color: theme.colors.textSecondary,
+    color: theme.colors.primary, // #E53935
     marginTop: scale(2),
   },
   emptyPrompt: {
@@ -337,7 +328,7 @@ const styles = StyleSheet.create({
   viewerTitle: {
     fontFamily: theme.typography.families.bold,
     fontSize: scale(16),
-    color: '#FFF4E3',
+    color: theme.colors.textInverse,
     flex: 1,
     marginRight: 12,
   },
@@ -398,7 +389,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   reactionBtnActive: {
-    backgroundColor: '#FFC93C',
+    backgroundColor: theme.colors.sunset,
     borderColor: '#FFFFFF',
     transform: [{ scale: 1.15 }],
   },
@@ -407,9 +398,7 @@ const styles = StyleSheet.create({
   },
   openMemoriesBtn: {
     backgroundColor: theme.colors.primary,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
-    borderRadius: 14,
+    borderRadius: theme.roundness.full,
     paddingVertical: scale(12),
     alignItems: 'center',
     ...theme.shadows.hardSm,

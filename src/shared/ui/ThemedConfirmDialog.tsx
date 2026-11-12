@@ -128,31 +128,23 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   dialogShadow: {
-    position: 'absolute',
-    top: 5,
-    left: 5,
-    right: -5,
-    bottom: -5,
-    backgroundColor: theme.colors.border,
-    borderRadius: 20,
-    zIndex: 0,
+    display: 'none',
   },
   dialogSurface: {
-    position: 'relative',
-    zIndex: 1,
-    backgroundColor: theme.colors.background, // Paper #FFF4E3
+    backgroundColor: theme.colors.background, // #FFFDFB
     borderRadius: 20,
-    borderWidth: 2.5,
-    borderColor: theme.colors.border, // Ink #2B2118
+    borderWidth: 1,
+    borderColor: theme.colors.border, // #FBE9E7
     padding: scale(22),
     alignItems: 'center',
+    ...theme.shadows.card,
   },
   emojiBadge: {
     width: scale(52),
     height: scale(52),
-    borderRadius: scale(26),
-    backgroundColor: theme.colors.surface,
-    borderWidth: 2,
+    borderRadius: 9999,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderWidth: 1,
     borderColor: theme.colors.border,
     justifyContent: 'center',
     alignItems: 'center',
@@ -160,7 +152,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.hardSm,
   },
   emojiText: {
-    fontSize: 26,
+    fontSize: scale(26),
   },
   title: {
     fontFamily: theme.typography.families.bold,
@@ -185,10 +177,10 @@ const styles = StyleSheet.create({
   btn: {
     flex: 1,
     height: scale(46),
-    borderRadius: 14,
+    borderRadius: 9999,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: theme.colors.border,
   },
   cancelBtn: {
@@ -200,16 +192,17 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   confirmBtn: {
-    backgroundColor: theme.colors.stickers.sunshine, // Warm Buttercup
+    backgroundColor: theme.colors.primary, // #E53935
+    borderColor: theme.colors.primary,
   },
   destructiveBtn: {
-    backgroundColor: theme.colors.danger, // Tomato / Red
-    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.danger, // #C62828
+    borderColor: theme.colors.danger,
   },
   confirmBtnText: {
     fontFamily: theme.typography.families.bold,
     fontSize: scale(14),
-    color: theme.colors.text,
+    color: '#FFFFFF',
   },
   destructiveBtnText: {
     color: '#FFFFFF',

@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, Button, Input } from '@/shared/ui';
 import type { SessionData } from '../hooks/useSession';
 import { useSubmitEvent, useAdvanceRound, useCompleteSession, useSaveSessionAsMemory } from '../hooks/useSession';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface DrawingGuessProps {
   data: SessionData;
@@ -270,48 +270,44 @@ export const DrawingGuessRenderer: React.FC<DrawingGuessProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    padding: scale(16),
     width: '100%',
   },
   progressHeader: {
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: scale(8),
   },
   roundText: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '700',
-    color: '#6366F1',
+    color: theme.colors.primary,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   promptHeader: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: scale(16),
   },
   roleTitle: {
-    fontSize: 14,
-    color: '#64748B',
+    fontSize: scale(14),
+    color: theme.colors.textSecondary,
     fontWeight: '600',
   },
   promptWord: {
-    fontSize: 22,
+    fontSize: scale(22),
     fontWeight: '800',
-    color: '#4F46E5',
-    marginTop: 4,
+    color: theme.colors.primary,
+    marginTop: scale(4),
   },
   canvasContainer: {
     width: '100%',
-    height: 280,
+    aspectRatio: 1.15,
     backgroundColor: theme.colors.surface,
-    borderRadius: 20,
-    borderWidth: 1.5,
+    borderRadius: theme.roundness.lg,
+    borderWidth: 1,
     borderColor: theme.colors.border,
     overflow: 'hidden',
-    shadowColor: theme.colors.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    ...theme.shadows.card,
   },
   canvasSurface: {
     flex: 1,
@@ -321,22 +317,22 @@ const styles = StyleSheet.create({
   },
   strokeDot: {
     position: 'absolute',
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: theme.colors.text, // #42362e
+    width: scale(6),
+    height: scale(6),
+    borderRadius: 9999,
+    backgroundColor: theme.colors.text,
   },
   canvasPlaceholder: {
-    fontSize: 14,
+    fontSize: scale(14),
     color: theme.colors.textMuted,
     fontStyle: 'italic',
   },
   guessSection: {
-    marginTop: 16,
+    marginTop: scale(16),
   },
   inputRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: scale(10),
     alignItems: 'flex-start',
   },
   guessInput: {
@@ -344,11 +340,11 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   drawerSection: {
-    marginTop: 16,
+    marginTop: scale(16),
     alignItems: 'center',
   },
   waitingGuessText: {
-    fontSize: 14,
+    fontSize: scale(14),
     color: theme.colors.textSecondary,
     fontWeight: '500',
   },
@@ -359,43 +355,43 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   correctText: {
-    fontSize: 16,
+    fontSize: scale(16),
     fontWeight: '800',
     color: theme.colors.success,
   },
   answerText: {
-    fontSize: 18,
+    fontSize: scale(18),
     fontWeight: '800',
     color: theme.colors.text,
-    marginTop: 4,
+    marginTop: scale(4),
   },
   nextButton: {
-    marginTop: 16,
+    marginTop: scale(16),
   },
   completedContainer: {
     alignItems: 'center',
-    padding: 32,
+    padding: scale(32),
   },
   completedEmoji: {
-    fontSize: 48,
-    marginBottom: 16,
+    fontSize: scale(48),
+    marginBottom: scale(16),
   },
   completedTitle: {
-    fontSize: 26,
+    fontSize: scale(26),
     fontWeight: '800',
     color: theme.colors.text,
-    marginBottom: 8,
+    marginBottom: scale(8),
     letterSpacing: -0.5,
   },
   completedSubtitle: {
-    fontSize: 15,
+    fontSize: scale(15),
     color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 28,
+    marginBottom: scale(28),
   },
   saveButton: {
     width: '100%',
-    marginBottom: 12,
+    marginBottom: scale(12),
   },
   homeButton: {
     width: '100%',

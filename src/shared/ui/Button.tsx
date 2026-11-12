@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Text,
   ActivityIndicator,
@@ -7,7 +7,6 @@ import {
   ViewStyle,
   TextStyle,
   Pressable,
-  View,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -16,7 +15,17 @@ import Animated, {
 } from 'react-native-reanimated';
 import { theme, scale, triggerHaptic, motion } from '@/shared/theme';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'pool' | 'bubblegum' | 'outline' | 'ghost' | 'danger' | 'kintsugi';
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'coral'
+  | 'rose'
+  | 'pool'
+  | 'bubblegum'
+  | 'outline'
+  | 'ghost'
+  | 'danger'
+  | 'kintsugi';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps {
@@ -45,25 +54,23 @@ export const Button: React.FC<ButtonProps> = ({
   accessibilityLabel,
 }) => {
   const isInteractive = !loading && !disabled;
-  const pressedOffset = useSharedValue(0);
+  const [isPressed, setIsPressed] = useState(false);
+  const scaleAnim = useSharedValue(1);
 
-  const animatedSurfaceStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateX: pressedOffset.value },
-        { translateY: pressedOffset.value },
-      ],
-    };
-  });
+  const animatedSurfaceStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleAnim.value }],
+  }));
 
   const handlePressIn = () => {
     if (!isInteractive) return;
+    setIsPressed(true);
     triggerHaptic('light');
-    pressedOffset.value = withSpring(motion.pressOffset, motion.spring);
+    scaleAnim.value = withSpring(0.97, motion.spring);
   };
 
   const handlePressOut = () => {
-    pressedOffset.value = withSpring(0, motion.spring);
+    setIsPressed(false);
+    scaleAnim.value = withSpring(1, motion.spring);
   };
 
   const handlePress = () => {
@@ -71,8 +78,17 @@ export const Button: React.FC<ButtonProps> = ({
     onPress();
   };
 
-  // Map legacy variant names
-  const resolvedVariant = variant === 'kintsugi' ? 'secondary' : variant;
+  // Map legacy variant names seamlessly
+  let resolvedVariant = variant;
+  if (variant === 'kintsugi' || variant === 'pool') resolvedVariant = 'secondary';
+  if (variant === 'bubblegum') resolvedVariant = 'rose';
+
+  const isPrimaryOrFilled =
+    resolvedVariant === 'primary' ||
+    resolvedVariant === 'secondary' ||
+    resolvedVariant === 'coral' ||
+    resolvedVariant === 'rose' ||
+    resolvedVariant === 'danger';
 
   return (
     <Pressable
@@ -86,17 +102,14 @@ export const Button: React.FC<ButtonProps> = ({
       accessibilityState={{ disabled: !isInteractive, busy: loading }}
       style={[styles.outerContainer, disabled && styles.disabledContainer, style]}
     >
-      {/* 1. Solid Ink Hard Shadow Underlay */}
-      {resolvedVariant !== 'ghost' && !disabled && (
-        <View style={[styles.shadowBlock, styles[`shadow_${size}`]]} />
-      )}
-
-      {/* 2. Interactive Surface with Chunky Ink Outline */}
       <Animated.View
         style={[
           styles.surfaceBase,
-          styles[resolvedVariant],
+          styles[resolvedVariant] || styles.primary,
           styles[size],
+          resolvedVariant !== 'ghost' && !disabled && styles.elevated,
+          isPressed && resolvedVariant === 'primary' && styles.primaryPressed,
+          isPressed && resolvedVariant === 'outline' && styles.outlinePressed,
           animatedSurfaceStyle,
           disabled && styles.disabledSurface,
         ]}
@@ -104,13 +117,13 @@ export const Button: React.FC<ButtonProps> = ({
         {loading ? (
           <ActivityIndicator
             size="small"
-            color={resolvedVariant === 'primary' || resolvedVariant === 'danger' ? '#FFFFFF' : theme.colors.text}
+            color={isPrimaryOrFilled ? '#FFFFFF' : theme.colors.primary}
           />
         ) : (
           <Text
             style={[
               styles.textBase,
-              styles[`text_${resolvedVariant}`],
+              styles[`text_${resolvedVariant}` as keyof typeof styles] || styles.text_primary,
               styles[`text_${size}`],
               disabled && styles.textDisabled,
               textStyle,
@@ -128,99 +141,95 @@ export const Button: React.FC<ButtonProps> = ({
 const styles = StyleSheet.create({
   outerContainer: {
     position: 'relative',
-    marginRight: motion.pressOffset,
-    marginBottom: motion.pressOffset,
   },
   disabledContainer: {
-    opacity: 0.6,
+    opacity: 0.9,
   },
-  // Hard offset ink shadow block (No blur!)
-  shadowBlock: {
-    position: 'absolute',
-    top: motion.pressOffset,
-    left: motion.pressOffset,
-    right: -motion.pressOffset,
-    bottom: -motion.pressOffset,
-    backgroundColor: theme.colors.shadowInk,
-    borderRadius: theme.roundness.md,
-    zIndex: 0,
-  },
-  shadow_sm: {
-    borderRadius: theme.roundness.sm,
-  },
-  shadow_md: {
-    borderRadius: theme.roundness.md,
-  },
-  shadow_lg: {
-    borderRadius: theme.roundness.lg,
+  elevated: {
+    ...theme.shadows.hardSm,
   },
 
-  // Surface
+  // Pill Surface (borderRadius: 9999)
   surfaceBase: {
-    position: 'relative',
-    zIndex: 1,
-    borderRadius: theme.roundness.md,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    borderWidth: theme.borders.chunky,
-    borderColor: theme.colors.border,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
 
   // Sizes (Minimum 48dp touch target enforced)
   sm: {
-    borderRadius: theme.roundness.sm,
+    borderRadius: 9999,
     paddingVertical: scale(8),
-    paddingHorizontal: scale(14),
-    minHeight: Math.max(48, scale(44)),
+    paddingHorizontal: scale(18),
+    minHeight: Math.max(44, scale(42)),
   },
   md: {
-    borderRadius: theme.roundness.md,
+    borderRadius: 9999,
     paddingVertical: scale(12),
-    paddingHorizontal: scale(20),
+    paddingHorizontal: scale(22),
     minHeight: scale(50),
   },
   lg: {
-    borderRadius: theme.roundness.lg,
+    borderRadius: 9999,
     paddingVertical: scale(15),
-    paddingHorizontal: scale(26),
-    minHeight: scale(56),
+    paddingHorizontal: scale(28),
+    minHeight: scale(54),
   },
 
-  // Variants (String & Stickers Toybox Palette)
+  // Love, Joy & Connection Variants
   primary: {
-    backgroundColor: theme.colors.primary, // Tomato #FF5A3C
+    backgroundColor: theme.colors.primary, // #E53935
+  },
+  primaryPressed: {
+    backgroundColor: theme.colors.primaryPressed, // #C62828
   },
   secondary: {
-    backgroundColor: theme.colors.secondary, // Sunshine #FFC93C
+    backgroundColor: theme.colors.secondary, // #FF7043
+  },
+  coral: {
+    backgroundColor: theme.colors.coral, // #FF7043
+  },
+  rose: {
+    backgroundColor: theme.colors.rose, // #F48FB1
   },
   pool: {
-    backgroundColor: theme.colors.pool, // Pool #2EC4B6
+    backgroundColor: theme.colors.secondary, // #FF7043
   },
   bubblegum: {
-    backgroundColor: theme.colors.bubblegum, // Bubblegum #FF8FB1
+    backgroundColor: theme.colors.rose, // #F48FB1
+  },
+  kintsugi: {
+    backgroundColor: theme.colors.secondary, // #FF7043
   },
   outline: {
-    backgroundColor: theme.colors.surface, // Paper White #FFFFFF
+    backgroundColor: theme.colors.background, // #FFFDFB
+    borderWidth: 1,
+    borderColor: theme.colors.border, // #FBE9E7
+  },
+  outlinePressed: {
+    backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
   },
   ghost: {
     backgroundColor: 'transparent',
     borderWidth: 0,
   },
   danger: {
-    backgroundColor: theme.colors.danger, // Alert Red #E03616
+    backgroundColor: theme.colors.danger, // #C62828
   },
   disabledSurface: {
-    backgroundColor: theme.colors.surfaceSubtle,
-    borderColor: theme.colors.borderLight,
+    backgroundColor: theme.colors.surfaceDisabled, // #FBE9E7
+    borderColor: theme.colors.border, // #FBE9E7
   },
 
   // Typography
   textBase: {
     fontFamily: theme.typography.fontFamilies.display,
-    fontWeight: '800',
+    fontWeight: '700',
     textAlign: 'center',
-    letterSpacing: -0.2,
+    letterSpacing: -0.1,
   },
   text_sm: {
     fontSize: scale(14),
@@ -235,24 +244,33 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   text_secondary: {
-    color: theme.colors.text,
+    color: '#FFFFFF',
+  },
+  text_coral: {
+    color: '#FFFFFF',
+  },
+  text_rose: {
+    color: '#FFFFFF',
   },
   text_pool: {
-    color: theme.colors.text,
+    color: '#FFFFFF',
   },
   text_bubblegum: {
-    color: theme.colors.text,
+    color: '#FFFFFF',
+  },
+  text_kintsugi: {
+    color: '#FFFFFF',
   },
   text_outline: {
-    color: theme.colors.text,
+    color: theme.colors.text, // #3E2723
   },
   text_ghost: {
-    color: theme.colors.primary,
+    color: theme.colors.primary, // #E53935
   },
   text_danger: {
     color: '#FFFFFF',
   },
   textDisabled: {
-    color: theme.colors.textMuted,
+    color: theme.colors.textSecondary, // #7A625A
   },
 });

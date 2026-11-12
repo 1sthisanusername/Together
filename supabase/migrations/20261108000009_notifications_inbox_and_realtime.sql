@@ -61,6 +61,7 @@ CREATE OR REPLACE FUNCTION public.fn_messages_insert_notification()
 RETURNS TRIGGER AS $$
 DECLARE
   v_sender_name TEXT;
+  v_mime_type TEXT;
   v_type TEXT;
   v_title TEXT;
   v_body TEXT;
@@ -68,18 +69,22 @@ BEGIN
   SELECT display_name INTO v_sender_name FROM public.profiles WHERE id = NEW.sender_id;
   v_sender_name := COALESCE(v_sender_name, 'Partner');
 
-  IF NEW.media_type = 'audio' THEN
+  IF NEW.media_id IS NOT NULL THEN
+    SELECT mime_type INTO v_mime_type FROM public.media_files WHERE id = NEW.media_id;
+  END IF;
+
+  IF v_mime_type LIKE 'audio/%' THEN
     v_type := 'voice_note';
     v_title := v_sender_name || ' sent a voice note';
     v_body := '🎙️ Voice note received';
-  ELSIF NEW.media_type = 'photo' THEN
+  ELSIF v_mime_type LIKE 'image/%' THEN
     v_type := 'photo_message';
     v_title := v_sender_name || ' shared a photo';
-    v_body := '📸 Photo received';
+    v_body := COALESCE(LEFT(NEW.content, 80), '📸 Photo received');
   ELSE
     v_type := 'message';
     v_title := v_sender_name || ' sent a message';
-    v_body := LEFT(NEW.content, 80);
+    v_body := COALESCE(LEFT(NEW.content, 80), 'New message');
   END IF;
 
   INSERT INTO public.notifications (
@@ -255,8 +260,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-DROP TRIGGER IF EXISTS trg_sessions_insert_notification ON public.sessions;
+DROP TRIGGER IF EXISTS trg_sessions_insert_notification ON public.activity_sessions;
 CREATE TRIGGER trg_sessions_insert_notification
-  AFTER INSERT ON public.sessions
+  AFTER INSERT ON public.activity_sessions
   FOR EACH ROW
   EXECUTE FUNCTION public.fn_sessions_insert_notification();

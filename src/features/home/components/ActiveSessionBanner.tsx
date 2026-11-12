@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/shared/ui';
+import { WarmGradient } from '@/shared/ui';
+import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export interface ActiveSessionBannerProps {
   onJoin: () => void;
@@ -11,54 +12,96 @@ export const ActiveSessionBanner: React.FC<ActiveSessionBannerProps> = ({ onJoin
   const { t } = useTranslation();
 
   return (
-    <View style={styles.banner}>
-      <View style={styles.textContainer}>
-        <Text style={styles.pulseDot}>● </Text>
-        <Text style={styles.bannerText}>{t('home.activeSessionBanner')}</Text>
-      </View>
-      <Button
-        title={t('home.joinSession')}
-        size="sm"
-        variant="primary"
-        onPress={onJoin}
-        style={styles.joinButton}
-      />
+    <View style={styles.cardWrapper}>
+      <WarmGradient colors={theme.gradients.hero} borderRadius={20} style={styles.gradientCard}>
+        <View style={styles.banner}>
+          <View style={styles.textContainer}>
+            <View style={styles.liveBadge}>
+              <View style={styles.pulseDot} />
+              <Text style={styles.liveLabel}>LIVE</Text>
+            </View>
+            <Text style={styles.bannerText}>{t('home.activeSessionBanner')}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.joinPillBtn}
+            onPress={() => {
+              triggerHaptic('light');
+              onJoin();
+            }}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.joinPillText}>{t('home.joinSession')}</Text>
+          </TouchableOpacity>
+        </View>
+      </WarmGradient>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  cardWrapper: {
+    width: '100%',
+    marginVertical: scale(7),
+    borderRadius: 20,
+    ...theme.shadows.card,
+  },
+  gradientCard: {
+    borderRadius: 20,
+  },
   banner: {
-    backgroundColor: '#EEF2FF',
-    borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: scale(14),
+    paddingHorizontal: scale(16),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1.5,
-    borderColor: '#C7D2FE',
-    marginVertical: 10,
-    width: '100%',
   },
   textContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    marginRight: 10,
+    marginRight: scale(10),
+    gap: scale(8),
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    borderRadius: 9999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   pulseDot: {
-    color: '#4F46E5',
-    fontSize: 16,
+    width: 6,
+    height: 6,
+    borderRadius: 9999,
+    backgroundColor: theme.colors.sunset, // #FFB74D
+  },
+  liveLabel: {
+    fontFamily: theme.typography.families.bold,
+    fontSize: scale(10),
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   bannerText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#3730A3',
+    fontFamily: theme.typography.families.bold,
+    fontSize: scale(13),
+    color: '#FFFFFF',
     flexShrink: 1,
   },
-  joinButton: {
-    backgroundColor: '#4F46E5',
+  joinPillBtn: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 9999,
+    paddingHorizontal: scale(14),
+    paddingVertical: scale(8),
+    minHeight: 38,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  joinPillText: {
+    fontFamily: theme.typography.fontFamilies.display,
+    fontSize: scale(12),
+    fontWeight: '700',
+    color: theme.colors.primary, // #E53935
   },
 });
-

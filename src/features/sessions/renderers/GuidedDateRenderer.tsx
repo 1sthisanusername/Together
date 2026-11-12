@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Card, Button } from '@/shared/ui';
+import { Card, Button, ProgressBar } from '@/shared/ui';
 import type { SessionData } from '../hooks/useSession';
 import {
   useSubmitEvent,
@@ -9,6 +9,7 @@ import {
   useSaveSessionAsMemory,
   useAdvanceRound,
 } from '../hooks/useSession';
+import { theme, scale } from '@/shared/theme';
 
 export interface GuidedDateProps {
   data: SessionData;
@@ -212,6 +213,7 @@ export const GuidedDateRenderer: React.FC<GuidedDateProps> = ({
           {t('dates.step', { current: currentStepIdx + 1, total: steps.length })}
         </Text>
       </View>
+      <ProgressBar current={currentStepIdx + 1} total={steps.length} />
 
       <Text style={styles.stepTitle}>{currentStep.title}</Text>
 
@@ -293,157 +295,157 @@ export const GuidedDateRenderer: React.FC<GuidedDateProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    padding: scale(16),
     width: '100%',
   },
   progressHeader: {
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: scale(8),
   },
   stepBadge: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '700',
-    color: '#E11D48',
+    color: theme.colors.primary,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   stepTitle: {
-    fontSize: 22,
+    fontSize: scale(22),
     fontWeight: '800',
-    color: '#0F172A',
+    color: theme.colors.text,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: scale(16),
   },
   callContainer: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderRadius: theme.roundness.lg,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 12,
-    marginBottom: 16,
+    borderColor: theme.colors.border,
+    padding: scale(12),
+    marginBottom: scale(16),
   },
   callSectionLabel: {
-    fontSize: 12,
+    fontSize: scale(12),
     fontWeight: '700',
-    color: '#64748B',
+    color: theme.colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 8,
+    marginBottom: scale(8),
     textAlign: 'center',
   },
   callButtonsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 8,
+    gap: scale(8),
   },
   callButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    gap: 6,
+    borderColor: theme.colors.border,
+    borderRadius: theme.roundness.full,
+    paddingVertical: scale(8),
+    paddingHorizontal: scale(14),
+    gap: scale(6),
   },
   callButtonIcon: {
-    fontSize: 14,
+    fontSize: scale(14),
   },
   callButtonText: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '600',
-    color: '#1E293B',
+    color: theme.colors.text,
   },
   timerCard: {
     alignItems: 'center',
-    paddingVertical: 18,
-    backgroundColor: '#FFF1F2',
-    borderColor: '#FECDD3',
-    marginBottom: 16,
+    paddingVertical: scale(18),
+    backgroundColor: theme.colors.surfaceBlush,
+    borderColor: theme.colors.border,
+    marginBottom: scale(16),
   },
   timerLabel: {
-    fontSize: 12,
+    fontSize: scale(12),
     fontWeight: '700',
-    color: '#9F1239',
+    color: theme.colors.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 4,
+    marginBottom: scale(4),
   },
   timerDigits: {
-    fontSize: 40,
+    fontSize: scale(40),
     fontWeight: '800',
-    color: '#BE123C',
+    color: theme.colors.primary,
     fontVariant: ['tabular-nums'],
   },
   instructionCard: {
-    padding: 20,
-    marginBottom: 16,
-    backgroundColor: '#FFFFFF',
+    padding: scale(20),
+    marginBottom: scale(16),
+    backgroundColor: theme.colors.surface,
   },
   instructionText: {
-    fontSize: 16,
-    color: '#334155',
-    lineHeight: 24,
+    fontSize: scale(16),
+    color: theme.colors.text,
+    lineHeight: scale(24),
     textAlign: 'center',
   },
   checklistCard: {
-    padding: 16,
-    marginBottom: 20,
-    backgroundColor: '#FFFFFF',
+    padding: scale(16),
+    marginBottom: scale(20),
+    backgroundColor: theme.colors.surface,
   },
   checklistTitle: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '700',
-    color: '#475569',
+    color: theme.colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 12,
+    marginBottom: scale(12),
   },
   checklistItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    gap: 10,
+    paddingVertical: scale(8),
+    gap: scale(10),
   },
   checkboxIcon: {
-    fontSize: 16,
+    fontSize: scale(16),
   },
   checklistText: {
-    fontSize: 15,
-    color: '#1E293B',
+    fontSize: scale(15),
+    color: theme.colors.text,
     flex: 1,
   },
   checklistTextChecked: {
     textDecorationLine: 'line-through',
-    color: '#94A3B8',
+    color: theme.colors.textSecondary,
   },
   actionButton: {
     width: '100%',
   },
   completedContainer: {
     alignItems: 'center',
-    padding: 32,
+    padding: scale(32),
   },
   completedEmoji: {
-    fontSize: 48,
-    marginBottom: 16,
+    fontSize: scale(48),
+    marginBottom: scale(16),
   },
   completedTitle: {
-    fontSize: 24,
+    fontSize: scale(24),
     fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 8,
+    color: theme.colors.text,
+    marginBottom: scale(8),
   },
   completedSubtitle: {
-    fontSize: 15,
-    color: '#64748B',
+    fontSize: scale(15),
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 28,
+    marginBottom: scale(28),
   },
   saveButton: {
     width: '100%',
-    marginBottom: 12,
+    marginBottom: scale(12),
   },
   homeButton: {
     width: '100%',

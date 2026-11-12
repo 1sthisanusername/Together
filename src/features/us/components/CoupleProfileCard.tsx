@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback } from 'react-native';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple, useUpdateStartDate } from '@/features/couple';
-import { Card, Button, Input, DatePickerField } from '@/shared/ui';
+import { Card, Button, DatePickerField, HeartIcon, PinIcon } from '@/shared/ui';
 import {
   calculateTogetherDuration,
   calculateDaysTogether,
   calculateNextAnniversary,
   calculateNextMilestone,
 } from '@/shared/utils';
-import { theme } from '@/shared/theme';
+import { theme, scale, triggerHaptic } from '@/shared/theme';
 
 export const CoupleProfileCard: React.FC = () => {
   const user = useAuthStore((state) => state.user);
@@ -32,6 +32,10 @@ export const CoupleProfileCard: React.FC = () => {
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [dateInput, setDateInput] = useState(couple?.start_date || '');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Anniversary section ⋮ overflow menu & milestones modal
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [showMilestonesModal, setShowMilestonesModal] = useState(false);
 
   const startDate = couple?.start_date;
   const duration = startDate ? calculateTogetherDuration(startDate) : null;
@@ -73,11 +77,14 @@ export const CoupleProfileCard: React.FC = () => {
             <Text style={styles.avatarInitial}>{myInitial}</Text>
           </View>
           <Text style={styles.avatarName} numberOfLines={1}>{myName}</Text>
-          <Text style={styles.avatarTz} numberOfLines={1}>📍 {myTz.split('/').pop()?.replace('_', ' ')}</Text>
+          <View style={styles.tzRow}>
+            <PinIcon color={theme.colors.textSecondary} size={11} />
+            <Text style={styles.avatarTz} numberOfLines={1}>{myTz.split('/').pop()?.replace('_', ' ')}</Text>
+          </View>
         </View>
 
         <View style={styles.centerHeart}>
-          <Text style={styles.heartIcon}>♥</Text>
+          <HeartIcon color={theme.colors.primary} size={24} filled />
           <Text style={styles.togetherTag}>Together</Text>
         </View>
 
@@ -86,17 +93,31 @@ export const CoupleProfileCard: React.FC = () => {
             <Text style={styles.avatarInitial}>{partnerInitial}</Text>
           </View>
           <Text style={styles.avatarName} numberOfLines={1}>{partnerName}</Text>
-          <Text style={styles.avatarTz} numberOfLines={1}>📍 {partnerTz.split('/').pop()?.replace('_', ' ')}</Text>
+          <View style={styles.tzRow}>
+            <PinIcon color={theme.colors.textSecondary} size={11} />
+            <Text style={styles.avatarTz} numberOfLines={1}>{partnerTz.split('/').pop()?.replace('_', ' ')}</Text>
+          </View>
         </View>
       </View>
 
-      {/* Anniversary & Milestones Section */}
+      {/* Anniversary & Milestones Section with ⋮ menu */}
       {startDate && duration ? (
         <View style={styles.anniversarySection}>
           <View style={styles.anniversaryHeaderRow}>
             <Text style={styles.sectionHeaderTitle}>💍 Together Since</Text>
-            <TouchableOpacity onPress={handleStartEdit} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Text style={styles.editDateBtn}>✎ Edit</Text>
+
+            {/* Anniversary ⋮ Menu Trigger */}
+            <TouchableOpacity
+              onPress={() => {
+                triggerHaptic('light');
+                setMenuVisible(true);
+              }}
+              style={styles.moreBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Anniversary options"
+            >
+              <Text style={styles.moreDots}>⋮</Text>
             </TouchableOpacity>
           </View>
 
@@ -190,194 +211,409 @@ export const CoupleProfileCard: React.FC = () => {
           </View>
         </View>
       )}
+
+      {/* Anniversary Header Dropdown ⋮ Menu Modal */}
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
+          <View style={styles.modalBackdrop}>
+            <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+              <View style={styles.menuDropdown}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setMenuVisible(false);
+                    triggerHaptic('light');
+                    handleStartEdit();
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.menuItemIcon}>✎</Text>
+                  <Text style={styles.menuItemText}>Edit "Together Since"</Text>
+                </TouchableOpacity>
+
+                <View style={styles.menuDivider} />
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setMenuVisible(false);
+                    triggerHaptic('light');
+                    setShowMilestonesModal(true);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.menuItemIcon}>🏆</Text>
+                  <Text style={styles.menuItemText}>View Milestones</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* Milestones Viewer Modal */}
+      <Modal
+        visible={showMilestonesModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowMilestonesModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowMilestonesModal(false)}>
+          <View style={styles.milestonesModalOverlay}>
+            <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+              <View style={styles.milestonesCard}>
+                <View style={styles.milestonesHeader}>
+                  <Text style={styles.milestonesTitle}>Milestones & Memories ✨</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowMilestonesModal(false)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Text style={styles.milestonesClose}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.milestoneItem}>
+                  <Text style={styles.milestoneEmoji}>📅</Text>
+                  <View style={styles.milestoneTextCol}>
+                    <Text style={styles.milestoneHeading}>Next Anniversary</Text>
+                    <Text style={styles.milestoneValue}>
+                      {nextAnniv
+                        ? `${nextAnniv.daysRemaining === 0 ? 'Today!' : `In ${nextAnniv.daysRemaining} days`} (Year ${nextAnniv.yearsTogetherNext})`
+                        : 'Set a start date to calculate'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.milestoneItem}>
+                  <Text style={styles.milestoneEmoji}>🌟</Text>
+                  <View style={styles.milestoneTextCol}>
+                    <Text style={styles.milestoneHeading}>Next Big Milestone</Text>
+                    <Text style={styles.milestoneValue}>
+                      {nextMilestone
+                        ? `${nextMilestone.description} (in ${nextMilestone.daysRemaining} days)`
+                        : 'Calculated from your start date'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.milestoneItem}>
+                  <Text style={styles.milestoneEmoji}>⏳</Text>
+                  <View style={styles.milestoneTextCol}>
+                    <Text style={styles.milestoneHeading}>Total Days of Loving Each Other</Text>
+                    <Text style={styles.milestoneValue}>
+                      {totalDays !== null ? `${totalDays} days together` : 'N/A'}
+                    </Text>
+                  </View>
+                </View>
+
+                <Button
+                  title="Close"
+                  variant="outline"
+                  size="md"
+                  onPress={() => setShowMilestonesModal(false)}
+                  style={{ marginTop: scale(14) }}
+                />
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </Card>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    padding: 18,
-    marginBottom: 16,
-    backgroundColor: '#FFFFFF',
+    padding: scale(18),
+    marginBottom: scale(16),
+    backgroundColor: theme.colors.surface,
     borderColor: theme.colors.borderLight,
-    borderRadius: 20,
+    borderRadius: theme.roundness.lg,
   },
   avatarsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingVertical: 8,
+    paddingVertical: scale(8),
   },
   avatarWrapper: {
     alignItems: 'center',
     flex: 1,
   },
   avatar: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: scale(58),
+    height: scale(58),
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: scale(8),
+    ...theme.shadows.hardSm,
   },
   myAvatar: {
-    backgroundColor: '#7FA083',
+    backgroundColor: theme.colors.coral,
   },
   partnerAvatar: {
-    backgroundColor: '#C48B9F',
+    backgroundColor: theme.colors.rose,
   },
   avatarInitial: {
-    fontSize: 24,
+    fontSize: scale(24),
     fontWeight: '800',
     color: '#FFFFFF',
   },
   avatarName: {
-    fontSize: 15,
+    fontSize: scale(15),
     fontWeight: '700',
     color: theme.colors.text,
     textAlign: 'center',
-    marginBottom: 2,
+    marginBottom: scale(2),
+  },
+  tzRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(3),
+    justifyContent: 'center',
   },
   avatarTz: {
-    fontSize: 12,
+    fontSize: scale(12),
     color: theme.colors.textSecondary,
     textAlign: 'center',
   },
   centerHeart: {
     alignItems: 'center',
-    paddingHorizontal: 8,
-  },
-  heartIcon: {
-    fontSize: 26,
-    color: '#E11D48',
-    marginBottom: 2,
+    paddingHorizontal: scale(8),
+    gap: scale(4),
   },
   togetherTag: {
-    fontSize: 11,
+    fontSize: scale(11),
     fontWeight: '700',
-    color: '#94A3B8',
+    color: theme.colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
   anniversarySection: {
-    marginTop: 14,
-    paddingTop: 14,
+    marginTop: scale(14),
+    paddingTop: scale(14),
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: theme.colors.border,
   },
   anniversaryHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: scale(4),
   },
   sectionHeaderTitle: {
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: scale(14),
+    fontWeight: '700',
     color: theme.colors.text,
   },
-  editDateBtn: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: theme.colors.primary,
+  moreBtn: {
+    paddingHorizontal: scale(8),
+    paddingVertical: scale(2),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moreDots: {
+    fontSize: scale(18),
+    fontWeight: '900',
+    color: theme.colors.text,
   },
   startDateFormatted: {
-    fontSize: 13,
+    fontSize: scale(13),
     color: theme.colors.textSecondary,
-    marginBottom: 10,
+    marginBottom: scale(10),
   },
   durationCard: {
-    backgroundColor: '#F7F3F0',
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderRadius: scale(16),
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: scale(14),
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: scale(10),
   },
   durationText: {
-    fontSize: 15,
+    fontSize: scale(15),
     fontWeight: '700',
     color: theme.colors.text,
     textAlign: 'center',
   },
   totalDaysBadge: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 2,
+    fontSize: scale(12),
+    fontWeight: '700',
+    color: theme.colors.primary,
+    marginTop: scale(3),
   },
   countdownRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: scale(10),
   },
   countdownBox: {
     flex: 1,
-    backgroundColor: '#FAF5FF',
-    borderColor: '#E9D5FF',
+    backgroundColor: theme.colors.surfaceBlush,
+    borderColor: theme.colors.border,
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 10,
+    borderRadius: scale(16),
+    padding: scale(12),
     alignItems: 'center',
   },
   countdownNumber: {
-    fontSize: 16,
+    fontSize: scale(18),
     fontWeight: '800',
-    color: '#7E22CE',
+    color: theme.colors.primary,
   },
   countdownLabel: {
-    fontSize: 11,
-    color: '#9333EA',
-    marginTop: 2,
+    fontSize: scale(11),
+    color: theme.colors.textSecondary,
+    marginTop: scale(2),
     textAlign: 'center',
   },
   emptyAnniversaryBox: {
-    marginTop: 14,
-    paddingTop: 14,
+    marginTop: scale(14),
+    paddingTop: scale(14),
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: theme.colors.border,
     alignItems: 'center',
   },
   emptyHeartIcon: {
-    fontSize: 24,
-    marginBottom: 4,
+    fontSize: scale(24),
+    marginBottom: scale(4),
   },
   emptyTitle: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '700',
     color: theme.colors.text,
-    marginBottom: 2,
+    marginBottom: scale(2),
   },
   emptySubtitle: {
-    fontSize: 12,
+    fontSize: scale(12),
     color: theme.colors.textSecondary,
     textAlign: 'center',
-    paddingHorizontal: 12,
-    marginBottom: 10,
+    paddingHorizontal: scale(12),
+    marginBottom: scale(10),
   },
   setDateBtn: {
     alignSelf: 'center',
   },
   editFormContainer: {
-    marginTop: 14,
-    padding: 14,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 14,
+    marginTop: scale(14),
+    padding: scale(14),
+    backgroundColor: theme.colors.surfaceBlush,
+    borderRadius: scale(14),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.colors.border,
   },
   editFormTitle: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '700',
     color: theme.colors.text,
-    marginBottom: 8,
+    marginBottom: scale(8),
     textAlign: 'center',
   },
   formBtnRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 6,
+    gap: scale(10),
+    marginTop: scale(6),
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuDropdown: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.roundness.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    paddingVertical: scale(6),
+    minWidth: scale(200),
+    ...theme.shadows.hardSm,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: scale(14),
+    paddingVertical: scale(10),
+    gap: scale(10),
+  },
+  menuItemIcon: {
+    fontSize: scale(16),
+  },
+  menuItemText: {
+    fontFamily: theme.typography.families.body,
+    fontSize: scale(14),
+    fontWeight: '700',
+    color: theme.colors.text,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    marginVertical: scale(4),
+  },
+  milestonesModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: scale(20),
+  },
+  milestonesCard: {
+    width: '100%',
+    maxWidth: scale(380),
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.roundness.lg,
+    padding: scale(18),
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    ...theme.shadows.hardSm,
+  },
+  milestonesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: scale(14),
+  },
+  milestonesTitle: {
+    fontFamily: theme.typography.fontFamilies.display,
+    fontSize: scale(18),
+    fontWeight: '800',
+    color: theme.colors.text,
+  },
+  milestonesClose: {
+    fontSize: scale(18),
+    fontWeight: '700',
+    color: theme.colors.textSecondary,
+    padding: scale(4),
+  },
+  milestoneItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(12),
+    paddingVertical: scale(10),
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.borderLight,
+  },
+  milestoneEmoji: {
+    fontSize: scale(24),
+  },
+  milestoneTextCol: {
+    flex: 1,
+  },
+  milestoneHeading: {
+    fontSize: scale(12),
+    color: theme.colors.textSecondary,
+    fontWeight: '600',
+  },
+  milestoneValue: {
+    fontSize: scale(14),
+    color: theme.colors.text,
+    fontWeight: '700',
+    marginTop: scale(2),
   },
 });

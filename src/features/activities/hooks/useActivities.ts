@@ -4,8 +4,7 @@ import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
 import type { Activity, ActivitySession } from '@/shared/types';
 
-import { FALLBACK_ACTIVITIES } from '../fallbackActivities';
-import { ENABLE_SIMULTANEOUS_ACTIVITIES } from '../config';
+import { ENABLE_SIMULTANEOUS_ACTIVITIES, isActivityAvailable } from '../config';
 
 export function useActivities(category?: string) {
   return useQuery<Activity[]>({
@@ -18,31 +17,20 @@ export function useActivities(category?: string) {
       }
 
       const { data, error } = await query;
-      let activities: Activity[] = (data as Activity[]) || [];
-      if (error || !data || data.length === 0) {
-        // Fallback on offline or unseeded database
-        activities = filterFallback(category);
+      if (error) {
+        throw error;
       }
+
+      let activities: Activity[] = (data as Activity[]) || [];
 
       // Hide unsupported simultaneous activities (e.g. live drawing without sync infrastructure)
       if (!ENABLE_SIMULTANEOUS_ACTIVITIES) {
-        activities = activities.filter((a) => a.kind !== 'drawing_guess');
+        activities = activities.filter((a) => a.kind !== 'drawing_guess' && isActivityAvailable(a));
       }
 
       return activities;
     },
   });
-}
-
-function filterFallback(category?: string): Activity[] {
-  let list = FALLBACK_ACTIVITIES;
-  if (category && category !== 'all') {
-    list = list.filter((a) => a.category === category);
-  }
-  if (!ENABLE_SIMULTANEOUS_ACTIVITIES) {
-    list = list.filter((a) => a.kind !== 'drawing_guess');
-  }
-  return list;
 }
 
 export function useStartActivity() {

@@ -3,13 +3,9 @@ import {
   View,
   Text,
   StyleSheet,
-  Modal,
   TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
-import { Button, Input, DatePickerField } from '@/shared/ui';
+import { Button, Input, DatePickerField, FormSheet } from '@/shared/ui';
 import type { BucketItem } from '@/shared/types';
 import { theme, scale, triggerHaptic } from '@/shared/theme';
 
@@ -82,129 +78,97 @@ export const AddEditBucketItemModal: React.FC<AddEditBucketItemModalProps> = ({
     });
   };
 
+  const disabledReason = !title.trim() ? 'Please enter a title for your bucket list dream' : null;
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.overlay}
-      >
-        <TouchableOpacity
-          style={styles.backdrop}
-          activeOpacity={1}
+    <FormSheet
+      visible={visible}
+      onClose={onClose}
+      title={itemToEdit ? '✏️ Edit Dream' : '🎯 Add to Bucket List'}
+      primaryLabel={itemToEdit ? 'Save Changes' : 'Add Dream 💕'}
+      onPrimary={handleSave}
+      primaryDisabled={!title.trim() || isSaving}
+      primaryLoading={isSaving}
+      disabledReason={disabledReason}
+      secondary={
+        <Button
+          title="Cancel"
+          variant="ghost"
+          size="md"
           onPress={onClose}
+          style={{ flex: 1 }}
+        />
+      }
+    >
+      <View style={styles.formContainer}>
+        {/* Title Input */}
+        <Text style={styles.inputLabel}>Dream Title *</Text>
+        <Input
+          placeholder="e.g. Watch the sunset in Santorini"
+          value={title}
+          onChangeText={(val) => {
+            setTitle(val);
+            if (errorMsg) setErrorMsg(null);
+          }}
+          maxLength={120}
+        />
+        {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
+
+        {/* Description Input */}
+        <Text style={styles.inputLabel}>Notes & Details (optional)</Text>
+        <Input
+          placeholder="Any specific plans, places to visit, or ideas..."
+          value={description}
+          onChangeText={setDescription}
+          multiline
+          numberOfLines={3}
+          style={{ height: scale(72), textAlignVertical: 'top' }}
         />
 
-        <View style={styles.modalContainer}>
-          {/* Hard Ink Shadow */}
-          <View style={styles.modalShadow} />
-
-          {/* Modal Surface */}
-          <View style={styles.modalSurface}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Header */}
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  {itemToEdit ? '✏️ Edit Dream' : '🎯 Add to Bucket List'}
-                </Text>
-                <TouchableOpacity
-                  onPress={onClose}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Text style={styles.closeBtn}>✕</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Title Input */}
-              <Text style={styles.inputLabel}>Dream Title *</Text>
-              <Input
-                placeholder="e.g. Watch the sunset in Santorini"
-                value={title}
-                onChangeText={(val) => {
-                  setTitle(val);
-                  if (errorMsg) setErrorMsg(null);
+        {/* Category Chips */}
+        <Text style={styles.inputLabel}>Category</Text>
+        <View style={styles.categoryRow}>
+          {CATEGORIES.map((cat) => {
+            const isSelected = category === cat.id;
+            return (
+              <TouchableOpacity
+                key={cat.id}
+                style={[
+                  styles.categoryChip,
+                  isSelected && {
+                    backgroundColor: cat.color,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  triggerHaptic('light');
+                  setCategory(cat.id);
                 }}
-                maxLength={120}
-              />
-              {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
-
-              {/* Description Input */}
-              <Text style={styles.inputLabel}>Notes & Details (optional)</Text>
-              <Input
-                placeholder="Any specific plans, places to visit, or ideas..."
-                value={description}
-                onChangeText={setDescription}
-                multiline
-                numberOfLines={3}
-                style={{ height: scale(72), textAlignVertical: 'top' }}
-              />
-
-              {/* Category Chips */}
-              <Text style={styles.inputLabel}>Category</Text>
-              <View style={styles.categoryRow}>
-                {CATEGORIES.map((cat) => {
-                  const isSelected = category === cat.id;
-                  return (
-                    <TouchableOpacity
-                      key={cat.id}
-                      style={[
-                        styles.categoryChip,
-                        isSelected && {
-                          backgroundColor: cat.color,
-                          borderColor: theme.colors.border,
-                        },
-                      ]}
-                      onPress={() => {
-                        triggerHaptic('light');
-                        setCategory(cat.id);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.categoryChipIcon}>{cat.icon}</Text>
-                      <Text
-                        style={[
-                          styles.categoryChipLabel,
-                          isSelected && styles.categoryChipLabelSelected,
-                        ]}
-                      >
-                        {cat.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              {/* Target Date (optional) */}
-              <Text style={styles.inputLabel}>Target Date (optional)</Text>
-              <DatePickerField
-                placeholder="Pick an estimated date"
-                value={targetDate || ''}
-                onChange={(val) => setTargetDate(val || null)}
-              />
-
-              {/* Action Buttons */}
-              <View style={styles.buttonRow}>
-                <Button
-                  title="Cancel"
-                  variant="ghost"
-                  size="md"
-                  onPress={onClose}
-                  style={{ flex: 1 }}
-                />
-                <Button
-                  title={itemToEdit ? 'Save Changes' : 'Add Dream 💕'}
-                  variant="primary"
-                  size="md"
-                  loading={isSaving}
-                  disabled={isSaving}
-                  onPress={handleSave}
-                  style={{ flex: 1.5 }}
-                />
-              </View>
-            </ScrollView>
-          </View>
+                activeOpacity={0.7}
+              >
+                <Text style={styles.categoryChipIcon}>{cat.icon}</Text>
+                <Text
+                  style={[
+                    styles.categoryChipLabel,
+                    isSelected && styles.categoryChipLabelSelected,
+                  ]}
+                >
+                  {cat.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+
+        {/* Target Date (optional) */}
+        <Text style={styles.inputLabel}>Target Date (optional)</Text>
+        <DatePickerField
+          placeholder="Pick an estimated date"
+          value={targetDate || ''}
+          onChange={(val) => setTargetDate(val || null)}
+        />
+      </View>
+    </FormSheet>
   );
 };
 
@@ -313,5 +277,8 @@ const styles = StyleSheet.create({
     gap: scale(10),
     marginTop: scale(18),
     marginBottom: scale(4),
+  },
+  formContainer: {
+    paddingBottom: scale(12),
   },
 });

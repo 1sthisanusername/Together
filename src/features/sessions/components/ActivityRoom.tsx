@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSession } from '../hooks/useSession';
 import { getActivityRenderer } from '@/features/activities/registry';
 import { LoadingState, ErrorState, GameErrorBoundary } from '@/shared/ui';
-import { theme } from '@/shared/theme';
+import { theme, scale } from '@/shared/theme';
 
 export interface ActivityRoomProps {
   sessionId: string;
@@ -86,12 +87,13 @@ export const ActivityRoom: React.FC<ActivityRoomProps> = ({
         </View>
       ) : null}
 
-      <ScrollView
+      <KeyboardAwareScrollView
         style={styles.scrollFlex}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         scrollEnabled={sessionData.activity.kind !== 'drawing_guess'}
+        bottomOffset={scale(32)}
         showsVerticalScrollIndicator={false}
       >
         <GameErrorBoundary onExit={onExit}>
@@ -101,7 +103,7 @@ export const ActivityRoom: React.FC<ActivityRoomProps> = ({
             onFinish={onExit}
           />
         </GameErrorBoundary>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 };
@@ -115,52 +117,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(14),
     backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.borderLight,
   },
   exitBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingVertical: scale(6),
+    paddingHorizontal: scale(10),
   },
   exitText: {
-    fontSize: 14,
+    fontSize: scale(14),
     fontWeight: '700',
     color: theme.colors.textSecondary,
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: scale(16),
     fontWeight: '800',
     color: theme.colors.text,
     flex: 1,
     textAlign: 'center',
-    marginHorizontal: 8,
+    marginHorizontal: scale(8),
   },
   liveIndicator: {
-    paddingHorizontal: 10,
+    paddingHorizontal: scale(10),
   },
   liveDot: {
-    color: theme.colors.success || '#10B981',
-    fontSize: 18,
+    color: theme.colors.success,
+    fontSize: scale(18),
   },
   advanceBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FAF5F2',
+    backgroundColor: theme.colors.surfaceBlush,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.borderLight,
-    paddingVertical: 9,
-    paddingHorizontal: 16,
-    gap: 8,
+    paddingVertical: scale(9),
+    paddingHorizontal: scale(16),
+    gap: scale(8),
   },
   advanceBannerIcon: {
-    fontSize: 14,
+    fontSize: scale(14),
   },
   advanceBannerText: {
-    fontSize: 13,
+    fontSize: scale(13),
     fontWeight: '700',
     color: theme.colors.primary,
   },
@@ -169,7 +171,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 40,
+    paddingBottom: scale(40),
   },
 });
 

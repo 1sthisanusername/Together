@@ -12,11 +12,12 @@ import {
   CoupleProfileCard,
 } from '@/features/us';
 import { useHomeData } from '@/features/home';
-import { LoadingState, ErrorState, SwipeTabWrapper } from '@/shared/ui';
-import { theme, scale } from '@/shared/theme';
+import { LoadingState, ErrorState, SwipeTabWrapper, ResponsiveContainer } from '@/shared/ui';
+import { theme, scale, useResponsiveLayout } from '@/shared/theme';
 
 export default function UsScreen() {
   const { t } = useTranslation();
+  const { horizontalGutter, sectionGap, s } = useResponsiveLayout();
   const insets = useSafeAreaInsets();
   let tabBarHeight = 56;
   try {
@@ -42,45 +43,55 @@ export default function UsScreen() {
     <SafeAreaView style={styles.safeArea}>
       <SwipeTabWrapper currentTab="us">
         <View style={styles.header}>
-        <Text style={styles.title} maxFontSizeMultiplier={1.35}>
-          {t('us.title')}
-        </Text>
-        <Text style={styles.subtitle} maxFontSizeMultiplier={1.35}>
-          {t('us.subtitle')}
-        </Text>
-      </View>
+          <ResponsiveContainer style={{ paddingHorizontal: horizontalGutter }}>
+            <View style={styles.titleRow}>
+              <Text style={[styles.title, { fontSize: s(26) }]} maxFontSizeMultiplier={1.35}>
+                {t('us.title')}
+              </Text>
+              <View style={styles.titleDot} />
+            </View>
+            <Text style={styles.subtitle} maxFontSizeMultiplier={1.35}>
+              {t('us.subtitle')}
+            </Text>
+          </ResponsiveContainer>
+        </View>
 
-      {isLoading ? (
-        <LoadingState message={t('common.loading')} />
-      ) : error ? (
-        <ErrorState
-          title={t('common.errorTitle')}
-          message={error.message}
-          onRetry={handleRefresh}
-          retryTitle={t('common.retry')}
-        />
-      ) : (
-        <ScrollView
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={false} onRefresh={handleRefresh} />}
-        >
-          <CoupleProfileCard />
+        {isLoading ? (
+          <LoadingState message={t('common.loading')} />
+        ) : error ? (
+          <ErrorState
+            title={t('common.errorTitle')}
+            message={error.message}
+            onRetry={handleRefresh}
+            retryTitle={t('common.retry')}
+          />
+        ) : (
+          <ScrollView
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingHorizontal: horizontalGutter, paddingBottom: bottomPadding },
+            ]}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            showsVerticalScrollIndicator={false}
+            refreshControl={<RefreshControl refreshing={false} onRefresh={handleRefresh} />}
+          >
+            <ResponsiveContainer style={{ gap: sectionGap }}>
+              <CoupleProfileCard />
 
-          {homeData?.nextMeeting ? (
-            <NextReunionCountdownCard
-              nextMeeting={homeData.nextMeeting}
-              daysRemaining={homeData.daysToNextMeeting}
-            />
-          ) : null}
+              {homeData?.nextMeeting ? (
+                <NextReunionCountdownCard
+                  nextMeeting={homeData.nextMeeting}
+                  daysRemaining={homeData.daysToNextMeeting}
+                />
+              ) : null}
 
-          <ImportantDatesList dates={importantDates || []} />
+              <ImportantDatesList dates={importantDates || []} />
 
-          <BucketListCard items={bucketItems || []} />
-        </ScrollView>
-      )}
+              <BucketListCard items={bucketItems || []} />
+            </ResponsiveContainer>
+          </ScrollView>
+        )}
       </SwipeTabWrapper>
     </SafeAreaView>
   );
@@ -92,26 +103,38 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   header: {
-    paddingHorizontal: scale(20),
-    paddingTop: scale(16),
+    paddingTop: scale(14),
     paddingBottom: scale(14),
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.surfaceSubtle, // #FFF0ED
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.border, // #FBE9E7
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(5),
+    marginBottom: scale(4),
   },
   title: {
+    fontFamily: theme.typography.fontFamilies.display,
     fontSize: scale(26),
     fontWeight: '800',
     color: theme.colors.text,
-    marginBottom: scale(4),
     letterSpacing: -0.5,
   },
+  titleDot: {
+    width: scale(7),
+    height: scale(7),
+    borderRadius: scale(3.5),
+    backgroundColor: theme.colors.primary,
+    marginTop: scale(4),
+  },
   subtitle: {
+    fontFamily: theme.typography.families.body,
     fontSize: scale(14),
     color: theme.colors.textSecondary,
   },
   scrollContent: {
-    paddingHorizontal: scale(20),
     paddingVertical: scale(16),
   },
 });

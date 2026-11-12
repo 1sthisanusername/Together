@@ -8,9 +8,10 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import '@/shared/i18n';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
-import { supabase, queryClient, push, notificationRouter, restorePersistedCache } from '@/services';
+import { supabase, isSupabaseConfigured, queryClient, push, notificationRouter, restorePersistedCache } from '@/services';
 import { theme } from '@/shared/theme';
 import { InAppNotificationBanner, useNotificationRealtime } from '@/features/notifications';
+import { ErrorState } from '@/shared/ui';
 import { useFonts, BricolageGrotesque_700Bold } from '@expo-google-fonts/bricolage-grotesque';
 import { Figtree_400Regular, Figtree_600SemiBold, Figtree_700Bold } from '@expo-google-fonts/figtree';
 import { Caveat_600SemiBold, Caveat_700Bold } from '@expo-google-fonts/caveat';
@@ -194,6 +195,20 @@ export default function RootLayout() {
       removePushListener();
     };
   }, [initAuth, router]);
+
+  // Safety check: verify database configuration
+  if (!isSupabaseConfigured) {
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.errorContainer}>
+          <ErrorState
+            title="Configuration Error"
+            message="The app isn't configured correctly. Please check your Supabase environment variables."
+          />
+        </SafeAreaView>
+      </SafeAreaProvider>
+    );
+  }
 
   return (
     <SafeAreaProvider>

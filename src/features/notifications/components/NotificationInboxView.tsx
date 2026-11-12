@@ -6,7 +6,6 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,7 +17,13 @@ import {
 import { getNotificationIcon } from './InAppNotificationBanner';
 import { getRouteForNotification } from '@/services/push';
 import type { AppNotification } from '../types';
-import { theme, scale, triggerHaptic } from '@/shared/theme';
+import {
+  SkeletonList,
+  ResponsiveContainer,
+  ChevronLeftIcon,
+  LetterIcon,
+} from '@/shared/ui';
+import { theme, scale } from '@/shared/theme';
 
 function formatTimestamp(isoString: string): string {
   try {
@@ -109,12 +114,15 @@ export const NotificationInboxView: React.FC = () => {
           onPress={() => router.back()}
           style={styles.backButton}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Text style={styles.backText}>←</Text>
+          <ChevronLeftIcon color={theme.colors.text} size={22} />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Notifications</Text>
+        <Text style={styles.headerTitle} maxFontSizeMultiplier={1.3}>
+          Notifications
+        </Text>
 
         {unreadCount > 0 ? (
           <TouchableOpacity
@@ -122,6 +130,8 @@ export const NotificationInboxView: React.FC = () => {
             disabled={isMarkingAll}
             style={styles.markAllBtn}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Mark all notifications as read"
           >
             <Text style={styles.markAllText}>Mark all read</Text>
           </TouchableOpacity>
@@ -132,37 +142,43 @@ export const NotificationInboxView: React.FC = () => {
 
       {/* Main List */}
       {isLoading ? (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="small" color={theme.colors.primary} />
-        </View>
+        <ResponsiveContainer>
+          <SkeletonList count={5} lines={2} hasHeader={false} />
+        </ResponsiveContainer>
       ) : notifications.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>💌</Text>
-          <Text style={styles.emptyTitle}>You're all caught up</Text>
-          <Text style={styles.emptySubtitle}>
+        <ResponsiveContainer style={styles.emptyContainer}>
+          <View style={styles.emptyIconCircle}>
+            <LetterIcon color={theme.colors.primary} size={32} focused />
+          </View>
+          <Text style={styles.emptyTitle} maxFontSizeMultiplier={1.3}>
+            You're all caught up
+          </Text>
+          <Text style={styles.emptySubtitle} maxFontSizeMultiplier={1.3}>
             When your partner sends a message, letter, or activity invite, it will appear here.
           </Text>
-        </View>
+        </ResponsiveContainer>
       ) : (
-        <FlatList
-          data={notifications}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={[
-            styles.listContent,
-            { paddingBottom: insets.bottom + 24 },
-          ]}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={() => {
-                refetch();
-              }}
-              tintColor={theme.colors.primary}
-            />
-          }
-          showsVerticalScrollIndicator={false}
-        />
+        <ResponsiveContainer style={styles.listWrapper}>
+          <FlatList
+            data={notifications}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingBottom: insets.bottom + 24 },
+            ]}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={() => {
+                  refetch();
+                }}
+                tintColor={theme.colors.primary}
+              />
+            }
+            showsVerticalScrollIndicator={false}
+          />
+        </ResponsiveContainer>
       )}
     </View>
   );
@@ -213,30 +229,40 @@ const styles = StyleSheet.create({
   headerPlaceholder: {
     width: 36,
   },
+  listWrapper: {
+    flex: 1,
+  },
   listContent: {
     paddingHorizontal: scale(16),
     paddingTop: scale(12),
   },
   itemCard: {
     backgroundColor: theme.colors.surface,
-    borderRadius: scale(16),
-    padding: scale(14),
+    borderRadius: theme.roundness.lg,
+    padding: scale(16),
     marginBottom: scale(10),
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: theme.colors.border,
+    ...theme.shadows.card,
   },
   itemCardUnread: {
-    backgroundColor: '#FFFFFF',
-    borderColor: theme.colors.primaryBorder,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderColor: theme.colors.rose,
   },
   iconWrapper: {
     position: 'relative',
     marginRight: scale(14),
+    width: scale(42),
+    height: scale(42),
+    borderRadius: 21,
+    backgroundColor: theme.colors.surfaceBlush,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   itemIcon: {
-    fontSize: scale(24),
+    fontSize: scale(20),
   },
   unreadDot: {
     position: 'absolute',
@@ -287,9 +313,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: scale(36),
   },
-  emptyIcon: {
-    fontSize: scale(48),
-    marginBottom: scale(16),
+  emptyIconCircle: {
+    width: scale(72),
+    height: scale(72),
+    borderRadius: 36,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: scale(18),
+    ...theme.shadows.card,
   },
   emptyTitle: {
     fontSize: scale(18),

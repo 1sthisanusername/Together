@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Sheet, Button, Input, ErrorState } from '@/shared/ui';
+import { FormSheet, Button, Input, ErrorState } from '@/shared/ui';
 import { useUnlinkCouple } from '../hooks/useCouple';
 import { theme, scale, triggerHaptic } from '@/shared/theme';
 
@@ -67,7 +67,24 @@ export const UnlinkCoupleDialog: React.FC<UnlinkCoupleDialogProps> = ({
   // --- RENDER LIGHTWEIGHT CANCEL FLOW FOR PENDING INVITES ---
   if (isCancel) {
     return (
-      <Sheet visible={visible} onClose={onClose} title="Cancel Couple Space">
+      <FormSheet
+        visible={visible}
+        onClose={onClose}
+        title="Cancel Couple Space"
+        primaryLabel="Cancel Space"
+        onPrimary={handleUnlink}
+        primaryLoading={isPending}
+        primaryDisabled={isPending}
+        secondary={
+          <Button
+            title="Keep Invite"
+            variant="outline"
+            size="md"
+            onPress={onClose}
+            disabled={isPending}
+          />
+        }
+      >
         <View style={styles.container}>
           <Text style={styles.warningHeading}>
             Cancel this pending couple space?
@@ -89,42 +106,91 @@ export const UnlinkCoupleDialog: React.FC<UnlinkCoupleDialogProps> = ({
               retryTitle={t('common.retry')}
             />
           ) : null}
-
-          <View style={styles.actions}>
-            <Button
-              title="Keep Invite"
-              variant="outline"
-              size="md"
-              onPress={onClose}
-              disabled={isPending}
-              style={styles.button}
-            />
-            <Button
-              title="Cancel Space"
-              variant="danger"
-              size="md"
-              loading={isPending}
-              onPress={handleUnlink}
-              style={styles.button}
-            />
-          </View>
         </View>
-      </Sheet>
+      </FormSheet>
     );
   }
 
   // --- RENDER 3-STEP PROTECTED SAFEGUARD FLOW FOR ACTIVE COUPLES ---
+  const sheetTitle =
+    step === 1
+      ? 'Step 1/3: Consequences'
+      : step === 2
+      ? 'Step 2/3: Verify Intent'
+      : 'Step 3/3: Final Confirmation';
+
+  const primaryLabel =
+    step === 1
+      ? 'Next Step ›'
+      : step === 2
+      ? 'Final Step ›'
+      : countdown > 0
+      ? `Disconnect Couple (${countdown}s)`
+      : 'Permanently Disconnect Couple Space';
+
+  const onPrimary = () => {
+    if (step === 1) {
+      triggerHaptic('medium');
+      setStep(2);
+    } else if (step === 2) {
+      triggerHaptic('warning');
+      setStep(3);
+    } else {
+      handleUnlink();
+    }
+  };
+
+  const primaryDisabled =
+    step === 1
+      ? !hasAcknowledged
+      : step === 2
+      ? !isPhraseMatched
+      : countdown > 0 || isPending;
+
+  const disabledReason =
+    step === 1 && !hasAcknowledged
+      ? 'Please check the box acknowledging the consequences'
+      : step === 2 && !isPhraseMatched
+      ? 'Type "UNLINK" in all caps to unlock the final step'
+      : step === 3 && countdown > 0
+      ? `Please wait ${countdown}s cooldown to confirm`
+      : null;
+
+  const secondaryAction =
+    step === 1 ? (
+      <Button
+        title="Cancel"
+        variant="outline"
+        size="md"
+        onPress={onClose}
+      />
+    ) : step === 2 ? (
+      <Button
+        title="‹ Back"
+        variant="outline"
+        size="md"
+        onPress={() => setStep(1)}
+      />
+    ) : (
+      <Button
+        title="Keep Safe"
+        variant="outline"
+        size="md"
+        onPress={onClose}
+      />
+    );
+
   return (
-    <Sheet
+    <FormSheet
       visible={visible}
       onClose={onClose}
-      title={
-        step === 1
-          ? 'Step 1/3: Consequences'
-          : step === 2
-          ? 'Step 2/3: Verify Intent'
-          : 'Step 3/3: Final Confirmation'
-      }
+      title={sheetTitle}
+      primaryLabel={primaryLabel}
+      onPrimary={onPrimary}
+      primaryDisabled={primaryDisabled}
+      primaryLoading={step === 3 && isPending}
+      disabledReason={disabledReason}
+      secondary={secondaryAction}
     >
       <View style={styles.container}>
         {/* Step Progression Bar */}
@@ -171,27 +237,6 @@ export const UnlinkCoupleDialog: React.FC<UnlinkCoupleDialogProps> = ({
                 I understand that unlinking immediately disconnects our couple space and cannot be undone.
               </Text>
             </TouchableOpacity>
-
-            <View style={styles.actions}>
-              <Button
-                title="Cancel (Keep Space)"
-                variant="outline"
-                size="md"
-                onPress={onClose}
-                style={styles.button}
-              />
-              <Button
-                title="Next Step ›"
-                variant="primary"
-                size="md"
-                disabled={!hasAcknowledged}
-                onPress={() => {
-                  triggerHaptic('medium');
-                  setStep(2);
-                }}
-                style={styles.button}
-              />
-            </View>
           </View>
         )}
 
@@ -224,27 +269,6 @@ export const UnlinkCoupleDialog: React.FC<UnlinkCoupleDialogProps> = ({
                 ? '✓ Phrase matched. You may proceed.'
                 : 'Type "UNLINK" to unlock the final step.'}
             </Text>
-
-            <View style={styles.actions}>
-              <Button
-                title="‹ Back"
-                variant="outline"
-                size="md"
-                onPress={() => setStep(1)}
-                style={styles.button}
-              />
-              <Button
-                title="Final Step ›"
-                variant="primary"
-                size="md"
-                disabled={!isPhraseMatched}
-                onPress={() => {
-                  triggerHaptic('warning');
-                  setStep(3);
-                }}
-                style={styles.button}
-              />
-            </View>
           </View>
         )}
 
@@ -267,34 +291,10 @@ export const UnlinkCoupleDialog: React.FC<UnlinkCoupleDialogProps> = ({
                 retryTitle={t('common.retry')}
               />
             ) : null}
-
-            <View style={styles.step3Col}>
-              <Button
-                title="❤️ Keep Our Space Safe"
-                variant="primary"
-                size="lg"
-                onPress={onClose}
-                style={styles.keepSpaceBtn}
-              />
-
-              <Button
-                title={
-                  countdown > 0
-                    ? `Disconnect Couple (${countdown}s cooldown)`
-                    : 'Permanently Disconnect Couple Space'
-                }
-                variant="danger"
-                size="md"
-                disabled={countdown > 0 || isPending}
-                loading={isPending}
-                onPress={handleUnlink}
-                style={styles.finalUnlinkBtn}
-              />
-            </View>
           </View>
         )}
       </View>
-    </Sheet>
+    </FormSheet>
   );
 };
 
