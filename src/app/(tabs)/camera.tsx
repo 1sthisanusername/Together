@@ -155,11 +155,9 @@ export default function CameraScreen() {
               <TouchableOpacity
                 style={styles.choiceBtn}
                 onPress={handlePickFromGallery}
--                activeOpacity={0.85}
-+                activeOpacity={0.85}
-+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-+                accessibilityLabel="Pick a photo from gallery for home cover"
- hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityLabel="Take a photo for home cover"
+                activeOpacity={0.85}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityLabel="Pick a photo from gallery for home cover"
               >
                 <GalleryIcon color={theme.colors.coral} size={scale(20)} />
                 <Text style={styles.choiceTitle}>From Gallery</Text>
