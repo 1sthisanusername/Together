@@ -64,6 +64,7 @@ export default function PlayScreen() {
                 onPress={() => handleFilterChange('all')}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 accessibilityRole="tab"
+                accessibilityLabel="Show all activities"
                 accessibilityState={{ selected: filter === 'all' }}
               >
                 <Text
@@ -79,6 +80,7 @@ export default function PlayScreen() {
                 onPress={() => handleFilterChange('play')}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 accessibilityRole="tab"
+                accessibilityLabel="Show play activities"
                 accessibilityState={{ selected: filter === 'play' }}
               >
                 <Text
@@ -94,6 +96,7 @@ export default function PlayScreen() {
                 onPress={() => handleFilterChange('deep_talk')}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 accessibilityRole="tab"
+                accessibilityLabel="Show deep talk activities"
                 accessibilityState={{ selected: filter === 'deep_talk' }}
               >
                 <Text

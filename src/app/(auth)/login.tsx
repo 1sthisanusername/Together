@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/features/auth';
@@ -21,69 +21,76 @@ export default function WelcomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ResponsiveContainer style={styles.content}>
-        {/* Brand Logo & Presentation */}
-        <View style={styles.logoSection}>
-          <Logo size="xl" showText={true} />
-          <Text style={styles.tagline} maxFontSizeMultiplier={1.35}>
-            A warm, private space built exclusively for two.
-          </Text>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        bounces={false}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <ResponsiveContainer style={styles.content}>
+          {/* Brand Logo & Presentation */}
+          <View style={styles.logoSection}>
+            <Logo size="xl" showText={true} />
+            <Text style={styles.tagline} maxFontSizeMultiplier={1.35}>
+              A warm, private space built exclusively for two.
+            </Text>
 
-          <View style={styles.featureList}>
-            <View style={styles.featurePill}>
-              <View style={styles.featureIconCircle}>
-                <HeartIcon color={theme.colors.primary} size={15} focused />
+            <View style={styles.featureList}>
+              <View style={styles.featurePill}>
+                <View style={styles.featureIconCircle}>
+                  <HeartIcon color={theme.colors.primary} size={15} focused />
+                </View>
+                <Text style={styles.featureLabel} maxFontSizeMultiplier={1.3}>
+                  Live partner presence & daily check-ins
+                </Text>
               </View>
-              <Text style={styles.featureLabel} maxFontSizeMultiplier={1.3}>
-                Live partner presence & daily check-ins
-              </Text>
-            </View>
-            <View style={styles.featurePill}>
-              <View style={styles.featureIconCircle}>
-                <PlayIcon color={theme.colors.coral} size={15} focused />
+              <View style={styles.featurePill}>
+                <View style={styles.featureIconCircle}>
+                  <PlayIcon color={theme.colors.coral} size={15} focused />
+                </View>
+                <Text style={styles.featureLabel} maxFontSizeMultiplier={1.3}>
+                  Playful games & guided dates
+                </Text>
               </View>
-              <Text style={styles.featureLabel} maxFontSizeMultiplier={1.3}>
-                Playful games & guided dates
-              </Text>
-            </View>
-            <View style={styles.featurePill}>
-              <View style={styles.featureIconCircle}>
-                <CameraIcon color={theme.colors.sunset} size={15} focused />
+              <View style={styles.featurePill}>
+                <View style={styles.featureIconCircle}>
+                  <CameraIcon color={theme.colors.sunset} size={15} focused />
+                </View>
+                <Text style={styles.featureLabel} maxFontSizeMultiplier={1.3}>
+                  Shared memories, photos & secret letters
+                </Text>
               </View>
-              <Text style={styles.featureLabel} maxFontSizeMultiplier={1.3}>
-                Shared memories, photos & secret letters
-              </Text>
             </View>
           </View>
-        </View>
 
-        {/* Action Section: Welcome screen has ONE button */}
-        <View style={styles.actionSection}>
-          {error ? (
-            <View style={styles.errorWrapper}>
-              <ErrorState
-                title="Sign In"
-                message={error}
-                onRetry={() => setError(null)}
-                retryTitle="Dismiss"
-              />
-            </View>
-          ) : null}
+          {/* Action Section: Welcome screen has ONE button */}
+          <View style={styles.actionSection}>
+            {error ? (
+              <View style={styles.errorWrapper}>
+                <ErrorState
+                  title="Sign In"
+                  message={error}
+                  onRetry={() => setError(null)}
+                  retryTitle="Dismiss"
+                />
+              </View>
+            ) : null}
 
-          <Button
-            title="Continue with Google"
-            variant="primary"
-            size="lg"
-            loading={isLoading}
-            onPress={handleGoogleSignIn}
-            style={styles.googleButton}
-          />
+            <Button
+              title="Continue with Google"
+              variant="primary"
+              size="lg"
+              loading={isLoading}
+              onPress={handleGoogleSignIn}
+              style={styles.googleButton}
+            />
 
-          <Text style={styles.privacyNotice} maxFontSizeMultiplier={1.3}>
-            Private & encrypted space exclusively for you and your partner.
-          </Text>
-        </View>
-      </ResponsiveContainer>
+            <Text style={styles.privacyNotice} maxFontSizeMultiplier={1.3}>
+              Private & encrypted space exclusively for you and your partner.
+            </Text>
+          </View>
+        </ResponsiveContainer>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -93,16 +100,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   content: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'space-between',
     paddingHorizontal: scale(24),
-    paddingVertical: scale(36),
+    paddingVertical: scale(24),
+    minHeight: '100%',
   },
   logoSection: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: scale(16),
   },
   tagline: {
     marginTop: scale(12),
@@ -114,7 +124,7 @@ const styles = StyleSheet.create({
     maxWidth: 300,
   },
   featureList: {
-    marginTop: scale(24),
+    marginTop: scale(20),
     gap: scale(10),
     width: '100%',
     maxWidth: 340,

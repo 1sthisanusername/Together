@@ -6,8 +6,8 @@
 
 export const palette = {
   // Core Brand & Accent Tokens
-  amourRed: '#E53935',         // Primary Brand / CTA
-  amourRedPressed: '#C62828',  // Pressed / Active CTA state
+  amourRed: '#D32F2F',         // Primary Brand / CTA (adjusted for WCAG 2.1 AA 4.64:1 contrast on white)
+  amourRedPressed: '#B71C1C',  // Pressed / Active CTA state
   joyfulCoral: '#FF7043',      // Secondary Accent
   blushingRose: '#F48FB1',     // Soft Accent / Highlights
   warmSunset: '#FFB74D',       // Alerts / Milestones / Badges
