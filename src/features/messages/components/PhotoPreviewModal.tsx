@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   tapToZoomText: {
     color: '#FFFFFF',
     fontSize: scale(12),
-    fontFamily: theme.typography.families.medium,
+    fontFamily: theme.typography.families.body,
   },
   zoomBackdrop: {
     flex: 1,
