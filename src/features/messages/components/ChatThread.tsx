@@ -1,22 +1,21 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
+  FlatList,
   StyleSheet,
   Platform,
   Keyboard,
   TouchableWithoutFeedback,
   Animated,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  KeyboardAvoidingView,
-  KeyboardStickyView,
-} from 'react-native-keyboard-controller';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useAuthStore } from '@/features/auth';
 import { useActiveCouple } from '@/features/couple';
 import {
@@ -39,9 +38,40 @@ import {
   ThemedAlert,
 } from '@/shared/ui';
 import { theme, scale } from '@/shared/theme';
+import type { ChatMessage } from '../types';
 
 export interface ChatThreadProps {
   onBack?: () => void;
+}
+
+function formatDateSeparator(dateStr: string): string {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const msgDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round((today.getTime() - msgDate.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) {
+    return d.toLocaleDateString(undefined, { weekday: 'long' });
+  }
+  return d.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+  });
+}
+
+function isDifferentDay(d1: string, d2?: string): boolean {
+  if (!d2) return true;
+  const date1 = new Date(d1);
+  const date2 = new Date(d2);
+  return (
+    date1.getFullYear() !== date2.getFullYear() ||
+    date1.getMonth() !== date2.getMonth() ||
+    date1.getDate() !== date2.getDate()
+  );
 }
 
 export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
@@ -62,7 +92,40 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
   const closedBottomPadding = bottomSafeInset > 0 ? bottomSafeInset + scale(10) : scale(14);
   const [inputText, setInputText] = useState('');
   const [previewImageUri, setPreviewImageUri] = useState<string | null>(null);
-  const scrollViewRef = useRef<any>(null);
+
+  const flatListRef = useRef<FlatList<ChatMessage>>(null);
+  const scrollOffsetRef = useRef<number>(0);
+  const listHeightRef = useRef<number>(0);
+  const prevMessagesCountRef = useRef<number>(messages?.length || 0);
+
+  const invertedMessages = useMemo(() => {
+    return messages ? [...messages].reverse() : [];
+  }, [messages]);
+
+  useEffect(() => {
+    const currentCount = messages?.length || 0;
+    const prevCount = prevMessagesCountRef.current;
+    prevMessagesCountRef.current = currentCount;
+
+    if (currentCount > prevCount) {
+      const isScrolledUpMoreThanOneScreen =
+        listHeightRef.current > 0 && scrollOffsetRef.current > listHeightRef.current;
+
+      // If user has NOT scrolled up more than one screen, keep them anchored to the newest message at bottom
+      if (!isScrolledUpMoreThanOneScreen) {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      }
+      // If user has scrolled up more than one screen, a new incoming message must NOT pull them down!
+    }
+  }, [messages?.length]);
+
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+  }, []);
+
+  const handleLayout = useCallback((event: any) => {
+    listHeightRef.current = event.nativeEvent.layout.height;
+  }, []);
 
   const [recordingState, setRecordingState] = useState({
     isRecording: false,
@@ -102,7 +165,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
 
     try {
       await sendText({ content: textToSend });
-      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
     } catch {
       // Handled by optimistic failure status
     }
@@ -114,7 +177,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
       fileBytes: payload.fileBytes,
       durationSeconds: payload.durationSeconds,
     });
-    setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
   };
 
   const handleCameraPress = async () => {
@@ -178,7 +241,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
     setPreviewImageUri(null);
     try {
       await sendPhoto({ uri, caption });
-      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
     } catch {
       // Handled by optimistic failure status
     }
@@ -196,9 +259,35 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
     });
   };
 
+  const renderItem = useCallback(
+    ({ item, index }: { item: ChatMessage; index: number }) => {
+      const olderMessage = invertedMessages[index + 1];
+      const showDateSeparator = isDifferentDay(item.created_at, olderMessage?.created_at);
+
+      return (
+        <View key={item.id}>
+          {showDateSeparator && (
+            <View style={styles.dateSeparatorContainer}>
+              <View style={styles.dateSeparatorPill}>
+                <Text style={styles.dateSeparatorText}>{formatDateSeparator(item.created_at)}</Text>
+              </View>
+            </View>
+          )}
+          <MessageItem
+            message={item}
+            isMyMessage={item.sender_id === user?.id}
+            viewerTimezone={viewerTimezone}
+            onRetry={(failedMsg) => retryMessage(failedMsg)}
+          />
+        </View>
+      );
+    },
+    [invertedMessages, user?.id, viewerTimezone, retryMessage]
+  );
+
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
+      <View style={styles.header}>
         {onBack && (
           <TouchableOpacity onPress={onBack} style={styles.backBtn}>
             <Text style={styles.backIcon}>←</Text>
@@ -210,10 +299,11 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
         </View>
       </View>
 
-      {/* Message list with keyboard dismissal */}
+      {/* Single keyboard-offset mechanism wrapping both list and input bar */}
       <KeyboardAvoidingView
-        style={styles.listContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior="padding"
+        keyboardVerticalOffset={-bottomSafeInset}
+        style={styles.keyboardContainer}
       >
         {isLoading ? (
           <View style={styles.centerContainer}>
@@ -232,28 +322,22 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
             </View>
           </TouchableWithoutFeedback>
         ) : (
-          <ScrollView
-            ref={scrollViewRef}
+          <FlatList
+            ref={flatListRef}
+            data={invertedMessages}
+            inverted
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
             contentContainerStyle={styles.messageList}
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
-            onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
-          >
-            {messages.map((msg) => (
-              <MessageItem
-                key={msg.id}
-                message={msg}
-                isMyMessage={msg.sender_id === user?.id}
-                viewerTimezone={viewerTimezone}
-                onRetry={(failedMsg) => retryMessage(failedMsg)}
-              />
-            ))}
-          </ScrollView>
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            onLayout={handleLayout}
+            style={styles.listContainer}
+          />
         )}
-      </KeyboardAvoidingView>
 
-      {/* Input bar inside KeyboardStickyView - clears nav bar/line when closed, flush above keyboard when opened */}
-      <KeyboardStickyView offset={{ closed: 0, opened: bottomSafeInset }}>
         <View style={[styles.inputBarContainer, { paddingBottom: closedBottomPadding }]}>
           <View
             style={[
@@ -317,9 +401,6 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
                   placeholderTextColor={theme.colors.textSecondary}
                   value={inputText}
                   onChangeText={setInputText}
-                  onFocus={() => {
-                    setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 150);
-                  }}
                   multiline
                   maxLength={1000}
                 />
@@ -367,7 +448,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
             )}
           </View>
         </View>
-      </KeyboardStickyView>
+      </KeyboardAvoidingView>
 
       {/* Photo Preview & Caption Modal before sending */}
       <PhotoPreviewModal
@@ -384,6 +465,10 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ onBack }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: theme.colors.surface,
+  },
+  keyboardContainer: {
+    flex: 1,
     backgroundColor: theme.colors.background,
   },
   listContainer: {
@@ -392,11 +477,28 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(10),
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.borderLight,
     backgroundColor: theme.colors.surface,
+  },
+  dateSeparatorContainer: {
+    alignItems: 'center',
+    marginVertical: scale(10),
+  },
+  dateSeparatorPill: {
+    paddingHorizontal: scale(10),
+    paddingVertical: scale(4),
+    backgroundColor: theme.colors.surfaceBlush,
+    borderRadius: theme.roundness.full,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  dateSeparatorText: {
+    fontSize: scale(11),
+    fontWeight: '600',
+    color: theme.colors.textSecondary,
   },
   backBtn: {
     marginRight: scale(12),

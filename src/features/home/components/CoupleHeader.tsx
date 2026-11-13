@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Button, DatePickerField, HeartIcon } from '@/shared/ui';
+import { Button, DatePickerField, HeartIcon, RefreshIcon } from '@/shared/ui';
 import type { Profile } from '@/shared/types';
 import {
   calculateDaysTogether,
@@ -120,7 +120,7 @@ export const CoupleHeader: React.FC<CoupleHeaderProps> = ({
           >
             <View style={styles.durationSurface}>
               <Text style={styles.durationText}>{durationText}</Text>
-              <Text style={styles.durationCycleHint}>↻</Text>
+              <RefreshIcon color={theme.colors.textSecondary} size={scale(12)} strokeWidth={2.4} />
             </View>
           </TouchableOpacity>
         ) : (
@@ -216,12 +216,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: scale(6),
     backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
-    borderWidth: 1,
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border, // #FBE9E7
     paddingHorizontal: scale(14),
     paddingVertical: scale(6),
-    borderRadius: 9999,
-    ...theme.shadows.hardSm,
+    borderRadius: theme.roundness.lg,
+    ...theme.shadows.soft,
   },
   durationText: {
     fontFamily: theme.typography.fontFamilies.display,
@@ -268,9 +268,10 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: theme.colors.danger,
-    fontSize: 12,
-    marginTop: -8,
-    marginBottom: 8,
+    fontFamily: theme.typography.fontFamilies.sans,
+    fontSize: scale(12),
+    marginTop: scale(-8),
+    marginBottom: scale(8),
     fontWeight: '700',
   },
   formRow: {

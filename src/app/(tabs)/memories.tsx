@@ -8,7 +8,7 @@ import { useMemories, MemoryCard, AddMemoryModal } from '@/features/memories';
 import { useLetters, LetterCard } from '@/features/letters';
 import { useActiveCouple } from '@/features/couple';
 import { useAuthStore } from '@/features/auth';
-import { SkeletonList, ErrorState, Button, EmptyState, SwipeTabWrapper, ResponsiveContainer, LockIcon } from '@/shared/ui';
+import { SkeletonList, ErrorState, Button, EmptyState, SwipeTabWrapper, ResponsiveContainer, LockIcon, CameraIcon, LetterIcon } from '@/shared/ui';
 import { theme, scale, useResponsiveLayout, triggerHaptic } from '@/shared/theme';
 
 export default function MemoriesScreen() {
@@ -113,14 +113,20 @@ export default function MemoriesScreen() {
                 accessibilityRole="tab"
                 accessibilityState={{ selected: activeSection === 'memories' }}
               >
-                <Text
-                  style={[
-                    styles.segmentText,
-                    activeSection === 'memories' && styles.segmentTextActive,
-                  ]}
-                >
-                  📸 {t('memories.title')}
-                </Text>
+                <View style={styles.segmentContent}>
+                  <CameraIcon
+                    color={activeSection === 'memories' ? '#FFFFFF' : theme.colors.textSecondary}
+                    size={scale(15)}
+                  />
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      activeSection === 'memories' && styles.segmentTextActive,
+                    ]}
+                  >
+                    {t('memories.title')}
+                  </Text>
+                </View>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -136,14 +142,20 @@ export default function MemoriesScreen() {
                 accessibilityRole="tab"
                 accessibilityState={{ selected: activeSection === 'letters' }}
               >
-                <Text
-                  style={[
-                    styles.segmentText,
-                    activeSection === 'letters' && styles.segmentTextActive,
-                  ]}
-                >
-                  💌 {t('letters.title')}
-                </Text>
+                <View style={styles.segmentContent}>
+                  <LetterIcon
+                    color={activeSection === 'letters' ? '#FFFFFF' : theme.colors.textSecondary}
+                    size={scale(15)}
+                  />
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      activeSection === 'letters' && styles.segmentTextActive,
+                    ]}
+                  >
+                    {t('letters.title')}
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
           </ResponsiveContainer>
@@ -327,6 +339,11 @@ const styles = StyleSheet.create({
     borderRadius: theme.roundness.full,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  segmentContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(6),
   },
   segmentBtnActive: {
     backgroundColor: theme.colors.primary,

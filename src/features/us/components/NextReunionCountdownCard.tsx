@@ -7,6 +7,7 @@ import {
   PlaneIcon,
   HeartIcon,
   ThemedToast,
+  NumberTicker,
   formatDateToDateString,
 } from '@/shared/ui';
 import type { ImportantDate } from '@/shared/types';
@@ -74,7 +75,11 @@ export const NextReunionCountdownCard: React.FC<NextReunionCountdownCardProps> =
         {nextMeeting && daysRemaining !== null ? (
           <View style={styles.countdownContainer}>
             <View style={styles.numberRow}>
-              <Text style={styles.daysNumber}>{daysRemaining}</Text>
+              <NumberTicker
+                value={daysRemaining}
+                textStyle={styles.daysNumber}
+                rounded
+              />
               <Text style={styles.daysUnit}>
                 {daysRemaining === 1 ? 'day' : 'days'}
               </Text>
@@ -95,13 +100,12 @@ export const NextReunionCountdownCard: React.FC<NextReunionCountdownCardProps> =
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No upcoming reunion date set yet</Text>
             {!showDatePicker ? (
-              <TouchableOpacity
-                style={styles.setBtn}
+              <Button
+                title="+ Set Reunion Countdown"
+                variant="primary"
+                size="md"
                 onPress={() => setShowDatePicker(true)}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.setBtnText}>+ Set Reunion Countdown</Text>
-              </TouchableOpacity>
+              />
             ) : (
               <View style={styles.inputContainer}>
                 <DatePickerField
@@ -146,12 +150,12 @@ export const NextReunionCountdownCard: React.FC<NextReunionCountdownCardProps> =
 const styles = StyleSheet.create({
   cardWrapper: {
     width: '100%',
-    marginVertical: scale(7),
+    marginVertical: scale(8),
   },
   cardSurface: {
     backgroundColor: theme.colors.surfaceBlush, // #FFF0ED soft pale blush
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: theme.roundness.lg,
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border, // #FBE9E7
     padding: scale(20),
     alignItems: 'center',

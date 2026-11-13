@@ -6,12 +6,41 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
+  Pressable,
 } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { useMemories } from '@/features/memories';
-import { MemoriesIcon, PlusIcon, GalleryIcon } from '@/shared/ui';
-import { theme, scale, useResponsiveLayout, triggerHaptic } from '@/shared/theme';
+import { MemoriesIcon, PlusIcon, GalleryIcon, ChevronLeftIcon } from '@/shared/ui';
+import { theme, scale, useResponsiveLayout, triggerHaptic, motion } from '@/shared/theme';
+
+/** Spring-animated individual polaroid */
+const PolaroidItem: React.FC<{
+  item: { id: string; url: string; title: string };
+  idx: number;
+  width: number;
+  onPress: (item: { id: string; url: string; title: string }) => void;
+}> = ({ item, idx, width, onPress }) => {
+  const rotation = idx % 2 === 0 ? '-1.2deg' : '1.2deg';
+  const pScale = useSharedValue(1);
+  const pAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pScale.value }, { rotate: rotation }],
+  }));
+  return (
+    <Pressable
+      style={{ width }}
+      onPress={() => onPress(item)}
+      onPressIn={() => { pScale.value = withSpring(0.93, motion.bouncy); triggerHaptic('light'); }}
+      onPressOut={() => { pScale.value = withSpring(1, motion.bouncy); }}
+    >
+      <Animated.View style={[styles.polaroidFrame, pAnimStyle]}>
+        <Image source={{ uri: item.url }} style={styles.polaroidImage} contentFit="cover" />
+        <Text style={styles.polaroidCaption} numberOfLines={1}>{item.title}</Text>
+      </Animated.View>
+    </Pressable>
+  );
+};
 
 export const QuickPhotosCard: React.FC = () => {
   const router = useRouter();
@@ -23,6 +52,12 @@ export const QuickPhotosCard: React.FC = () => {
     title: string;
   } | null>(null);
   const [activeReaction, setActiveReaction] = useState<string | null>(null);
+  const viewerScale = useSharedValue(0.88);
+  const viewerOpacity = useSharedValue(0);
+  const viewerAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: viewerScale.value }],
+    opacity: viewerOpacity.value,
+  }));
 
   // Extract recent photo URLs from memories
   const recentPhotos: { id: string; url: string; title: string }[] = [];
@@ -49,6 +84,17 @@ export const QuickPhotosCard: React.FC = () => {
     triggerHaptic('light');
     setActiveReaction(null);
     setSelectedPhoto(photo);
+    // Animate viewer entrance
+    viewerScale.value = 0.88;
+    viewerOpacity.value = 0;
+    viewerScale.value = withSpring(1, motion.bouncy);
+    viewerOpacity.value = withSpring(1, motion.spring);
+  };
+
+  const handleCloseViewer = () => {
+    viewerScale.value = withSpring(0.88, motion.spring);
+    viewerOpacity.value = withSpring(0, motion.spring);
+    setTimeout(() => setSelectedPhoto(null), 220);
   };
 
   const handleReaction = (emoji: string) => {
@@ -79,29 +125,15 @@ export const QuickPhotosCard: React.FC = () => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.photosRow}
           >
-            {recentPhotos.map((item, idx) => {
-              const rotation = idx % 2 === 0 ? '-1.2deg' : '1.2deg';
-              return (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[
-                    styles.polaroidFrame,
-                    { width: polaroidWidth, transform: [{ rotate: rotation }] },
-                  ]}
-                  onPress={() => handleSelectPhoto(item)}
-                  activeOpacity={0.85}
-                >
-                  <Image
-                    source={{ uri: item.url }}
-                    style={styles.polaroidImage}
-                    contentFit="cover"
-                  />
-                  <Text style={styles.polaroidCaption} numberOfLines={1}>
-                    {item.title}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+            {recentPhotos.map((item, idx) => (
+              <PolaroidItem
+                key={item.id}
+                item={item}
+                idx={idx}
+                width={polaroidWidth}
+                onPress={handleSelectPhoto}
+              />
+            ))}
 
             {/* Quick Add Polaroid Slot */}
             <TouchableOpacity
@@ -138,23 +170,25 @@ export const QuickPhotosCard: React.FC = () => {
         visible={!!selectedPhoto}
         transparent
         animationType="fade"
-        onRequestClose={() => setSelectedPhoto(null)}
+        onRequestClose={handleCloseViewer}
       >
         <View style={styles.viewerOverlay}>
           <View style={styles.viewerHeader}>
             <Text style={styles.viewerTitle} numberOfLines={1}>
               {selectedPhoto?.title}
             </Text>
-            <TouchableOpacity
+            {/* Close button: 48dp touch target with proper icon */}
+            <Pressable
               style={styles.viewerCloseBtn}
-              onPress={() => setSelectedPhoto(null)}
-              activeOpacity={0.7}
+              onPress={handleCloseViewer}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Text style={styles.viewerCloseText}>✕</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
-          <View style={styles.viewerImageContainer}>
+          {/* Animated image container */}
+          <Animated.View style={[styles.viewerImageContainer, viewerAnimStyle]}>
             {selectedPhoto?.url ? (
               <Image
                 source={{ uri: selectedPhoto.url }}
@@ -170,7 +204,7 @@ export const QuickPhotosCard: React.FC = () => {
                 </Text>
               </View>
             )}
-          </View>
+          </Animated.View>
 
           {/* Quick Reaction Stickers */}
           <View style={styles.reactionsBar}>
@@ -209,13 +243,13 @@ export const QuickPhotosCard: React.FC = () => {
 const styles = StyleSheet.create({
   cardWrapper: {
     width: '100%',
-    marginVertical: scale(7),
+    marginVertical: scale(8),
   },
   cardSurface: {
-    backgroundColor: theme.colors.surface, // #FFFFFF with 1px solid #FBE9E7
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border, // #FBE9E7
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.roundness.lg,
+    borderWidth: theme.borders.subtle,
+    borderColor: theme.colors.border,
     padding: scale(18),
     ...theme.shadows.card,
   },
@@ -228,11 +262,11 @@ const styles = StyleSheet.create({
   titleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: scale(6),
     backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
-    borderWidth: 1,
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border,
-    borderRadius: 9999,
+    borderRadius: theme.roundness.full,
     paddingHorizontal: scale(10),
     paddingVertical: scale(4),
   },
@@ -242,8 +276,8 @@ const styles = StyleSheet.create({
     color: theme.colors.text, // #3E2723
   },
   viewAllBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: scale(4),
+    paddingHorizontal: scale(8),
   },
   viewAllText: {
     fontFamily: theme.typography.families.bold,
@@ -255,18 +289,17 @@ const styles = StyleSheet.create({
     gap: scale(12),
   },
   polaroidFrame: {
-    width: scale(112),
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: theme.colors.border, // #FBE9E7
-    borderRadius: 20,
+    borderWidth: theme.borders.subtle,
+    borderColor: theme.colors.border,
+    borderRadius: theme.roundness.lg,
     padding: scale(6),
     ...theme.shadows.hardSm,
   },
   polaroidImage: {
     width: '100%',
     aspectRatio: 1,
-    borderRadius: 14,
+    borderRadius: theme.roundness.md,
     backgroundColor: theme.colors.surfaceBlush,
   },
   polaroidCaption: {
@@ -333,9 +366,9 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   viewerCloseBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: scale(48),
+    height: scale(48),
+    borderRadius: theme.roundness.full,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',

@@ -3,13 +3,14 @@ import {
   View,
   Text,
   Image,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
 } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useHomePhoto } from '../hooks/useHomePhoto';
 import { SetHomePhotoModal } from './SetHomePhotoModal';
 import { CameraIcon, HeartIcon } from '@/shared/ui';
-import { theme, scale, useResponsiveLayout, triggerHaptic } from '@/shared/theme';
+import { theme, scale, useResponsiveLayout, triggerHaptic, motion } from '@/shared/theme';
 
 export interface HomePagePhotoCardProps {
   partnerName: string;
@@ -20,6 +21,11 @@ export const HomePagePhotoCard: React.FC<HomePagePhotoCardProps> = ({ partnerNam
   const [modalVisible, setModalVisible] = useState(false);
   const { mediaAspectRatio } = useResponsiveLayout();
 
+  const scaleAnim = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleAnim.value }],
+  }));
+
   const handlePress = () => {
     triggerHaptic('light');
     setModalVisible(true);
@@ -27,8 +33,18 @@ export const HomePagePhotoCard: React.FC<HomePagePhotoCardProps> = ({ partnerNam
 
   return (
     <View style={styles.wrapper}>
-      <TouchableOpacity onPress={handlePress} activeOpacity={0.9}>
-        <View style={styles.cardSurface}>
+      <Pressable
+        onPress={handlePress}
+        onPressIn={() => {
+          scaleAnim.value = withSpring(0.985, motion.spring);
+        }}
+        onPressOut={() => {
+          scaleAnim.value = withSpring(1, motion.spring);
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Shared home photo card"
+      >
+        <Animated.View style={[styles.cardSurface, animStyle]}>
           {homePhotoUrl ? (
             <View style={[styles.photoContainer, { aspectRatio: mediaAspectRatio }]}>
               <Image source={{ uri: homePhotoUrl }} style={styles.photo} resizeMode="cover" />
@@ -40,7 +56,7 @@ export const HomePagePhotoCard: React.FC<HomePagePhotoCardProps> = ({ partnerNam
                   </Text>
                 </View>
                 <View style={styles.cameraIconPill}>
-                  <CameraIcon color={theme.colors.text} size={scale(13)} />
+                  <CameraIcon color={theme.colors.textInverse} size={scale(13)} />
                   <Text style={styles.cameraIconText}>Change</Text>
                 </View>
               </View>
@@ -48,7 +64,7 @@ export const HomePagePhotoCard: React.FC<HomePagePhotoCardProps> = ({ partnerNam
           ) : (
             <View style={styles.placeholderContainer}>
               <View style={styles.placeholderIconWrapper}>
-                <CameraIcon color="#FFFFFF" size={scale(24)} />
+                <CameraIcon color={theme.colors.textInverse} size={scale(28)} />
               </View>
               <Text style={styles.placeholderTitle}>Set your shared home photo</Text>
               <Text style={styles.placeholderSub}>
@@ -59,8 +75,8 @@ export const HomePagePhotoCard: React.FC<HomePagePhotoCardProps> = ({ partnerNam
               </View>
             </View>
           )}
-        </View>
-      </TouchableOpacity>
+        </Animated.View>
+      </Pressable>
 
       <SetHomePhotoModal
         visible={modalVisible}
@@ -73,21 +89,21 @@ export const HomePagePhotoCard: React.FC<HomePagePhotoCardProps> = ({ partnerNam
 const styles = StyleSheet.create({
   wrapper: {
     width: '100%',
-    marginVertical: scale(7),
+    marginVertical: scale(8),
   },
   cardSurface: {
-    backgroundColor: theme.colors.surface, // #FFFFFF
-    borderWidth: 1,
-    borderColor: theme.colors.border, // #FBE9E7
-    borderRadius: 20,
+    backgroundColor: theme.colors.surface,
+    borderWidth: theme.borders.subtle,
+    borderColor: theme.colors.border,
+    borderRadius: theme.roundness.lg,
     overflow: 'hidden',
     padding: scale(8),
-    ...theme.shadows.card,
+    ...theme.shadows.elevated,
   },
   photoContainer: {
     width: '100%',
     aspectRatio: 16 / 9,
-    borderRadius: 14,
+    borderRadius: theme.roundness.md,
     overflow: 'hidden',
     position: 'relative',
     backgroundColor: theme.colors.surfaceBlush,
@@ -98,9 +114,9 @@ const styles = StyleSheet.create({
   },
   badgeRow: {
     position: 'absolute',
-    bottom: 10,
-    left: 10,
-    right: 10,
+    bottom: scale(12),
+    left: scale(12),
+    right: scale(12),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -109,13 +125,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(62, 39, 35, 0.78)',
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    borderRadius: 9999,
+    backgroundColor: 'rgba(62, 39, 35, 0.85)',
+    paddingVertical: scale(6),
+    paddingHorizontal: scale(14),
+    borderRadius: theme.roundness.full,
+    ...theme.shadows.tiny,
   },
   attributionText: {
-    fontFamily: theme.typography.families.sans,
+    fontFamily: theme.typography.fontFamilies.sans,
     fontSize: scale(11),
     fontWeight: '700',
     color: '#FFFFFF',
@@ -124,65 +141,66 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: scale(5),
-    backgroundColor: theme.colors.sunset,
-    paddingVertical: scale(5),
-    paddingHorizontal: scale(12),
-    borderRadius: 9999,
+    backgroundColor: theme.colors.kintsugi,
+    paddingVertical: scale(6),
+    paddingHorizontal: scale(14),
+    borderRadius: theme.roundness.full,
+    ...theme.shadows.tiny,
   },
   cameraIconText: {
-    fontFamily: theme.typography.families.bold,
+    fontFamily: theme.typography.fontFamilies.bold,
     fontSize: scale(11),
     fontWeight: '700',
-    color: theme.colors.text,
+    color: theme.colors.textInverse,
   },
   placeholderContainer: {
     alignItems: 'center',
-    paddingVertical: scale(24),
-    paddingHorizontal: scale(16),
+    paddingVertical: scale(32),
+    paddingHorizontal: scale(20),
     backgroundColor: theme.colors.surfaceBlush,
-    borderRadius: scale(14),
-    borderWidth: 1,
+    borderRadius: theme.roundness.md,
+    borderWidth: theme.borders.subtle,
     borderStyle: 'dashed',
     borderColor: theme.colors.rose,
   },
   placeholderIconWrapper: {
-    width: scale(50),
-    height: scale(50),
-    borderRadius: 9999,
+    width: scale(60),
+    height: scale(60),
+    borderRadius: theme.roundness.full,
     backgroundColor: theme.colors.rose,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: scale(10),
-    ...theme.shadows.hardSm,
+    marginBottom: scale(14),
+    ...theme.shadows.soft,
   },
   placeholderTitle: {
     fontFamily: theme.typography.fontFamilies.display,
-    fontSize: scale(16),
-    fontWeight: '700',
+    fontSize: scale(17),
+    fontWeight: '800',
     color: theme.colors.text,
-    marginBottom: scale(4),
+    marginBottom: scale(6),
+    textAlign: 'center',
   },
   placeholderSub: {
-    fontFamily: theme.typography.families.body,
-    fontSize: scale(12),
+    fontFamily: theme.typography.fontFamilies.sans,
+    fontSize: scale(13),
     color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: scale(14),
-    lineHeight: scale(16),
-    paddingHorizontal: scale(12),
+    marginBottom: scale(18),
+    lineHeight: scale(18),
+    paddingHorizontal: scale(16),
   },
   setButtonPill: {
     backgroundColor: theme.colors.primary,
-    borderRadius: 9999,
-    paddingVertical: scale(8),
-    paddingHorizontal: scale(18),
+    borderRadius: theme.roundness.full,
+    paddingVertical: scale(10),
+    paddingHorizontal: scale(24),
     ...theme.shadows.hardSm,
   },
   setButtonText: {
     fontFamily: theme.typography.fontFamilies.display,
-    fontSize: scale(12),
+    fontSize: scale(13),
     fontWeight: '700',
     color: '#FFFFFF',
   },
 });
-

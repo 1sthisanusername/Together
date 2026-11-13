@@ -168,6 +168,7 @@ export const theme = {
   typography: {
     fontFamilies: {
       display: 'BricolageGrotesque_700Bold',
+      bold: 'BricolageGrotesque_700Bold',
       sans: 'Figtree_600SemiBold',
       sansRegular: 'Figtree_400Regular',
       handwritten: 'Caveat_700Bold',
@@ -182,7 +183,7 @@ export const theme = {
     },
   },
 
-  // Subtle 1px Warm Borders with variant support
+  // Subtle 1px Warm Borders with variant support & focus states
   borders: {
     // Default subtle border - 1px warm blush
     subtle: 1,
@@ -192,53 +193,71 @@ export const theme = {
     chunkyThick: 2,
     // Decorative border - for special showcase cards
     decorative: 1,
-    // Focus ring border - for keyboard accessibility
-    focus: 2,
+    // Focus ring border - for keyboard accessibility (4px with inset)
+    focus: 4,
+    // Focus ring inset for input elements
+    focusInset: 2,
   },
 
   // Warm, Diffused Elevation Shadows with variant support
   // All shadows use cozyNight (#3E2723) for warm diffused feel
   // Opacities adjusted for WCAG compliance on light/dark backgrounds
   shadows: {
-    // Base elevation - minimal shadow for inline elements
+    // No shadow - explicitly zero elevation
+    none: {
+      shadowColor: 'transparent',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0,
+      shadowRadius: 0,
+      elevation: 0,
+    },
+    // Extra-tiny shadow - for borders and thin elements
     tiny: {
+      shadowColor: palette.cozyNight,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.03,
+      shadowRadius: 4,
+      elevation: 0,
+    },
+    // Base elevation - minimal shadow for inline elements
+    tiny2: {
       shadowColor: palette.cozyNight,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.04,
-      shadowRadius: 8,
+      shadowRadius: 6,
       elevation: 1,
     },
     // Subtle card shadow - default card elevation
     soft: {
       shadowColor: palette.cozyNight,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.05,
-      shadowRadius: 12,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.04,
+      shadowRadius: 8,
+      elevation: 1,
     },
     // Default card shadow - primary card elevation
     card: {
       shadowColor: palette.cozyNight,
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.07,
-      shadowRadius: 20,
-      elevation: 4,
+      shadowOffset: { width: 0, height: 5 },
+      shadowOpacity: 0.06,
+      shadowRadius: 15,
+      elevation: 3,
     },
     // Elevated card - raised emphasis
     elevated: {
       shadowColor: palette.cozyNight,
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.08,
-      shadowRadius: 24,
-      elevation: 6,
+      shadowOffset: { width: 0, height: 7 },
+      shadowOpacity: 0.07,
+      shadowRadius: 20,
+      elevation: 5,
     },
     // Modal shadow - prominent modal elevation
     modal: {
       shadowColor: palette.cozyNight,
-      shadowOffset: { width: 0, height: 12 },
-      shadowOpacity: 0.1,
-      shadowRadius: 32,
-      elevation: 8,
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.08,
+      shadowRadius: 28,
+      elevation: 6,
     },
     // Hard shadow - strong emphasis (buttons, badges)
     hardSm: {
@@ -265,10 +284,19 @@ export const theme = {
     // Inset shadow - for pressed/active states
     inset: {
       shadowColor: 'rgba(0, 0, 0, 0.05)',
-      shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.15,
-      shadowRadius: 4,
+      shadowOffset: { width: 0, height: -1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 3,
       elevation: 1,
+    },
+    // Focus ring shadow - for keyboard accessibility
+    focusRing: {
+      shadowColor: palette.amourRed,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.3,
+      shadowRadius: 0,
+      spread: 2,
+      elevation: 0,
     },
   },
 

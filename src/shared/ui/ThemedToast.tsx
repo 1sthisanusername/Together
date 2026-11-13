@@ -1,13 +1,19 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Animated,
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import { theme, scale } from '@/shared/theme';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  runOnJS,
+} from 'react-native-reanimated';
+import { theme, scale, motion } from '@/shared/theme';
 
 export interface ThemedToastProps {
   visible: boolean;
@@ -26,28 +32,24 @@ export const ThemedToast: React.FC<ThemedToastProps> = ({
   onRetry,
   durationMs = 3500,
 }) => {
-  const translateY = useRef(new Animated.Value(-80)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useSharedValue(-80);
+  const opacity = useSharedValue(0);
+
+  const hide = () => {
+    'worklet';
+    translateY.value = withSpring(-80, motion.spring);
+    opacity.value = withTiming(0, { duration: 200 }, (finished) => {
+      if (finished && onDismiss) runOnJS(onDismiss)();
+    });
+  };
 
   useEffect(() => {
     if (visible) {
-      Animated.parallel([
-        Animated.spring(translateY, {
-          toValue: 0,
-          useNativeDriver: true,
-          bounciness: 8,
-        }),
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      translateY.value = withSpring(0, { damping: 14, stiffness: 280, mass: 0.8 });
+      opacity.value = withTiming(1, { duration: 180 });
 
       if (!onRetry && durationMs > 0) {
-        const timer = setTimeout(() => {
-          hide();
-        }, durationMs);
+        const timer = setTimeout(() => hide(), durationMs);
         return () => clearTimeout(timer);
       }
     } else {
@@ -55,22 +57,10 @@ export const ThemedToast: React.FC<ThemedToastProps> = ({
     }
   }, [visible]);
 
-  const hide = () => {
-    Animated.parallel([
-      Animated.timing(translateY, {
-        toValue: -80,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      onDismiss?.();
-    });
-  };
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+    opacity: opacity.value,
+  }));
 
   if (!visible) return null;
 
@@ -85,16 +75,7 @@ export const ThemedToast: React.FC<ThemedToastProps> = ({
       : theme.colors.stickers.sunshine;
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          transform: [{ translateY }],
-          opacity,
-        },
-      ]}
-    >
-      <View style={styles.toastShadow} />
+    <Animated.View style={[styles.container, animStyle]}>
       <View style={styles.toastSurface}>
         <View style={[styles.badge, { backgroundColor: badgeBg }]}>
           <Text style={styles.badgeEmoji}>{emoji}</Text>
@@ -115,7 +96,7 @@ export const ThemedToast: React.FC<ThemedToastProps> = ({
         ) : (
           <TouchableOpacity
             style={styles.dismissBtn}
-            onPress={hide}
+            onPress={() => hide()}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Text style={styles.dismissIcon}>✕</Text>
@@ -133,9 +114,6 @@ const styles = StyleSheet.create({
     left: scale(20),
     right: scale(20),
     zIndex: 9999,
-  },
-  toastShadow: {
-    display: 'none',
   },
   toastSurface: {
     backgroundColor: theme.colors.background, // #FFFDFB

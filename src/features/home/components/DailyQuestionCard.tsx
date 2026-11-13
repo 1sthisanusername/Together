@@ -4,14 +4,16 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Pressable,
   StyleSheet,
   ActivityIndicator,
   Modal,
   ScrollView,
 } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useDailyQuestion, useDailyQuestionHistory } from '../hooks/useDailyQuestion';
 import { SparklesIcon, LetterIcon, HeartBeat } from '@/shared/ui';
-import { theme, scale, triggerHaptic } from '@/shared/theme';
+import { theme, scale, triggerHaptic, motion } from '@/shared/theme';
 
 export interface DailyQuestionCardProps {
   partnerName: string;
@@ -32,6 +34,11 @@ export const DailyQuestionCard: React.FC<DailyQuestionCardProps> = ({
   const [inputAnswer, setInputAnswer] = useState('');
   const [errorText, setErrorText] = useState<string | null>(null);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+
+  const submitScale = useSharedValue(1);
+  const submitAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: submitScale.value }],
+  }));
 
   if (isLoading || !qData) {
     return (
@@ -66,7 +73,7 @@ export const DailyQuestionCard: React.FC<DailyQuestionCardProps> = ({
         <View style={styles.headerRow}>
           <View style={styles.headerBadges}>
             <View style={styles.categoryBadge}>
-              <SparklesIcon color={theme.colors.text} size={scale(13)} />
+              <SparklesIcon color={theme.colors.textInverse} size={scale(13)} />
               <Text style={styles.categoryText}>Daily Question</Text>
             </View>
 
@@ -154,34 +161,49 @@ export const DailyQuestionCard: React.FC<DailyQuestionCardProps> = ({
               <Text style={styles.errorText}>{errorText}</Text>
             ) : null}
 
-            <TouchableOpacity
-              style={[
-                styles.submitBtn,
-                (!inputAnswer.trim() || isSubmitting) && styles.submitBtnDisabled,
-              ]}
+            <Pressable
+              style={{ width: '100%' }}
               onPress={handleSubmit}
               disabled={!inputAnswer.trim() || isSubmitting}
-              activeOpacity={0.85}
+              onPressIn={() => {
+                if (inputAnswer.trim() && !isSubmitting) {
+                  submitScale.value = withSpring(0.96, motion.spring);
+                  triggerHaptic('light');
+                }
+              }}
+              onPressOut={() => {
+                submitScale.value = withSpring(1, motion.spring);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Submit daily answer"
             >
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <View style={styles.submitBtnInner}>
-                  <LetterIcon
-                    color={!inputAnswer.trim() ? theme.colors.textSecondary : '#FFFFFF'}
-                    size={scale(16)}
-                  />
-                  <Text
-                    style={[
-                      styles.submitBtnText,
-                      !inputAnswer.trim() && styles.submitBtnTextDisabled,
-                    ]}
-                  >
-                    Submit Answer
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
+              <Animated.View
+                style={[
+                  styles.submitBtn,
+                  (!inputAnswer.trim() || isSubmitting) && styles.submitBtnDisabled,
+                  submitAnimStyle,
+                ]}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <View style={styles.submitBtnInner}>
+                    <LetterIcon
+                      color={!inputAnswer.trim() ? theme.colors.textSecondary : '#FFFFFF'}
+                      size={scale(16)}
+                    />
+                    <Text
+                      style={[
+                        styles.submitBtnText,
+                        !inputAnswer.trim() && styles.submitBtnTextDisabled,
+                      ]}
+                    >
+                      Submit Answer
+                    </Text>
+                  </View>
+                )}
+              </Animated.View>
+            </Pressable>
           </View>
         )}
       </View>
@@ -204,6 +226,10 @@ export const DailyQuestionCard: React.FC<DailyQuestionCardProps> = ({
                   triggerHaptic('light');
                   setShowHistoryModal(false);
                 }}
+                activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Close history"
               >
                 <Text style={styles.modalCloseText}>✕</Text>
               </TouchableOpacity>
@@ -278,11 +304,11 @@ const styles = StyleSheet.create({
     marginVertical: scale(7),
   },
   cardSurface: {
-    backgroundColor: theme.colors.surface, // #FFFFFF with 1px solid #FBE9E7
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border, // #FBE9E7
-    padding: scale(18),
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.roundness.lg,
+    borderWidth: theme.borders.subtle,
+    borderColor: theme.colors.border,
+    padding: scale(20),
     ...theme.shadows.card,
   },
   centerPadding: {
@@ -292,14 +318,14 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontFamily: theme.typography.families.body,
-    fontSize: 13,
+    fontSize: scale(13),
     color: theme.colors.textSecondary,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: scale(12),
+    marginBottom: scale(14),
   },
   headerBadges: {
     flexDirection: 'row',
@@ -307,77 +333,81 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   historyBtn: {
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    borderRadius: 9999,
-    backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
-    borderWidth: 1,
+    paddingVertical: scale(6),
+    paddingHorizontal: scale(14),
+    borderRadius: theme.roundness.full,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border,
+    ...theme.shadows.tiny,
   },
   historyBtnText: {
-    fontFamily: theme.typography.families.bold,
+    fontFamily: theme.typography.fontFamilies.bold,
     fontSize: scale(11),
-    color: theme.colors.textSecondary, // #7A625A
+    color: theme.colors.textSecondary,
   },
   categoryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: theme.colors.sunset, // Warm Sunset #FFB74D
-    borderRadius: 9999,
+    backgroundColor: theme.colors.kintsugi,
+    borderRadius: theme.roundness.lg,
     paddingHorizontal: scale(10),
     paddingVertical: scale(4),
+    ...theme.shadows.tiny,
   },
   categoryText: {
-    fontFamily: theme.typography.families.bold,
+    fontFamily: theme.typography.fontFamilies.bold,
     fontSize: scale(11),
-    color: theme.colors.text, // #3E2723
+    color: theme.colors.textInverse,
   },
   streakBadge: {
-    backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
-    borderWidth: 1,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border,
-    borderRadius: 9999,
+    borderRadius: theme.roundness.full,
     paddingHorizontal: scale(9),
     paddingVertical: scale(4),
+    ...theme.shadows.tiny,
   },
   streakText: {
-    fontFamily: theme.typography.families.bold,
+    fontFamily: theme.typography.fontFamilies.bold,
     fontSize: scale(11),
-    color: theme.colors.primary, // #E53935
+    color: theme.colors.primary,
   },
   questionText: {
-    fontFamily: theme.typography.families.bold,
+    fontFamily: theme.typography.fontFamilies.bold,
     fontSize: scale(17),
     lineHeight: scale(24),
-    color: theme.colors.text, // #3E2723
-    marginBottom: scale(14),
+    color: theme.colors.text,
+    marginBottom: scale(16),
   },
   inputForm: {
-    gap: scale(10),
+    gap: scale(12),
   },
   textInput: {
-    backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
-    borderWidth: 1,
-    borderColor: theme.colors.border, // #FBE9E7
-    borderRadius: 16,
-    paddingHorizontal: scale(14),
-    paddingVertical: scale(12),
-    fontFamily: theme.typography.families.body,
-    fontSize: scale(14),
+    backgroundColor: theme.colors.surfaceBlush,
+    borderWidth: theme.borders.subtle,
+    borderColor: theme.colors.border,
+    borderRadius: theme.roundness.lg,
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(14),
+    fontFamily: theme.typography.fontFamilies.sans,
+    fontSize: scale(15),
     color: theme.colors.text,
-    minHeight: scale(72),
+    minHeight: scale(96),
     textAlignVertical: 'top',
+    ...theme.shadows.tiny2,
   },
   errorText: {
     color: theme.colors.danger,
-    fontFamily: theme.typography.families.bold,
-    fontSize: 12,
+    fontFamily: theme.typography.fontFamilies.bold,
+    fontSize: scale(12),
   },
   submitBtn: {
-    backgroundColor: theme.colors.primary, // #E53935
-    borderRadius: 9999,
-    height: scale(48),
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.roundness.lg,
+    height: scale(52),
     justifyContent: 'center',
     alignItems: 'center',
     ...theme.shadows.hardSm,
@@ -385,90 +415,96 @@ const styles = StyleSheet.create({
   submitBtnInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: scale(7),
+    gap: scale(8),
   },
   submitBtnDisabled: {
-    backgroundColor: theme.colors.surfaceDisabled, // #FBE9E7
+    backgroundColor: theme.colors.surfaceDisabled,
+    ...theme.shadows.none,
   },
   submitBtnText: {
-    fontFamily: theme.typography.families.bold,
-    fontSize: scale(14),
+    fontFamily: theme.typography.fontFamilies.bold,
+    fontSize: scale(15),
     color: '#FFFFFF',
   },
   submitBtnTextDisabled: {
-    color: theme.colors.textSecondary, // #7A625A
+    color: theme.colors.textSecondary,
   },
   waitingContainer: {
-    gap: scale(10),
+    gap: scale(12),
   },
   myAnswerPreview: {
-    backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
-    borderWidth: 1,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border,
-    borderRadius: 16,
-    padding: scale(14),
+    borderRadius: theme.roundness.lg,
+    padding: scale(16),
+    ...theme.shadows.soft,
   },
   lockedBox: {
-    backgroundColor: theme.colors.background, // #FFFDFB
-    borderWidth: 1,
-    borderColor: theme.colors.rose, // #F48FB1
+    backgroundColor: theme.colors.background,
+    borderWidth: theme.borders.subtle,
+    borderColor: theme.colors.rose,
     borderStyle: 'dashed',
-    borderRadius: 16,
-    padding: scale(14),
+    borderRadius: theme.roundness.lg,
+    padding: scale(18),
     alignItems: 'center',
-    gap: 4,
+    gap: scale(6),
+    ...theme.shadows.soft,
   },
   lockIcon: {
-    fontSize: 22,
-    marginBottom: 2,
+    fontSize: scale(24),
+    marginBottom: scale(4),
   },
   lockedTitle: {
-    fontFamily: theme.typography.families.bold,
-    fontSize: scale(14),
+    fontFamily: theme.typography.fontFamilies.bold,
+    fontSize: scale(15),
     color: theme.colors.text,
   },
   lockedSubtitle: {
-    fontFamily: theme.typography.families.body,
-    fontSize: scale(12),
+    fontFamily: theme.typography.fontFamilies.sans,
+    fontSize: scale(13),
     color: theme.colors.textSecondary,
     textAlign: 'center',
-    lineHeight: scale(16),
+    lineHeight: scale(18),
   },
   unlockedContainer: {
-    gap: scale(10),
+    gap: scale(12),
   },
   celebrationBadge: {
-    backgroundColor: theme.colors.sunset, // #FFB74D Warm Sunset
-    borderRadius: 9999,
-    paddingVertical: scale(5),
-    paddingHorizontal: scale(12),
+    backgroundColor: theme.colors.kintsugi,
+    borderRadius: theme.roundness.full,
+    paddingVertical: scale(8),
+    paddingHorizontal: scale(16),
     alignItems: 'center',
+    ...theme.shadows.tiny,
   },
   celebrationText: {
-    fontFamily: theme.typography.families.bold,
-    fontSize: scale(12),
-    color: theme.colors.text,
+    fontFamily: theme.typography.fontFamilies.bold,
+    fontSize: scale(13),
+    color: theme.colors.textInverse,
   },
   answerCard: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border,
-    borderRadius: 16,
-    padding: scale(14),
+    borderRadius: theme.roundness.lg,
+    padding: scale(16),
+    ...theme.shadows.soft,
   },
   partnerAnswerCard: {
-    backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
+    backgroundColor: theme.colors.surfaceBlush,
+    ...theme.shadows.soft,
   },
   answerAuthor: {
-    fontFamily: theme.typography.families.bold,
+    fontFamily: theme.typography.fontFamilies.bold,
     fontSize: scale(12),
     color: theme.colors.textSecondary,
-    marginBottom: 4,
+    marginBottom: scale(6),
   },
   answerContent: {
-    fontFamily: theme.typography.families.body,
-    fontSize: scale(14),
-    lineHeight: scale(20),
+    fontFamily: theme.typography.fontFamilies.sans,
+    fontSize: scale(15),
+    lineHeight: scale(22),
     color: theme.colors.text,
   },
   modalOverlay: {
@@ -481,36 +517,37 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '100%',
     maxHeight: '80%',
-    backgroundColor: theme.colors.background, // #FFFDFB
-    borderRadius: 20,
-    borderWidth: 1,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.roundness.xl,
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border,
-    padding: scale(20),
-    ...theme.shadows.card,
+    padding: scale(24),
+    ...theme.shadows.modal,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: scale(16),
+    marginBottom: scale(20),
   },
   modalTitle: {
-    fontFamily: theme.typography.families.bold,
+    fontFamily: theme.typography.fontFamilies.bold,
     fontSize: scale(18),
     color: theme.colors.text,
   },
   modalCloseBtn: {
-    width: scale(32),
-    height: scale(32),
-    borderRadius: 9999,
+    width: scale(36),
+    height: scale(36),
+    borderRadius: theme.roundness.full,
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+    ...theme.shadows.tiny2,
   },
   modalCloseText: {
-    fontSize: scale(16),
+    fontSize: scale(18),
     fontWeight: '700',
     color: theme.colors.text,
   },
@@ -520,100 +557,100 @@ const styles = StyleSheet.create({
     gap: scale(8),
   },
   historyLoadingText: {
-    fontFamily: theme.typography.families.body,
+    fontFamily: theme.typography.fontFamilies.sans,
     fontSize: scale(13),
     color: theme.colors.textSecondary,
   },
   historyEmpty: {
-    paddingVertical: scale(32),
+    paddingVertical: scale(40),
     alignItems: 'center',
-    gap: scale(8),
+    gap: scale(10),
   },
   historyEmptyEmoji: {
-    fontSize: scale(36),
+    fontSize: scale(40),
   },
   historyEmptyTitle: {
-    fontFamily: theme.typography.families.bold,
-    fontSize: scale(15),
+    fontFamily: theme.typography.fontFamilies.bold,
+    fontSize: scale(16),
     color: theme.colors.text,
   },
   historyEmptySubtitle: {
-    fontFamily: theme.typography.families.body,
-    fontSize: scale(12),
+    fontFamily: theme.typography.fontFamilies.sans,
+    fontSize: scale(13),
     color: theme.colors.textSecondary,
     textAlign: 'center',
-    lineHeight: scale(16),
+    lineHeight: scale(18),
   },
   historyScroll: {
     width: '100%',
   },
   historyScrollContent: {
-    gap: scale(12),
-    paddingBottom: scale(12),
+    gap: scale(14),
+    paddingBottom: scale(16),
   },
   historyCard: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
+    backgroundColor: theme.colors.surface,
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border,
     borderRadius: theme.roundness.lg,
-    padding: scale(14),
-    ...theme.shadows.hardSm,
+    padding: scale(16),
+    ...theme.shadows.soft,
   },
   historyDateBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: theme.colors.stickers.sunshine,
-    borderWidth: 1,
+    backgroundColor: theme.colors.kintsugi,
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border,
     borderRadius: theme.roundness.full,
-    paddingHorizontal: scale(8),
-    paddingVertical: scale(2),
-    marginBottom: scale(6),
+    paddingHorizontal: scale(10),
+    paddingVertical: scale(4),
+    marginBottom: scale(8),
+    ...theme.shadows.tiny,
   },
   historyDateText: {
-    fontFamily: theme.typography.families.bold,
+    fontFamily: theme.typography.fontFamilies.bold,
     fontSize: scale(11),
-    color: theme.colors.text,
+    color: theme.colors.textInverse,
   },
   historyQuestionText: {
-    fontFamily: theme.typography.families.bold,
-    fontSize: scale(13),
+    fontFamily: theme.typography.fontFamilies.bold,
+    fontSize: scale(14),
     color: theme.colors.text,
-    lineHeight: scale(18),
-    marginBottom: scale(10),
+    lineHeight: scale(20),
+    marginBottom: scale(12),
   },
   historyAnswersContainer: {
-    gap: scale(6),
-    borderTopWidth: 1,
+    gap: scale(8),
+    borderTopWidth: theme.borders.subtle,
     borderColor: theme.colors.borderLight,
-    paddingTop: scale(8),
+    paddingTop: scale(10),
   },
   historyAnswerRow: {
-    gap: scale(2),
+    gap: scale(4),
   },
   historyAuthorLabel: {
-    fontFamily: theme.typography.families.bold,
-    fontSize: scale(11),
+    fontFamily: theme.typography.fontFamilies.bold,
+    fontSize: scale(12),
     color: theme.colors.textSecondary,
   },
   historyAnswerBody: {
-    fontFamily: theme.typography.families.body,
-    fontSize: scale(13),
+    fontFamily: theme.typography.fontFamilies.sans,
+    fontSize: scale(14),
     color: theme.colors.text,
-    lineHeight: scale(18),
+    lineHeight: scale(20),
   },
   historyWaitingNote: {
-    fontFamily: theme.typography.families.body,
-    fontSize: scale(12),
+    fontFamily: theme.typography.fontFamilies.sans,
+    fontSize: scale(13),
     color: theme.colors.textSecondary,
     fontStyle: 'italic',
     marginTop: scale(4),
   },
   historyLockedNote: {
-    fontFamily: theme.typography.families.body,
-    fontSize: scale(12),
+    fontFamily: theme.typography.fontFamilies.sans,
+    fontSize: scale(13),
     color: theme.colors.textSecondary,
     fontStyle: 'italic',
     marginTop: scale(4),
   },
 });
-

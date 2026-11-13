@@ -34,7 +34,7 @@ export const TimeZoneClockCard: React.FC<TimeZoneClockCardProps> = ({
         {/* Top Header Sticker Row */}
         <View style={styles.headerRow}>
           <View style={styles.titleBadge}>
-            <ClockIcon color={theme.colors.text} size={scale(13)} />
+            <ClockIcon color={theme.colors.textInverse} size={scale(14)} />
             <Text style={styles.titleText}>Time Zones</Text>
           </View>
           <View style={styles.diffPill}>
@@ -58,9 +58,9 @@ export const TimeZoneClockCard: React.FC<TimeZoneClockCardProps> = ({
               ]}
             >
               {partnerTimeInfo.isNight ? (
-                <MoonIcon color={theme.colors.text} size={scale(12)} />
+                <MoonIcon color={theme.colors.textInverse} size={scale(14)} />
               ) : (
-                <SunIcon color={theme.colors.primary} size={scale(12)} />
+                <SunIcon color={theme.colors.kintsugi} size={scale(14)} />
               )}
               <Text style={styles.statusText}>
                 {partnerTimeInfo.isNight
@@ -81,7 +81,7 @@ export const TimeZoneClockCard: React.FC<TimeZoneClockCardProps> = ({
             <Text style={styles.timeBig}>{myTimeInfo.timeString}</Text>
             <Text style={styles.dateSub}>{myTimeInfo.dateString}</Text>
             <View style={[styles.statusBadge, styles.badgeMy]}>
-              <PinIcon color={theme.colors.coral} size={scale(12)} />
+              <PinIcon color={theme.colors.coral} size={scale(14)} />
               <Text style={styles.statusText}>Local time</Text>
             </View>
           </View>
@@ -94,112 +94,120 @@ export const TimeZoneClockCard: React.FC<TimeZoneClockCardProps> = ({
 const styles = StyleSheet.create({
   cardWrapper: {
     width: '100%',
-    marginVertical: scale(7),
+    marginVertical: scale(8),
   },
   cardSurface: {
-    backgroundColor: theme.colors.surface, // #FFFFFF with 1px solid #FBE9E7
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border, // #FBE9E7
-    padding: scale(18),
-    ...theme.shadows.card,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.roundness.lg,
+    borderWidth: theme.borders.subtle,
+    borderColor: theme.colors.border,
+    padding: scale(20),
+    ...theme.shadows.elevated,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: scale(14),
+    marginBottom: scale(16),
   },
   titleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
-    borderWidth: 1,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border,
-    borderRadius: 9999,
-    paddingHorizontal: scale(10),
-    paddingVertical: scale(4),
+    borderRadius: theme.roundness.full,
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(6),
+    ...theme.shadows.tiny,
   },
   titleText: {
-    fontFamily: theme.typography.families.bold,
-    fontSize: scale(11),
-    color: theme.colors.text, // #3E2723
+    fontFamily: theme.typography.fontFamilies.bold,
+    fontSize: scale(12),
+    color: theme.colors.textInverse,
   },
   diffPill: {
-    backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
-    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: theme.colors.surfaceBlush,
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border,
-    borderRadius: 9999,
-    paddingHorizontal: scale(10),
-    paddingVertical: scale(4),
+    borderRadius: theme.roundness.full,
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(6),
+    ...theme.shadows.tiny,
   },
   diffText: {
-    fontFamily: theme.typography.families.bold,
-    fontSize: scale(11),
-    color: theme.colors.primary, // Amour Red #E53935
+    fontFamily: theme.typography.fontFamilies.bold,
+    fontSize: scale(12),
+    color: theme.colors.primary,
   },
   clocksRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginTop: scale(12),
   },
   clockColumn: {
     flex: 1,
     alignItems: 'center',
   },
   columnHeader: {
-    fontFamily: theme.typography.families.bold,
+    fontFamily: theme.typography.fontFamilies.bold,
     fontSize: scale(11),
-    color: theme.colors.textSecondary, // #7A625A
+    color: theme.colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginBottom: scale(4),
+    letterSpacing: 0.5,
+    marginBottom: scale(6),
     textAlign: 'center',
   },
   timeBig: {
     fontFamily: theme.typography.fontFamilies.display,
-    fontSize: scale(24),
+    fontSize: scale(26),
     fontWeight: '700',
-    color: theme.colors.text, // Cozy Night #3E2723
-    marginBottom: scale(2),
-    letterSpacing: -0.5,
+    color: theme.colors.textInverse,
+    marginBottom: scale(4),
+    letterSpacing: -0.3,
   },
   dateSub: {
-    fontFamily: theme.typography.families.body,
-    fontSize: scale(11),
-    color: theme.colors.textSecondary, // #7A625A
+    fontFamily: theme.typography.fontFamilies.sans,
+    fontSize: scale(12),
+    color: theme.colors.textSecondary,
     marginBottom: scale(8),
   },
   divider: {
     width: 1,
-    height: scale(64),
-    backgroundColor: theme.colors.border, // #FBE9E7
-    marginHorizontal: scale(8),
+    height: scale(80),
+    backgroundColor: theme.colors.border,
+    marginHorizontal: scale(10),
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    borderWidth: 1,
+    gap: 6,
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border,
-    paddingVertical: scale(4),
-    paddingHorizontal: scale(10),
-    borderRadius: 9999,
+    borderRadius: theme.roundness.full,
+    paddingVertical: scale(6),
+    paddingHorizontal: scale(14),
     justifyContent: 'center',
+    ...theme.shadows.tiny,
   },
   badgeDay: {
-    backgroundColor: '#FFF8EC', // Soft Warm Sunset tint
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
   badgeNight: {
-    backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
+    backgroundColor: theme.colors.surfaceBlush,
   },
   badgeMy: {
-    backgroundColor: theme.colors.background, // #FFFDFB
+    backgroundColor: theme.colors.background,
+    ...theme.shadows.tiny,
   },
   statusText: {
-    fontFamily: theme.typography.families.bold,
-    fontSize: scale(10),
-    color: theme.colors.text, // #3E2723
+    fontFamily: theme.typography.fontFamilies.bold,
+    fontSize: scale(11),
+    color: theme.colors.textInverse,
   },
 });

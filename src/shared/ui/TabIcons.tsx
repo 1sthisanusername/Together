@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 export interface TabIconProps {
   color: any;
@@ -16,6 +17,18 @@ const getTintFill = (color: any, focused = false): string => {
   return 'rgba(229, 57, 53, 0.14)';
 };
 
+/** Wraps any tab icon in a spring-scale animation when focused changes */
+const TabIconWrapper: React.FC<{ focused?: boolean; children: React.ReactNode }> = ({ focused, children }) => {
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  useEffect(() => {
+    scale.value = withSpring(focused ? 1.18 : 1, { damping: 14, stiffness: 320, mass: 0.6 });
+  }, [focused]);
+
+  return <Animated.View style={animStyle}>{children}</Animated.View>;
+};
+
 /**
  * Love, Joy & Connection Bespoke Vector Icon Set (react-native-svg):
  * Warm, rounded 2px ink-line icons with soft translucent fills on active states.
@@ -28,30 +41,32 @@ export const HomeIcon: React.FC<TabIconProps> = ({
   focused = false,
   strokeWidth = 2.1,
 }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M4 10.5L12 4L20 10.5V19C20 19.8284 19.3284 20.5 18.5 20.5H5.5C4.67157 20.5 4 19.8284 4 19V10.5Z"
-      fill={getTintFill(color, focused)}
-      stroke={color}
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M9.5 20.5V14.5C9.5 13.3954 10.3954 12.5 11.5 12.5H12.5C13.6046 12.5 14.5 13.3954 14.5 14.5V20.5"
-      stroke={color}
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M16.5 6.5V4.5H18.5V8.2"
-      stroke={color}
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
+  <TabIconWrapper focused={focused}>
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 10.5L12 4L20 10.5V19C20 19.8284 19.3284 20.5 18.5 20.5H5.5C4.67157 20.5 4 19.8284 4 19V10.5Z"
+        fill={getTintFill(color, focused)}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M9.5 20.5V14.5C9.5 13.3954 10.3954 12.5 11.5 12.5H12.5C13.6046 12.5 14.5 13.3954 14.5 14.5V20.5"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M16.5 6.5V4.5H18.5V8.2"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  </TabIconWrapper>
 );
 
 // 2. Play: Rounded game controller with D-pad & action dots
@@ -61,27 +76,29 @@ export const PlayIcon: React.FC<TabIconProps> = ({
   focused = false,
   strokeWidth = 2.1,
 }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Rect
-      x={2.5}
-      y={6.5}
-      width={19}
-      height={11.5}
-      rx={5.75}
-      fill={getTintFill(color, focused)}
-      stroke={color}
-      strokeWidth={strokeWidth}
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M7.5 10.2V14.2M5.5 12.2H9.5"
-      stroke={color}
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-    />
-    <Circle cx={15.2} cy={11} r={1.1} fill={color} />
-    <Circle cx={17.6} cy={13.2} r={1.1} fill={color} />
-  </Svg>
+  <TabIconWrapper focused={focused}>
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect
+        x={2.5}
+        y={6.5}
+        width={19}
+        height={11.5}
+        rx={5.75}
+        fill={getTintFill(color, focused)}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M7.5 10.2V14.2M5.5 12.2H9.5"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Circle cx={15.2} cy={11} r={1.1} fill={color} />
+      <Circle cx={17.6} cy={13.2} r={1.1} fill={color} />
+    </Svg>
+  </TabIconWrapper>
 );
 
 // 3. Camera: Retro polaroid camera with centered lens & viewfinder dot
@@ -91,18 +108,20 @@ export const CameraIcon: React.FC<TabIconProps> = ({
   focused = false,
   strokeWidth = 2.1,
 }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M4.5 7.5H7.2L8.8 5H15.2L16.8 7.5H19.5C20.6046 7.5 21.5 8.39543 21.5 9.5V17.5C21.5 18.6046 20.6046 19.5 19.5 19.5H4.5C3.39543 19.5 2.5 18.6046 2.5 17.5V9.5C2.5 8.39543 3.39543 7.5 4.5 7.5Z"
-      fill={getTintFill(color, focused)}
-      stroke={color}
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Circle cx={12} cy={13.3} r={3.4} stroke={color} strokeWidth={strokeWidth} />
-    <Circle cx={17.5} cy={10.2} r={0.9} fill={color} />
-  </Svg>
+  <TabIconWrapper focused={focused}>
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4.5 7.5H7.2L8.8 5H15.2L16.8 7.5H19.5C20.6046 7.5 21.5 8.39543 21.5 9.5V17.5C21.5 18.6046 20.6046 19.5 19.5 19.5H4.5C3.39543 19.5 2.5 18.6046 2.5 17.5V9.5C2.5 8.39543 3.39543 7.5 4.5 7.5Z"
+        fill={getTintFill(color, focused)}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Circle cx={12} cy={13.3} r={3.4} stroke={color} strokeWidth={strokeWidth} />
+      <Circle cx={17.5} cy={10.2} r={0.9} fill={color} />
+    </Svg>
+  </TabIconWrapper>
 );
 
 // 4. Memories: Polaroid frame with horizon landscape & sun dot
@@ -112,37 +131,39 @@ export const MemoriesIcon: React.FC<TabIconProps> = ({
   focused = false,
   strokeWidth = 2.1,
 }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Rect
-      x={4}
-      y={3.5}
-      width={16}
-      height={17}
-      rx={3}
-      fill={getTintFill(color, focused)}
-      stroke={color}
-      strokeWidth={strokeWidth}
-      strokeLinejoin="round"
-    />
-    <Rect
-      x={6.8}
-      y={6.2}
-      width={10.4}
-      height={9}
-      rx={1.5}
-      stroke={color}
-      strokeWidth={strokeWidth - 0.3}
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M7.2 14L10 11.4L12.3 13.4L14.5 11.8L16.8 14.2"
-      stroke={color}
-      strokeWidth={strokeWidth - 0.3}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Circle cx={14.3} cy={8.7} r={1} fill={color} />
-  </Svg>
+  <TabIconWrapper focused={focused}>
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect
+        x={4}
+        y={3.5}
+        width={16}
+        height={17}
+        rx={3}
+        fill={getTintFill(color, focused)}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinejoin="round"
+      />
+      <Rect
+        x={6.8}
+        y={6.2}
+        width={10.4}
+        height={9}
+        rx={1.5}
+        stroke={color}
+        strokeWidth={strokeWidth - 0.3}
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M7.2 14L10 11.4L12.3 13.4L14.5 11.8L16.8 14.2"
+        stroke={color}
+        strokeWidth={strokeWidth - 0.3}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Circle cx={14.3} cy={8.7} r={1} fill={color} />
+    </Svg>
+  </TabIconWrapper>
 );
 
 // 5. Us: Two intertwined couple hearts
@@ -152,23 +173,25 @@ export const UsIcon: React.FC<TabIconProps> = ({
   focused = false,
   strokeWidth = 2.1,
 }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M9.5 18.2C9.5 18.2 3.5 14.4 3.5 9.6C3.5 7.4 5.2 5.8 7.2 5.8C8.6 5.8 9.7 6.5 10.3 7.6C10.9 6.5 12 5.8 13.4 5.8C15.4 5.8 17.1 7.4 17.1 9.6C17.1 14.4 11.1 18.2 11.1 18.2H9.5Z"
-      fill={getTintFill(color, focused)}
-      stroke={color}
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M15.2 19C17.6 17.3 20.5 14.6 20.5 11.2C20.5 9.3 19.1 8 17.4 8"
-      stroke={color}
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
+  <TabIconWrapper focused={focused}>
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M9.5 18.2C9.5 18.2 3.5 14.4 3.5 9.6C3.5 7.4 5.2 5.8 7.2 5.8C8.6 5.8 9.7 6.5 10.3 7.6C10.9 6.5 12 5.8 13.4 5.8C15.4 5.8 17.1 7.4 17.1 9.6C17.1 14.4 11.1 18.2 11.1 18.2H9.5Z"
+        fill={getTintFill(color, focused)}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M15.2 19C17.6 17.3 20.5 14.6 20.5 11.2C20.5 9.3 19.1 8 17.4 8"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  </TabIconWrapper>
 );
 
 // 6. Dates: Calendar sheet with top binder loops and center marker
@@ -605,5 +628,22 @@ export const WineGlassIcon: React.FC<TabIconProps> = ({
       strokeLinejoin="round"
     />
     <Path d="M12 13.5V20M8.5 20H15.5" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+  </Svg>
+);
+
+// 23. Refresh: Circular arrow for cycling formats/refreshing
+export const RefreshIcon: React.FC<TabIconProps> = ({
+  color,
+  size = 14,
+  strokeWidth = 2,
+}) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M3 12a9 9 0 0 1 15.5-6.4L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.4L3 16M3 21v-5h5"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </Svg>
 );

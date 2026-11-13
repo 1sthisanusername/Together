@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-import { theme, scale } from '@/shared/theme';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { theme, scale, motion } from '@/shared/theme';
 
 export interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showText?: boolean;
+  animated?: boolean;
 }
 
-export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true }) => {
+export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true, animated = true }) => {
   const dimensions = {
     sm: { imageSize: scale(36), textSize: scale(16) },
     md: { imageSize: scale(56), textSize: scale(22) },
@@ -15,8 +17,23 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true }) => {
     xl: { imageSize: scale(96), textSize: scale(36) },
   }[size];
 
-  return (
-    <View style={styles.container}>
+  const logoScale = useSharedValue(animated ? 0.9 : 1);
+  const logoOpacity = useSharedValue(animated ? 0 : 1);
+
+  useEffect(() => {
+    if (animated) {
+      logoScale.value = withSpring(1, motion.bouncy);
+      logoOpacity.value = withSpring(1, motion.spring);
+    }
+  }, [animated]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: logoScale.value }],
+    opacity: logoOpacity.value,
+  }));
+
+  const content = (
+    <>
       <Image
         source={require('../../../assets/splash-icon.png')}
         style={{ width: dimensions.imageSize, height: dimensions.imageSize }}
@@ -32,8 +49,14 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true }) => {
           <Text style={styles.subText}>a private space for two</Text>
         </View>
       )}
-    </View>
+    </>
   );
+
+  if (animated) {
+    return <Animated.View style={[styles.container, animStyle]}>{content}</Animated.View>;
+  }
+
+  return <View style={styles.container}>{content}</View>;
 };
 
 const styles = StyleSheet.create({
@@ -46,11 +69,13 @@ const styles = StyleSheet.create({
     marginTop: scale(10),
   },
   brandText: {
+    fontFamily: theme.typography.fontFamilies.display,
     fontWeight: '800',
     color: theme.colors.text,
     letterSpacing: -0.5,
   },
   subText: {
+    fontFamily: theme.typography.fontFamilies.sans,
     fontSize: scale(12),
     color: theme.colors.textSecondary,
     letterSpacing: 0.8,

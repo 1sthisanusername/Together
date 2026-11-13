@@ -124,7 +124,7 @@ export const Card: React.FC<CardProps> = ({
 const styles = StyleSheet.create({
   outerWrapper: {
     width: '100%',
-    marginVertical: scale(7),
+    marginVertical: scale(8),
     borderRadius: theme.roundness.lg,
   },
   cardShadow: {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, RefreshControl, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, RefreshControl, TouchableOpacity, Text, Modal } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -203,13 +203,23 @@ export default function HomeScreen() {
         >
           <ResponsiveContainer style={{ gap: sectionGap }}>
             {/* One-time prompt: Pick a nickname for partner if they chose 'let my partner choose' */}
-            {showPickPartnerName ? (
-              <PartnerNamePromptCard
-                partnerName={partnerName}
-                onSave={handleSavePartnerNickname}
-                onDismiss={handleDismissPartnerNickname}
-              />
-            ) : null}
+            {showPickPartnerName && (
+              <Modal
+                visible={true}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={handleDismissPartnerNickname}
+                accessibilityViewIsModal={true}
+              >
+                <View style={styles.modalBackdrop} accessible={true} accessibilityLabel="Partner nickname prompt">
+                  <PartnerNamePromptCard
+                    partnerName={partnerName}
+                    onSave={handleSavePartnerNickname}
+                    onDismiss={handleDismissPartnerNickname}
+                  />
+                </View>
+              </Modal>
+            )}
 
             <StaggeredList baseDelay={80} staggerGap={55}>
               {/* 1. Header (Both Names + Duration) */}
@@ -344,6 +354,13 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: scale(20),
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: scale(20),

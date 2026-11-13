@@ -116,6 +116,7 @@ const styles = StyleSheet.create({
   },
   tagline: {
     marginTop: scale(12),
+    fontFamily: theme.typography.fontFamilies.sans,
     fontSize: scale(15),
     fontWeight: '600',
     color: theme.colors.textSecondary,
@@ -143,12 +144,13 @@ const styles = StyleSheet.create({
   featureIconCircle: {
     width: scale(28),
     height: scale(28),
-    borderRadius: 14,
+    borderRadius: theme.roundness.md,
     backgroundColor: theme.colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   featureLabel: {
+    fontFamily: theme.typography.fontFamilies.sans,
     fontSize: scale(13),
     fontWeight: '600',
     color: theme.colors.text,

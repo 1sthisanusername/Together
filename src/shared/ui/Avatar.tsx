@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { theme, scale } from '@/shared/theme';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { theme, scale, motion } from '@/shared/theme';
 
 export interface AvatarProps {
   name: string;
@@ -40,8 +41,17 @@ export const Avatar: React.FC<AvatarProps> = ({
 
   const backgroundColor = bgColors[stickerColor] || theme.colors.sunset;
 
+  const scaleAnim = useSharedValue(0.85);
+  useEffect(() => {
+    scaleAnim.value = withSpring(1, motion.bouncy);
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleAnim.value }],
+  }));
+
   return (
-    <View style={[styles.wrapper, { width: scaledSize, height: scaledSize }]}>
+    <Animated.View style={[styles.wrapper, animStyle, { width: scaledSize, height: scaledSize }]}>
       {/* Avatar Surface */}
       {url ? (
         <Image
@@ -85,7 +95,7 @@ export const Avatar: React.FC<AvatarProps> = ({
           ]}
         />
       )}
-    </View>
+    </Animated.View>
   );
 };
 
@@ -94,7 +104,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   image: {
-    borderWidth: 2,
+    borderWidth: theme.borders.chunkyThick,
     borderColor: '#FFFFFF',
     backgroundColor: theme.colors.surfaceBlush,
     ...theme.shadows.hardSm,
@@ -102,7 +112,7 @@ const styles = StyleSheet.create({
   fallback: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: theme.borders.chunkyThick,
     borderColor: '#FFFFFF',
     borderRadius: theme.roundness.full,
     ...theme.shadows.soft,
@@ -118,10 +128,10 @@ const styles = StyleSheet.create({
     zIndex: 2,
     bottom: 0,
     right: 0,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2,
+    width: scale(14),
+    height: scale(14),
+    borderRadius: theme.roundness.full,
+    borderWidth: theme.borders.chunkyThick,
     borderColor: '#FFFFFF',
   },
   presenceOnline: {

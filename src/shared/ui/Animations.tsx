@@ -24,6 +24,8 @@ export interface FadeInViewProps {
   duration?: number;
   yOffset?: number;
   style?: StyleProp<ViewStyle>;
+  /** Override the default marginBottom (16). Pass 0 to remove spacing entirely. */
+  marginBottom?: number;
 }
 
 export const FadeInView: React.FC<FadeInViewProps> = ({
@@ -32,6 +34,7 @@ export const FadeInView: React.FC<FadeInViewProps> = ({
   duration = 450,
   yOffset = 16,
   style,
+  marginBottom = 16,
 }) => {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(yOffset);
@@ -49,7 +52,7 @@ export const FadeInView: React.FC<FadeInViewProps> = ({
   }));
 
   return (
-    <Animated.View style={[{ marginBottom: 16 }, animStyle, style]}>
+    <Animated.View style={[{ marginBottom }, animStyle, style]}>
       {children}
     </Animated.View>
   );
@@ -153,18 +156,20 @@ export const ShimmerSkeleton: React.FC<ShimmerSkeletonProps> = ({
   borderRadius = 12,
   style,
 }) => {
-  const translateX = useSharedValue(-60);
+  const [measuredWidth, setMeasuredWidth] = React.useState(typeof width === 'number' ? width : 280);
+  const translateX = useSharedValue(-measuredWidth);
 
   useEffect(() => {
+    translateX.value = -measuredWidth;
     translateX.value = withRepeat(
       withSequence(
-        withTiming(240, { duration: 1200 }),
-        withTiming(-60, { duration: 0 })
+        withTiming(measuredWidth * 1.6, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+        withTiming(-measuredWidth, { duration: 0 })
       ),
       -1,
       false
     );
-  }, []);
+  }, [measuredWidth]);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
@@ -172,6 +177,12 @@ export const ShimmerSkeleton: React.FC<ShimmerSkeletonProps> = ({
 
   return (
     <Animated.View
+      onLayout={(e) => {
+        const w = e.nativeEvent.layout.width;
+        if (w > 0 && Math.abs(w - measuredWidth) > 5) {
+          setMeasuredWidth(w);
+        }
+      }}
       style={[
         {
           width,
@@ -184,14 +195,17 @@ export const ShimmerSkeleton: React.FC<ShimmerSkeletonProps> = ({
       ]}
       pointerEvents="none"
     >
-      {/* Sweeping shine overlay — animates over a translucent white bar that spans the full component width */}
+      {/* Sweeping shine overlay */}
       <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.25)' }} />
       <Animated.View
         style={[
           {
             position: 'absolute',
-            inset: 0,
-            backgroundColor: 'rgba(255,255,255,0.55)',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            width: Math.max(measuredWidth * 0.5, 80),
+            backgroundColor: 'rgba(255,255,255,0.45)',
           },
           animStyle,
         ]}

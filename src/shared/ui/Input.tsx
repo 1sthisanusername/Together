@@ -44,13 +44,11 @@ export const Input: React.FC<InputProps> = ({
       )}
 
       {/* Warm Input Wrapper with subtle focus border */}
-      <View style={styles.inputWrapper}>
+      <View style={[styles.inputWrapper, isFocused && styles.inputWrapperFocused, error ? styles.inputWrapperError : null]}>
         <TextInput
           placeholderTextColor={theme.colors.textMuted}
           style={[
             styles.input,
-            isFocused && styles.inputFocused,
-            error ? styles.inputError : null,
             style,
           ]}
           onFocus={(e) => {
@@ -95,6 +93,14 @@ const styles = StyleSheet.create({
     borderRadius: theme.roundness.lg,
     overflow: 'hidden',
   },
+  inputWrapperFocused: {
+    borderColor: theme.colors.primary, // #D32F2F — focus ring on the wrapper (correct element)
+    borderWidth: theme.borders.chunkyThick,
+  },
+  inputWrapperError: {
+    borderColor: theme.colors.danger,
+    backgroundColor: theme.colors.dangerLight,
+  },
   input: {
     backgroundColor: theme.colors.surface, // #FFFFFF
     borderWidth: 0,
@@ -104,17 +110,12 @@ const styles = StyleSheet.create({
     fontSize: scale(15),
     fontFamily: theme.typography.fontFamilies.sans,
     color: theme.colors.text, // #3E2723
-    // No shadow by default - border provides definition
-    // Focus state adds the primary border color
   },
   inputFocused: {
-    borderColor: theme.colors.primary, // #D32F2F (Amour Red)
-    backgroundColor: theme.colors.background, // #FFFDFB
-    // Shadow removed - border color provides focus indicator
+    backgroundColor: theme.colors.background, // #FFFDFB — slight tint on focus
   },
   inputError: {
-    borderColor: theme.colors.danger, // #C62828
-    backgroundColor: theme.colors.dangerLight, // #FDEDEC
+    // error state is handled by the wrapper now
   },
   errorText: {
     marginTop: scale(6),

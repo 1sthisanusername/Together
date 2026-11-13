@@ -8,7 +8,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   useNotifications,
   useMarkNotificationRead,
@@ -107,7 +107,7 @@ export const NotificationInboxView: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
       {/* Header Bar */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -180,7 +180,7 @@ export const NotificationInboxView: React.FC = () => {
           />
         </ResponsiveContainer>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 

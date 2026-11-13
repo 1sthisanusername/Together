@@ -35,21 +35,27 @@ export default function VaultScreen() {
         <View style={styles.placeholder} />
       </View>
 
-      {isLoading ? (
-        <LoadingState message="Checking vault security..." />
-      ) : !hasPin ? (
-        <VaultPinPad isSetup onSuccess={setupPin} error={errorMsg} />
-      ) : !isUnlocked ? (
-        <VaultPinPad isSetup={false} onSuccess={verifyPin} error={errorMsg} />
-      ) : (
-        <VaultView onLock={lock} />
-      )}
+      <View style={styles.contentContainer}>
+        {isLoading ? (
+          <LoadingState message="Checking vault security..." />
+        ) : !hasPin ? (
+          <VaultPinPad isSetup onSuccess={setupPin} error={errorMsg} />
+        ) : !isUnlocked ? (
+          <VaultPinPad isSetup={false} onSuccess={verifyPin} error={errorMsg} />
+        ) : (
+          <VaultView onLock={lock} />
+        )}
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
+    flex: 1,
+    backgroundColor: theme.colors.surfaceBlush,
+  },
+  contentContainer: {
     flex: 1,
     backgroundColor: theme.colors.background,
   },

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/services';
@@ -91,11 +92,11 @@ export default function AuthCallbackScreen() {
   }, [router]);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ActivityIndicator size="large" color={theme.colors.primary} />
       <Text style={styles.statusText}>{status}</Text>
       {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
-    </View>
+    </SafeAreaView>
   );
 }
 

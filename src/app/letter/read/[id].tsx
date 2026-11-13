@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useOpenLetter, useLetters, type EnhancedLetter } from '@/features/letters/hooks/useLetters';
@@ -67,15 +68,17 @@ export default function LetterReadScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (!letter) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handleClose} style={styles.backBtn}>
             <Text style={styles.backIcon}>←</Text>
@@ -89,7 +92,7 @@ export default function LetterReadScreen() {
             <Text style={styles.backBtnText}>{t('common.back')}</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -101,11 +104,7 @@ export default function LetterReadScreen() {
   const palette = THEME_PALETTES[themeKey] || THEME_PALETTES.parchment_cream;
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-    >
+    <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleClose} style={styles.backBtn}>
@@ -116,6 +115,12 @@ export default function LetterReadScreen() {
         </Text>
         <View style={styles.backBtnSpacer} />
       </View>
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
 
       {isLocked && !isOpened ? (
         /* Locked State */
@@ -245,7 +250,8 @@ export default function LetterReadScreen() {
       )}
 
       <View style={styles.bottomPadding} />
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -253,6 +259,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+  scroll: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,

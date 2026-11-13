@@ -171,8 +171,8 @@ const styles = StyleSheet.create({
 
   // Sizes - all enforce minimum 48dp touch target (width + height)
   sm: {
-    width: scale(48),
-    height: Math.max(48, scale(42)),
+    minWidth: scale(48),
+    minHeight: Math.max(48, scale(42)),
     borderRadius: theme.roundness.md,
     paddingVertical: scale(8),
     paddingHorizontal: scale(16),

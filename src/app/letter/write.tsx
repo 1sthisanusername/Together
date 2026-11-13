@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
@@ -77,7 +78,7 @@ export default function LetterWriteScreen() {
     : null;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.dismiss()} style={styles.backBtn}>
@@ -233,7 +234,7 @@ export default function LetterWriteScreen() {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

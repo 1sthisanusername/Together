@@ -30,3 +30,4 @@ credentials.json
 # Temporary files
 ARCHITECTURE_DOC_EXTRACTED.txt
 supabase/.temp/
+scratch/

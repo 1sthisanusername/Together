@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme, wp } from '@/shared/theme';
 
 export default function IndexScreen() {
@@ -8,14 +9,14 @@ export default function IndexScreen() {
   const logoSize = Math.round(Math.min(wp(36), 180));
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Image
         source={require('../../assets/splash-icon.png')}
         style={{ width: logoSize, aspectRatio: 1 }}
         resizeMode="contain"
         accessibilityLabel="Together"
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -111,7 +111,7 @@ export const ActivityRoom: React.FC<ActivityRoomProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.surface,
   },
   header: {
     flexDirection: 'row',
@@ -168,6 +168,7 @@ const styles = StyleSheet.create({
   },
   scrollFlex: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
   scrollContent: {
     flexGrow: 1,

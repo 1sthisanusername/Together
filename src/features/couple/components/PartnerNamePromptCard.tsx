@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Card, Button, Input } from '@/shared/ui';
-import { theme, scale, triggerHaptic } from '@/shared/theme';
+import { theme, scale, triggerHaptic, motion } from '@/shared/theme';
 
 export interface PartnerNamePromptCardProps {
   partnerName: string;
@@ -19,6 +20,19 @@ export const PartnerNamePromptCard: React.FC<PartnerNamePromptCardProps> = ({
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  // Spring entrance: scale + fade in from slightly smaller
+  const cardScale = useSharedValue(0.88);
+  const cardOpacity = useSharedValue(0);
+  const cardAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cardScale.value }],
+    opacity: cardOpacity.value,
+  }));
+
+  useEffect(() => {
+    cardScale.value = withSpring(1, motion.bouncy);
+    cardOpacity.value = withSpring(1, motion.spring);
+  }, []);
+
   const handleSave = () => {
     const trimmed = nickname.trim();
     if (!trimmed) {
@@ -30,43 +44,45 @@ export const PartnerNamePromptCard: React.FC<PartnerNamePromptCardProps> = ({
   };
 
   return (
-    <Card style={styles.card}>
-      <Text style={styles.emoji}>💌</Text>
-      <Text style={styles.title}>Pick a nickname for {partnerName}</Text>
-      <Text style={styles.subtitle}>
-        Your partner left their nickname up to you! What sweet name would you like to call them?
-      </Text>
+    <Animated.View style={cardAnimStyle}>
+      <Card style={styles.card}>
+        <Text style={styles.emoji}>💌</Text>
+        <Text style={styles.title}>Pick a nickname for {partnerName}</Text>
+        <Text style={styles.subtitle}>
+          Your partner left their nickname up to you! What sweet name would you like to call them?
+        </Text>
 
-      <Input
-        placeholder={`e.g. My Love, ${partnerName}...`}
-        value={nickname}
-        onChangeText={(val) => {
-          setNickname(val);
-          if (error) setError(null);
-        }}
-        maxLength={30}
-        error={error || undefined}
-      />
+        <Input
+          placeholder={`e.g. My Love, ${partnerName}...`}
+          value={nickname}
+          onChangeText={(val) => {
+            setNickname(val);
+            if (error) setError(null);
+          }}
+          maxLength={30}
+          error={error || undefined}
+        />
 
-      <View style={styles.btnRow}>
-        <Button
-          title="Keep Default"
-          variant="ghost"
-          size="md"
-          onPress={onDismiss}
-          style={{ flex: 1 }}
-        />
-        <Button
-          title="Save Nickname ✨"
-          variant="primary"
-          size="md"
-          loading={isLoading}
-          disabled={!nickname.trim() || isLoading}
-          onPress={handleSave}
-          style={{ flex: 1.5 }}
-        />
-      </View>
-    </Card>
+        <View style={styles.btnRow}>
+          <Button
+            title="Keep Default"
+            variant="ghost"
+            size="md"
+            onPress={onDismiss}
+            style={{ flex: 1 }}
+          />
+          <Button
+            title="Save Nickname ✨"
+            variant="primary"
+            size="md"
+            loading={isLoading}
+            disabled={!nickname.trim() || isLoading}
+            onPress={handleSave}
+            style={{ flex: 1.5 }}
+          />
+        </View>
+      </Card>
+    </Animated.View>
   );
 };
 
@@ -92,7 +108,7 @@ const styles = StyleSheet.create({
     marginBottom: scale(4),
   },
   subtitle: {
-    fontFamily: theme.typography.families.body,
+    fontFamily: theme.typography.fontFamilies.sansRegular,
     fontSize: scale(13),
     color: theme.colors.textSecondary,
     textAlign: 'center',

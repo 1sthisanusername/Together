@@ -1,6 +1,7 @@
 import React from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
-import { theme, scale } from '@/shared/theme';
+import { Modal, View, Text, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, Pressable } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { theme, scale, triggerHaptic, motion } from '@/shared/theme';
 
 export interface ThemedAlertButton {
   text: string;
@@ -47,6 +48,44 @@ export const ThemedAlert = {
   },
 };
 
+/** Spring-animated alert button — extracted so hooks are called at component top level */
+const AlertButton: React.FC<{
+  btn: ThemedAlertButton;
+  onPress: (btn: ThemedAlertButton) => void;
+}> = ({ btn, onPress }) => {
+  const btnScale = useSharedValue(1);
+  const btnAnimStyle = useAnimatedStyle(() => ({ transform: [{ scale: btnScale.value }] }));
+  return (
+    <Pressable
+      onPress={() => { triggerHaptic(btn.style === 'destructive' ? 'warning' : 'light'); onPress(btn); }}
+      onPressIn={() => { btnScale.value = withSpring(0.95, motion.spring); }}
+      onPressOut={() => { btnScale.value = withSpring(1, motion.spring); }}
+      accessibilityRole="button"
+      accessibilityLabel={btn.text}
+      style={{ flex: 1 }}
+    >
+      <Animated.View
+        style={[
+          styles.btn,
+          btn.style === 'cancel' && styles.btnCancel,
+          btn.style === 'destructive' && styles.btnDestructive,
+          btnAnimStyle,
+        ]}
+      >
+        <Text
+          style={[
+            styles.btnText,
+            btn.style === 'cancel' && styles.btnCancelText,
+            btn.style === 'destructive' && styles.btnDestructiveText,
+          ]}
+        >
+          {btn.text}
+        </Text>
+      </Animated.View>
+    </Pressable>
+  );
+};
+
 export function ThemedAlertDialog() {
   const [alert, setAlert] = React.useState<ThemedAlertOptions | null>(() => activeAlert);
 
@@ -81,7 +120,7 @@ export function ThemedAlertDialog() {
   };
 
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={() => {}} aria-hidden={!alert}>
+    <Modal visible transparent animationType="fade" onRequestClose={() => { }} aria-hidden={!alert}>
       <TouchableWithoutFeedback onPress={() => handlePress({ text: 'OK', style: 'default' })}>
         <View style={styles.backdrop} accessible={true} accessibilityRole="alertdialog" accessibilityLabel={`${alert.title}${alert.message ? `. ${alert.message}` : ''}`}>
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
@@ -91,28 +130,7 @@ export function ThemedAlertDialog() {
               {alert.message ? <Text style={styles.message}>{alert.message}</Text> : null}
               <View style={styles.buttonRow} accessible={true} accessibilityLabel={`${alert.buttons?.map((b) => b.text).join(', ') || 'OK'}`}>
                 {(alert.buttons || []).map((btn, idx) => (
-                  <TouchableOpacity
-                    key={idx}
-                    style={[
-                      styles.btn,
-                      btn.style === 'cancel' && styles.btnCancel,
-                      btn.style === 'destructive' && styles.btnDestructive,
-                    ]}
-                    onPress={() => handlePress(btn)}
-                    activeOpacity={0.8}
-                    accessibilityRole="button"
-                    accessibilityLabel={btn.text}
-                  >
-                    <Text
-                      style={[
-                        styles.btnText,
-                        btn.style === 'cancel' && styles.btnCancelText,
-                        btn.style === 'destructive' && styles.btnDestructiveText,
-                      ]}
-                    >
-                      {btn.text}
-                    </Text>
-                  </TouchableOpacity>
+                  <AlertButton key={idx} btn={btn} onPress={handlePress} />
                 ))}
               </View>
             </View>
@@ -135,12 +153,12 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: scale(340),
     backgroundColor: theme.colors.surface, // #FFFFFF warm white surface
-    borderRadius: theme.roundness.lg,
+    borderRadius: theme.roundness.xl,
     borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border, // #FBE9E7 warm blush border
     padding: scale(24),
     alignItems: 'center',
-    ...theme.shadows.card, // Soft elevated shadow
+    ...theme.shadows.modal, // Soft elevated modal shadow
   },
   emoji: {
     fontSize: scale(36),
@@ -174,8 +192,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: theme.borders.subtle,
-    borderColor: theme.colors.border, // #FBE9E7
-    backgroundColor: theme.colors.primary, // #D32F2F amour red
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.primary,
   },
   btnCancel: {
     flex: 1,
@@ -184,8 +202,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: theme.borders.subtle,
-    borderColor: theme.colors.border, // #FBE9E7
-    backgroundColor: theme.colors.surfaceSubtle, // #FBE9E7 disabled blush
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceSubtle,
   },
   btnDestructive: {
     flex: 1,
@@ -194,8 +212,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: theme.borders.subtle,
-    borderColor: theme.colors.danger, // #C62828
-    backgroundColor: theme.colors.danger, // #C62828
+    borderColor: theme.colors.danger,
+    backgroundColor: theme.colors.danger,
   },
   btnText: {
     fontFamily: theme.typography.families.bold,

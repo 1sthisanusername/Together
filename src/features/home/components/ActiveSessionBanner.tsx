@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { WarmGradient, HeartBeat } from '@/shared/ui';
-import { theme, scale, triggerHaptic } from '@/shared/theme';
+import { theme, scale, triggerHaptic, motion } from '@/shared/theme';
 
 export interface ActiveSessionBannerProps {
   onJoin: () => void;
@@ -10,10 +11,14 @@ export interface ActiveSessionBannerProps {
 
 export const ActiveSessionBanner: React.FC<ActiveSessionBannerProps> = ({ onJoin }) => {
   const { t } = useTranslation();
+  const pillScale = useSharedValue(1);
+  const pillAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pillScale.value }],
+  }));
 
   return (
     <View style={styles.cardWrapper}>
-      <WarmGradient style="hero" borderRadius={20} containerStyle={styles.gradientCard}>
+      <WarmGradient style="hero" borderRadius={theme.roundness.lg} containerStyle={styles.gradientCard}>
         <View style={styles.banner}>
           <View style={styles.textContainer}>
             <View style={styles.liveBadge}>
@@ -22,16 +27,25 @@ export const ActiveSessionBanner: React.FC<ActiveSessionBannerProps> = ({ onJoin
             </View>
             <Text style={styles.bannerText}>{t('home.activeSessionBanner')}</Text>
           </View>
-          <TouchableOpacity
-            style={styles.joinPillBtn}
+          <Pressable
             onPress={() => {
-              triggerHaptic('light');
+              triggerHaptic('medium');
               onJoin();
             }}
-            activeOpacity={0.85}
+            onPressIn={() => {
+              pillScale.value = withSpring(0.94, motion.spring);
+            }}
+            onPressOut={() => {
+              pillScale.value = withSpring(1, motion.spring);
+            }}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.joinSession')}
           >
-            <Text style={styles.joinPillText}>{t('home.joinSession')}</Text>
-          </TouchableOpacity>
+            <Animated.View style={[styles.joinPillBtn, pillAnimStyle]}>
+              <Text style={styles.joinPillText}>{t('home.joinSession')}</Text>
+            </Animated.View>
+          </Pressable>
         </View>
       </WarmGradient>
     </View>
@@ -41,12 +55,12 @@ export const ActiveSessionBanner: React.FC<ActiveSessionBannerProps> = ({ onJoin
 const styles = StyleSheet.create({
   cardWrapper: {
     width: '100%',
-    marginVertical: scale(7),
-    borderRadius: 20,
+    marginVertical: scale(8),
+    borderRadius: theme.roundness.lg,
     ...theme.shadows.card,
   },
   gradientCard: {
-    borderRadius: 20,
+    borderRadius: theme.roundness.lg,
   },
   banner: {
     paddingVertical: scale(14),
@@ -85,10 +99,10 @@ const styles = StyleSheet.create({
   },
   joinPillBtn: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 9999,
+    borderRadius: theme.roundness.full,
     paddingHorizontal: scale(14),
     paddingVertical: scale(8),
-    minHeight: 38,
+    minHeight: Math.max(48, scale(38)),
     justifyContent: 'center',
     alignItems: 'center',
   },
