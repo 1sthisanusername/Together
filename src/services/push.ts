@@ -83,8 +83,9 @@ export function usePushNotificationConfig() {
       console.log('[Push] Notification response:', JSON.stringify(response.notification.request.content.data));
     });
 
-    // Register for remote push notifications on device
-    if (Device.isDevice) {
+    // Register for remote push notifications on native platforms only
+    // Web requires VAPID public key configuration which is not set up
+    if (Device.isDevice && Platform.OS !== 'web') {
       Notifications.getPermissionsAsync().then(async (status) => {
         if (status.granted) {
           const projectId = Constants.expoConfig?.extra?.eas?.projectId;
@@ -123,6 +124,11 @@ class AppPushService implements PushService {
       console.log('[Push] Remote push disabled by feature flag');
       return null;
     }
+    // Push notifications not supported on web without VAPID configuration
+    if (Platform.OS === 'web') {
+      console.log('[Push] Skipping push registration on web (requires VAPID key)');
+      return null;
+    }
 
     try {
       let token: string | null = null;
@@ -134,7 +140,7 @@ class AppPushService implements PushService {
             name: 'Default',
             importance: Notifications.AndroidImportance.MAX,
             vibrationPattern: [0, 250, 250, 250],
-            lightColor: '#E11D48',
+            lightColor: '#E53935',
             sound: 'default',
           });
         }

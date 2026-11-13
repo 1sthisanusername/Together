@@ -41,6 +41,14 @@ export interface ButtonProps {
   accessibilityLabel?: string;
 }
 
+/**
+ * Polished Button Component:
+ * - Minimum 48dp touch target enforced across all sizes
+ * - Soft spring press feedback with haptic response
+ * - Clear pressed/hover visual states
+ * - Accessible disabled and loading states
+ * - Consistent pill-shaped design with rounded corners
+ */
 export const Button: React.FC<ButtonProps> = ({
   onPress,
   title,
@@ -65,7 +73,7 @@ export const Button: React.FC<ButtonProps> = ({
     if (!isInteractive) return;
     setIsPressed(true);
     triggerHaptic('light');
-    scaleAnim.value = withSpring(0.97, motion.spring);
+    scaleAnim.value = withSpring(0.96, motion.spring);
   };
 
   const handlePressOut = () => {
@@ -107,7 +115,8 @@ export const Button: React.FC<ButtonProps> = ({
           styles.surfaceBase,
           styles[resolvedVariant] || styles.primary,
           styles[size],
-          resolvedVariant !== 'ghost' && !disabled && styles.elevated,
+          // Add elevated shadow for non-outline variants when interactive
+          isInteractive && resolvedVariant !== 'outline' && styles.elevated,
           isPressed && resolvedVariant === 'primary' && styles.primaryPressed,
           isPressed && resolvedVariant === 'outline' && styles.outlinePressed,
           animatedSurfaceStyle,
@@ -129,6 +138,7 @@ export const Button: React.FC<ButtonProps> = ({
               textStyle,
             ]}
             maxFontSizeMultiplier={1.35}
+            selectable={false}
           >
             {title}
           </Text>
@@ -143,70 +153,80 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   disabledContainer: {
-    opacity: 0.9,
+    opacity: 0.7,
   },
   elevated: {
-    ...theme.shadows.hardSm,
+    ...theme.shadows.card,
   },
 
-  // Pill Surface (borderRadius: 9999)
+  // Pill Surface (borderRadius: 9999) with subtle border
   surfaceBase: {
-    borderRadius: 9999,
+    borderRadius: theme.roundness.md,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    borderWidth: 1,
+    borderWidth: theme.borders.subtle,
     borderColor: 'transparent',
   },
 
-  // Sizes (Minimum 48dp touch target enforced)
+  // Sizes - all enforce minimum 48dp touch target (width + height)
   sm: {
-    borderRadius: 9999,
+    width: scale(48),
+    height: Math.max(48, scale(42)),
+    borderRadius: theme.roundness.md,
     paddingVertical: scale(8),
-    paddingHorizontal: scale(18),
-    minHeight: Math.max(44, scale(42)),
+    paddingHorizontal: scale(16),
   },
   md: {
-    borderRadius: 9999,
+    width: '100%',
+    height: scale(56),
+    borderRadius: theme.roundness.md,
     paddingVertical: scale(12),
-    paddingHorizontal: scale(22),
-    minHeight: scale(50),
+    paddingHorizontal: scale(24),
   },
   lg: {
-    borderRadius: 9999,
+    width: '100%',
+    height: scale(64),
+    borderRadius: theme.roundness.lg,
     paddingVertical: scale(15),
     paddingHorizontal: scale(28),
-    minHeight: scale(54),
   },
 
-  // Love, Joy & Connection Variants
+  // Love, Joy & Connection Variants with improved contrast
   primary: {
-    backgroundColor: theme.colors.primary, // #E53935
+    backgroundColor: theme.colors.primary, // #D32F2F
+    borderColor: theme.colors.primary,
   },
   primaryPressed: {
-    backgroundColor: theme.colors.primaryPressed, // #C62828
+    backgroundColor: theme.colors.primaryPressed, // #B71C1C
   },
   secondary: {
     backgroundColor: theme.colors.secondary, // #FF7043
+    borderColor: theme.colors.secondaryLight,
   },
   coral: {
     backgroundColor: theme.colors.coral, // #FF7043
+    borderColor: theme.colors.poolLight,
   },
   rose: {
     backgroundColor: theme.colors.rose, // #F48FB1
+    borderColor: theme.colors.rose,
   },
   pool: {
-    backgroundColor: theme.colors.secondary, // #FF7043
+    backgroundColor: theme.colors.pool, // #FF7043
+    borderColor: theme.colors.poolLight,
   },
   bubblegum: {
-    backgroundColor: theme.colors.rose, // #F48FB1
+    backgroundColor: theme.colors.bubblegum, // #F48FB1
+    borderColor: theme.colors.bubblegum,
   },
   kintsugi: {
-    backgroundColor: theme.colors.secondary, // #FF7043
+    backgroundColor: theme.colors.kintsugi, // #FFB74D
+    borderColor: theme.colors.kintsugiLight,
   },
   outline: {
-    backgroundColor: theme.colors.background, // #FFFDFB
-    borderWidth: 1,
+    backgroundColor: 'transparent',
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border, // #FBE9E7
   },
   outlinePressed: {
@@ -218,21 +238,24 @@ const styles = StyleSheet.create({
   },
   danger: {
     backgroundColor: theme.colors.danger, // #C62828
+    borderColor: theme.colors.danger,
   },
+
   disabledSurface: {
     backgroundColor: theme.colors.surfaceDisabled, // #FBE9E7
     borderColor: theme.colors.border, // #FBE9E7
   },
 
-  // Typography
+  // Typography - improved hierarchy and legibility
   textBase: {
     fontFamily: theme.typography.fontFamilies.display,
     fontWeight: '700',
     textAlign: 'center',
     letterSpacing: -0.1,
+    lineHeight: scale(20),
   },
   text_sm: {
-    fontSize: scale(14),
+    fontSize: scale(13),
   },
   text_md: {
     fontSize: scale(15),
@@ -250,22 +273,22 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   text_rose: {
-    color: '#FFFFFF',
+    color: '#2C1C1D', // Dark text on light coral for contrast
   },
   text_pool: {
-    color: '#FFFFFF',
+    color: '#2C1C1D', // Dark text on pool for contrast
   },
   text_bubblegum: {
-    color: '#FFFFFF',
+    color: '#2C1C1D', // Dark text on bubblegum for contrast
   },
   text_kintsugi: {
-    color: '#FFFFFF',
+    color: '#2C1C1D', // Dark text on kintsugi for contrast
   },
   text_outline: {
     color: theme.colors.text, // #3E2723
   },
   text_ghost: {
-    color: theme.colors.primary, // #E53935
+    color: theme.colors.primary, // #D32F2F
   },
   text_danger: {
     color: '#FFFFFF',

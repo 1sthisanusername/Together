@@ -58,13 +58,13 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: scale(72),
     height: scale(72),
-    borderRadius: 20,
+    borderRadius: theme.roundness.lg,
     backgroundColor: theme.colors.surfaceBlush, // #FFF0ED
-    borderWidth: 1,
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border, // #FBE9E7
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.shadows.card,
+    ...theme.shadows.soft,
   },
   title: {
     fontFamily: theme.typography.fontFamilies.display,

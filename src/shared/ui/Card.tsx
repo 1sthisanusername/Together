@@ -17,9 +17,10 @@ export type CardVariant =
   | 'tomato'
   | 'pool'
   | 'bubblegum'
-  | 'stoneware'
-  | 'trough'
-  | 'kintsugi';
+  | 'kintsugi'
+  | 'elevated'
+  | 'stoneware' // legacy alias for 'paper'
+  | 'trough' // legacy alias for 'blush';
 
 export interface CardProps {
   children: React.ReactNode;
@@ -27,7 +28,7 @@ export interface CardProps {
   style?: StyleProp<ViewStyle>;
   containerStyle?: StyleProp<ViewStyle>;
   testID?: string;
-  hasShadow?: boolean;
+  hasShadow?: 'soft' | 'card' | 'elevated' | 'modal' | 'hardSm' | 'hardMd' | 'hardLg' | 'none';
   onPress?: () => void;
   disabled?: boolean;
   accessibilityLabel?: string;
@@ -36,9 +37,9 @@ export interface CardProps {
 
 /**
  * Love, Joy & Connection Card Container:
- * 20px rounded corners, 1px solid #FBE9E7 border, warm #FFFFFF or #FFF0ED surface,
- * and warm diffused Cozy Night elevation shadow (0 8px 24px rgba(62, 39, 35, 0.07)).
+ * Rounded corners with variant-based surfaces, borders, and shadows.
  * Supports optional interactive press-scale spring physics when `onPress` is provided.
+ * Shadow variant can be controlled via `hasShadow` prop for precise elevation control.
  */
 export const Card: React.FC<CardProps> = ({
   children,
@@ -46,7 +47,7 @@ export const Card: React.FC<CardProps> = ({
   style,
   containerStyle,
   testID,
-  hasShadow = true,
+  hasShadow = 'card',
   onPress,
   disabled = false,
   accessibilityLabel,
@@ -58,7 +59,8 @@ export const Card: React.FC<CardProps> = ({
     transform: [{ scale: scaleAnim.value }],
   }));
 
-  // Normalize legacy variant aliases
+  // Normalize legacy variant aliases to current types
+  // stoneware and trough are legacy aliases mapped to current variants
   let resolvedVariant: keyof typeof styles = 'paper';
   if (variant === 'stoneware' || variant === 'paper') resolvedVariant = 'paper';
   else if (variant === 'trough' || variant === 'blush') resolvedVariant = 'blush';
@@ -66,6 +68,13 @@ export const Card: React.FC<CardProps> = ({
   else if (variant === 'bubblegum' || variant === 'rose') resolvedVariant = 'rose';
   else if (variant === 'pool' || variant === 'coral') resolvedVariant = 'coral';
   else if (variant === 'tomato') resolvedVariant = 'tomato';
+  else if (variant === 'elevated') resolvedVariant = 'elevated';
+  else resolvedVariant = 'paper';
+
+  // Resolve shadow style based on hasShadow prop
+  const shadowStyle = hasShadow !== 'none'
+    ? theme.shadows[hasShadow as keyof typeof theme.shadows]
+    : { shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0 };
 
   const cardSurface = (
     <View
@@ -98,7 +107,7 @@ export const Card: React.FC<CardProps> = ({
         accessibilityLabel={accessibilityLabel}
         accessibilityHint={accessibilityHint}
         accessibilityState={{ disabled }}
-        style={[styles.outerWrapper, hasShadow && styles.cardShadow, containerStyle]}
+        style={[styles.outerWrapper, shadowStyle, containerStyle]}
       >
         <Animated.View style={animatedStyle}>{cardSurface}</Animated.View>
       </Pressable>
@@ -106,7 +115,7 @@ export const Card: React.FC<CardProps> = ({
   }
 
   return (
-    <View style={[styles.outerWrapper, hasShadow && styles.cardShadow, containerStyle]}>
+    <View style={[styles.outerWrapper, shadowStyle, containerStyle]}>
       {cardSurface}
     </View>
   );
@@ -116,15 +125,15 @@ const styles = StyleSheet.create({
   outerWrapper: {
     width: '100%',
     marginVertical: scale(7),
-    borderRadius: 20,
+    borderRadius: theme.roundness.lg,
   },
   cardShadow: {
     ...theme.shadows.card,
   },
   cardSurface: {
-    borderRadius: 20,
+    borderRadius: theme.roundness.lg,
     padding: scale(18),
-    borderWidth: 1,
+    borderWidth: theme.borders.subtle,
     borderColor: theme.colors.border, // #FBE9E7
     overflow: 'hidden',
   },
@@ -147,5 +156,10 @@ const styles = StyleSheet.create({
   },
   rose: {
     backgroundColor: theme.colors.rose, // #F48FB1
+  },
+  elevated: {
+    backgroundColor: theme.colors.surface, // #FFFFFF
+    borderWidth: theme.borders.chunky,
+    borderColor: theme.colors.primaryBorder,
   },
 });

@@ -50,7 +50,31 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#E53935",
+          "defaultChannel": "default",
+          "mode": "production",
+          "androidMode": "default",
+          "androidCollapsedTitle": "Updates from Together",
+          "androidChannelId": "default",
+          "androidChannelName": "Default",
+          "androidChannelDescription": "Default notifications for Together app",
+          "androidChannelImportance": "max",
+          "androidChannelShowBadge": true,
+          "androidChannelLightColor": "#E53935",
+          "androidChannelVibrationPattern": [0, 250, 250, 250],
+          "androidChannelEnableLights": true,
+          "androidChannelEnableVibration": true,
+          "androidChannelLockscreenVisibility": "public",
+          "androidChannelBypassDnd": false,
+          "androidChannelGroupId": "together_notifications",
+          "androidChannelGroupName": "Together Notifications",
+          "androidSound": "default"
+        }
+      ],
       "expo-router",
       [
         "expo-build-properties",

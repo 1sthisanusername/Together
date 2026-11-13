@@ -13,7 +13,7 @@ export const ActiveSessionBanner: React.FC<ActiveSessionBannerProps> = ({ onJoin
 
   return (
     <View style={styles.cardWrapper}>
-      <WarmGradient colors={theme.gradients.hero} borderRadius={20} style={styles.gradientCard}>
+      <WarmGradient style="hero" borderRadius={20} containerStyle={styles.gradientCard}>
         <View style={styles.banner}>
           <View style={styles.textContainer}>
             <View style={styles.liveBadge}>

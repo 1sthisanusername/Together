@@ -104,11 +104,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#FFFFFF',
-    ...theme.shadows.hardSm,
+    borderRadius: theme.roundness.full,
+    ...theme.shadows.soft,
   },
   initials: {
     fontFamily: theme.typography.fontFamilies.display,
-    color: theme.colors.text,
+    color: theme.colors.textInverse, // #FFFDFB for contrast on colored backgrounds
     fontWeight: '800',
     letterSpacing: -0.5,
   },

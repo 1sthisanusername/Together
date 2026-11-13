@@ -15,8 +15,12 @@ export interface ProgressBarProps {
 }
 
 /**
- * Animated Round / Step Progress Bar:
- * Warm pale blush track (#FFF0ED) with Amour Red (#E53935) pill progress fill.
+ * Enhanced Round Progress Bar:
+ * - Warm blush track (#FFF0ED) with softened Amour Red fill
+ * - Smooth spring-animated fill progression
+ * - Ratio-based counter text with accessibility support
+ * - Consistent roundness using theme.roundness.full
+ * - Improved color contrast and visual polish
  */
 export const ProgressBar: React.FC<ProgressBarProps> = ({
   current,
@@ -60,30 +64,29 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: scale(10),
-    marginBottom: scale(14),
+    gap: scale(12),
+    marginBottom: scale(16),
   },
   track: {
     flex: 1,
-    height: scale(8),
+    height: scale(10),
     borderRadius: theme.roundness.full,
-    backgroundColor: theme.colors.surfaceBlush,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceBlush, // #FFF0ED warm blush
+    borderWidth: theme.borders.subtle,
+    borderColor: theme.colors.border, // #FBE9E7 subtle accent border
     overflow: 'hidden',
   },
   fill: {
     height: '100%',
     borderRadius: theme.roundness.full,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.kintsugi, // #FFB74D warm kintsugi gold
   },
   counterText: {
     fontFamily: theme.typography.fontFamilies.sans,
-    fontSize: scale(12),
+    fontSize: scale(13),
     fontWeight: '700',
-    color: theme.colors.textSecondary,
-    minWidth: scale(28),
+    color: theme.colors.textSecondary, // #7A625A muted purple-gray
+    minWidth: scale(30),
     textAlign: 'right',
   },
 });
-

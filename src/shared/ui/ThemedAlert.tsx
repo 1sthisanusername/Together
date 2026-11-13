@@ -126,7 +126,7 @@ export function ThemedAlertDialog() {
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(43, 33, 24, 0.5)',
+    backgroundColor: 'rgba(62, 39, 35, 0.4)', // cozyNight with 40% opacity for warm modal dimming
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: scale(24),
@@ -134,64 +134,80 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: scale(340),
-    backgroundColor: theme.colors.background,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    padding: scale(22),
+    backgroundColor: theme.colors.surface, // #FFFFFF warm white surface
+    borderRadius: theme.roundness.lg,
+    borderWidth: theme.borders.subtle,
+    borderColor: theme.colors.border, // #FBE9E7 warm blush border
+    padding: scale(24),
     alignItems: 'center',
-    ...theme.shadows.card,
+    ...theme.shadows.card, // Soft elevated shadow
   },
   emoji: {
     fontSize: scale(36),
-    marginBottom: scale(10),
+    marginBottom: scale(12),
   },
   title: {
     fontFamily: theme.typography.families.bold,
     fontSize: scale(18),
-    color: theme.colors.text,
+    color: theme.colors.text, // #3E2723 cozy night
     textAlign: 'center',
-    marginBottom: scale(8),
+    marginBottom: scale(10),
   },
   message: {
     fontFamily: theme.typography.families.body,
     fontSize: scale(14),
-    color: theme.colors.textSecondary,
+    color: theme.colors.textSecondary, // #7A625A muted
     textAlign: 'center',
     lineHeight: scale(20),
-    marginBottom: scale(20),
+    marginBottom: scale(24),
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: scale(12),
+    gap: scale(16),
     width: '100%',
+    marginTop: scale(16),
   },
   btn: {
     flex: 1,
-    height: scale(46),
-    borderRadius: 9999,
+    height: scale(48),
+    borderRadius: theme.roundness.md,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
+    borderWidth: theme.borders.subtle,
+    borderColor: theme.colors.border, // #FBE9E7
+    backgroundColor: theme.colors.primary, // #D32F2F amour red
   },
   btnCancel: {
-    backgroundColor: theme.colors.surfaceSubtle,
+    flex: 1,
+    height: scale(48),
+    borderRadius: theme.roundness.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: theme.borders.subtle,
+    borderColor: theme.colors.border, // #FBE9E7
+    backgroundColor: theme.colors.surfaceSubtle, // #FBE9E7 disabled blush
   },
   btnDestructive: {
-    backgroundColor: theme.colors.danger,
-    borderColor: theme.colors.danger,
+    flex: 1,
+    height: scale(48),
+    borderRadius: theme.roundness.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: theme.borders.subtle,
+    borderColor: theme.colors.danger, // #C62828
+    backgroundColor: theme.colors.danger, // #C62828
   },
   btnText: {
     fontFamily: theme.typography.families.bold,
     fontSize: scale(14),
-    color: theme.colors.text,
+    color: theme.colors.textInverse, // #FFFDFB white on red button
   },
   btnCancelText: {
-    color: theme.colors.text,
+    color: theme.colors.text, // #3E2723 cozy night
+    fontFamily: theme.typography.families.bold,
   },
   btnDestructiveText: {
     color: '#FFFFFF',
+    fontFamily: theme.typography.families.bold,
   },
 });
