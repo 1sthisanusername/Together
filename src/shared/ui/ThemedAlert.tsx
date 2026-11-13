@@ -15,46 +15,69 @@ export interface ThemedAlertOptions {
   emoji?: string;
 }
 
+type AlertListener = (alert: ThemedAlertOptions | null) => void;
+const listeners = new Set<AlertListener>();
+let activeAlert: ThemedAlertOptions | null = null;
 let currentResolver: ((button: ThemedAlertButton | null) => void) | null = null;
 
-export const ThemedAlert: { show: (options: ThemedAlertOptions) => void } = {
-  show({ title, message, buttons = [{ text: 'OK', style: 'default' }], emoji = '💌' }: ThemedAlertOptions) {
-    _pendingAlert = { title, message, buttons, emoji };
+function emitAlert(alert: ThemedAlertOptions | null) {
+  activeAlert = alert;
+  listeners.forEach((listener) => listener(alert));
+}
+
+export const ThemedAlert = {
+  show({
+    title,
+    message,
+    buttons = [{ text: 'OK', style: 'default' }],
+    emoji = '💌',
+  }: ThemedAlertOptions): Promise<ThemedAlertButton | null> {
+    const alertData: ThemedAlertOptions = { title, message, buttons, emoji };
     return new Promise<ThemedAlertButton | null>((resolve) => {
       currentResolver = resolve;
+      emitAlert(alertData);
     });
+  },
+  dismiss() {
+    if (activeAlert) {
+      currentResolver?.(null);
+      currentResolver = null;
+      emitAlert(null);
+    }
   },
 };
 
-let _pendingAlert: ThemedAlertOptions | null = null;
-
 export function ThemedAlertDialog() {
-  const [alert, setAlert] = React.useState<ThemedAlertOptions | null>(null);
+  const [alert, setAlert] = React.useState<ThemedAlertOptions | null>(() => activeAlert);
 
   React.useEffect(() => {
-    if (currentResolver && !_pendingAlert) return;
-    if (_pendingAlert && !alert) {
-      setAlert(_pendingAlert);
-      _pendingAlert = null;
+    const listener: AlertListener = (newAlert) => {
+      setAlert(newAlert);
+    };
+    listeners.add(listener);
+    // Sync in case alert was shown before effect mounted
+    if (activeAlert !== alert) {
+      setAlert(activeAlert);
     }
-  }, [_pendingAlert]);
-
-  // Handle concurrent calls: queue via a tiny state flag
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      if (!_pendingAlert || alert) return;
-      setAlert(_pendingAlert);
-      _pendingAlert = null;
-    }, 50);
-    return () => clearInterval(interval);
-  }, [alert]);
+    return () => {
+      listeners.delete(listener);
+    };
+  }, []);
 
   if (!alert) return null;
 
   const handlePress = (btn: ThemedAlertButton) => {
-    currentResolver?.(btn);
+    const resolver = currentResolver;
     currentResolver = null;
-    setAlert(null);
+    emitAlert(null);
+    if (btn.onPress) {
+      try {
+        btn.onPress();
+      } catch (err) {
+        console.warn('[ThemedAlert] button onPress error:', err);
+      }
+    }
+    resolver?.(btn);
   };
 
   return (
