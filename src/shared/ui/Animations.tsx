@@ -9,6 +9,7 @@ import Animated, {
   withRepeat,
   withSequence,
   cancelAnimation,
+  Easing,
 } from 'react-native-reanimated';
 import { motion } from '@/shared/theme';
 
@@ -37,8 +38,7 @@ export const FadeInView: React.FC<FadeInViewProps> = ({
 
   useEffect(() => {
     // Cubic ease-out curve for natural-feeling entrances
-    const easeCubicOut = (t: number) =>
-      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const easeCubicOut = Easing.out(Easing.cubic);
     opacity.value = withDelay(delay, withTiming(1, { duration, easing: easeCubicOut }));
     translateY.value = withDelay(delay, withTiming(0, { duration, easing: easeCubicOut }));
   }, [delay, duration]);
