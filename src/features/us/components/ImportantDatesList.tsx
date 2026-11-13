@@ -24,6 +24,7 @@ export const ImportantDatesList: React.FC<ImportantDatesListProps> = ({ dates })
 
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [expandedDateId, setExpandedDateId] = useState<string | null>(null);
 
   const [title, setTitle] = useState('');
   const [dateStr, setDateStr] = useState('');
@@ -162,17 +163,41 @@ export const ImportantDatesList: React.FC<ImportantDatesListProps> = ({ dates })
           dates.map((d) => {
             const addedByText =
               d.created_by === user?.id ? 'Added by you' : `Added by ${partnerName}`;
+            const isExpanded = expandedDateId === d.id;
+
+            // Calculate days countdown or days elapsed
+            const eventDate = new Date(d.event_date);
+            const now = new Date();
+            const diffTime = eventDate.getTime() - now.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            let statusDetail = '';
+            if (diffDays === 0) {
+              statusDetail = "Today! ✨";
+            } else if (diffDays > 0) {
+              statusDetail = `In ${diffDays} day${diffDays === 1 ? '' : 's'}`;
+            } else {
+              statusDetail = `${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? '' : 's'} ago`;
+            }
 
             return (
-              <View key={d.id} style={styles.dateRow}>
+              <TouchableOpacity
+                key={d.id}
+                activeOpacity={0.85}
+                onPress={() => setExpandedDateId(isExpanded ? null : d.id)}
+                style={[styles.dateRow, isExpanded && styles.dateRowExpanded]}
+              >
                 <View style={styles.dateIconWrapper}>
                   <Text style={styles.dateIcon}>💍</Text>
                 </View>
 
                 <View style={styles.dateContent}>
-                  <Text style={styles.dateTitle}>{d.title}</Text>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.dateTitle}>{d.title}</Text>
+                    <Text style={styles.expandChevron}>{isExpanded ? '▲' : '▼'}</Text>
+                  </View>
                   <Text style={styles.dateSub}>
-                    {new Date(d.event_date).toLocaleDateString('en-US', {
+                    {eventDate.toLocaleDateString('en-US', {
                       month: 'long',
                       day: 'numeric',
                       year: 'numeric',
@@ -181,27 +206,46 @@ export const ImportantDatesList: React.FC<ImportantDatesListProps> = ({ dates })
                   <View style={styles.tagRow}>
                     <Text style={styles.addedByTag}>{addedByText}</Text>
                     {d.is_recurring && <Text style={styles.recurringTag}>🔁 Yearly</Text>}
+                    <Text style={styles.statusPill}>{statusDetail}</Text>
                   </View>
+
+                  {/* Expanded Card Details */}
+                  {isExpanded && (
+                    <View style={styles.expandedDetails}>
+                      <Text style={styles.expandedDetailText}>
+                        • Category: <Text style={styles.expandedBold}>{d.category || 'Special Memory'}</Text>
+                      </Text>
+                      <Text style={styles.expandedDetailText}>
+                        • Recurrence: <Text style={styles.expandedBold}>{d.is_recurring ? 'Repeats annually' : 'One-time milestone'}</Text>
+                      </Text>
+                    </View>
+                  )}
                 </View>
 
                 {/* Edit & Delete Action Buttons */}
                 <View style={styles.actionsCol}>
                   <TouchableOpacity
-                    onPress={() => handleStartEdit(d)}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleStartEdit(d);
+                    }}
                     style={styles.actionBtn}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Text style={styles.editIcon}>✎</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    onPress={() => handleDelete(d.id, d.title)}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleDelete(d.id, d.title);
+                    }}
                     style={styles.actionBtn}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Text style={styles.deleteIcon}>✕</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
+              </TouchableOpacity>
             );
           })
         )}
@@ -276,6 +320,46 @@ const styles = StyleSheet.create({
     borderRadius: scale(14),
     borderWidth: 1,
     borderColor: theme.colors.borderLight,
+  },
+  dateRowExpanded: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.surface,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingRight: scale(4),
+  },
+  expandChevron: {
+    fontSize: scale(10),
+    color: theme.colors.textSecondary,
+    marginLeft: scale(6),
+  },
+  statusPill: {
+    fontSize: scale(11),
+    color: theme.colors.textSecondary,
+    backgroundColor: theme.colors.surfaceBlush,
+    paddingHorizontal: scale(8),
+    paddingVertical: scale(2),
+    borderRadius: theme.roundness.full,
+    fontWeight: '500',
+  },
+  expandedDetails: {
+    marginTop: scale(10),
+    paddingTop: scale(8),
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.borderLight,
+    gap: scale(4),
+  },
+  expandedDetailText: {
+    fontSize: scale(12),
+    color: theme.colors.textSecondary,
+    fontFamily: theme.typography.families.body,
+  },
+  expandedBold: {
+    color: theme.colors.text,
+    fontFamily: theme.typography.families.bold,
   },
   dateIconWrapper: {
     marginRight: scale(12),

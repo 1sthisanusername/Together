@@ -35,3 +35,4 @@ BEGIN
     -- targeting the edge function `send-outbox-notifications`.
   END IF;
 END $$;
+

@@ -4,6 +4,8 @@ import {
   Text,
   TextInput,
   StyleSheet,
+  TouchableOpacity,
+  Modal,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { theme, scale } from '@/shared/theme';
@@ -25,6 +27,7 @@ export const PhotoPreviewModal: React.FC<PhotoPreviewModalProps> = ({
   onCancel,
 }) => {
   const [caption, setCaption] = useState('');
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
 
   if (!visible || !imageUri) return null;
 
@@ -44,48 +47,80 @@ export const PhotoPreviewModal: React.FC<PhotoPreviewModalProps> = ({
   };
 
   return (
-    <FormSheet
-      visible={visible}
-      onClose={handleCancel}
-      title="Send Photo 📷"
-      primaryLabel="Send Photo ↑"
-      onPrimary={handleSend}
-      primaryDisabled={isSending}
-      primaryLoading={isSending}
-      secondary={
-        <Button
-          title="Cancel"
-          variant="outline"
-          size="md"
-          onPress={handleCancel}
-          disabled={isSending}
-        />
-      }
-    >
-      <View style={styles.contentContainer}>
-        {/* Photo Preview Thumbnail */}
-        <View style={styles.imageWrapper}>
+    <>
+      <FormSheet
+        visible={visible}
+        onClose={handleCancel}
+        title="Send Photo 📷"
+        primaryLabel="Send Photo ↑"
+        onPrimary={handleSend}
+        primaryDisabled={isSending}
+        primaryLoading={isSending}
+        secondary={
+          <Button
+            title="Cancel"
+            variant="outline"
+            size="md"
+            onPress={handleCancel}
+            disabled={isSending}
+          />
+        }
+      >
+        <View style={styles.contentContainer}>
+          {/* Photo Preview Thumbnail - tap to expand fullscreen */}
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => setIsZoomOpen(true)}
+            style={styles.imageWrapper}
+          >
+            <Image
+              source={{ uri: imageUri }}
+              style={styles.previewImage}
+              contentFit="contain"
+            />
+            <View style={styles.tapToZoomPill}>
+              <Text style={styles.tapToZoomText}>🔍 Tap to expand</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Caption Input */}
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.captionInput}
+              placeholder="Add a sweet note or caption…"
+              placeholderTextColor={theme.colors.textSecondary}
+              value={caption}
+              onChangeText={setCaption}
+              maxLength={200}
+              editable={!isSending}
+            />
+          </View>
+        </View>
+      </FormSheet>
+
+      {/* Fullscreen Expandable Photo Modal */}
+      <Modal
+        visible={isZoomOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsZoomOpen(false)}
+      >
+        <View style={styles.zoomBackdrop}>
+          <TouchableOpacity
+            style={styles.zoomCloseBtn}
+            onPress={() => setIsZoomOpen(false)}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Text style={styles.zoomCloseText}>✕ Close</Text>
+          </TouchableOpacity>
           <Image
             source={{ uri: imageUri }}
-            style={styles.previewImage}
+            style={styles.fullscreenImage}
             contentFit="contain"
           />
         </View>
-
-        {/* Caption Input */}
-        <View style={styles.inputWrapper}>
-          <TextInput
-            style={styles.captionInput}
-            placeholder="Add a sweet note or caption…"
-            placeholderTextColor={theme.colors.textSecondary}
-            value={caption}
-            onChangeText={setCaption}
-            maxLength={200}
-            editable={!isSending}
-          />
-        </View>
-      </View>
-    </FormSheet>
+      </Modal>
+    </>
   );
 };
 
@@ -193,6 +228,46 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingBottom: scale(12),
+  },
+  tapToZoomPill: {
+    position: 'absolute',
+    bottom: scale(10),
+    right: scale(10),
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingHorizontal: scale(10),
+    paddingVertical: scale(5),
+    borderRadius: theme.roundness.full,
+  },
+  tapToZoomText: {
+    color: '#FFFFFF',
+    fontSize: scale(12),
+    fontFamily: theme.typography.families.medium,
+  },
+  zoomBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: scale(16),
+  },
+  zoomCloseBtn: {
+    position: 'absolute',
+    top: scale(50),
+    right: scale(20),
+    zIndex: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: scale(14),
+    paddingVertical: scale(8),
+    borderRadius: theme.roundness.full,
+  },
+  zoomCloseText: {
+    color: '#FFFFFF',
+    fontSize: scale(14),
+    fontFamily: theme.typography.families.bold,
+  },
+  fullscreenImage: {
+    width: '100%',
+    height: '85%',
   },
 });
 
